@@ -1,0 +1,38 @@
+Block MODSEL                 # Select model
+ 1    1                      # mSugra
+ 3    113                    # seesaw type III
+ 5    0                      # switching off CKM CP violation
+ 6    1                      # switching on flavour violation
+Block SMINPUTS               # Standard Model inputs
+ 2   1.166390E-05       # G_F, Fermi constant
+ 3   1.190000E-01       # alpha_s(MZ) SM MSbar
+ 4   9.118760E+01       # Z-boson pole mass
+ 5   4.200000E+00       # m_b(mb) SM MSbar
+ 6   1.729000E+02       # m_top(pole)
+ 7   1.777000E+00       # m_tau(pole)
+Block MINPAR                 # Input parameters
+ 1   3.000000E+02       # m0
+ 2   4.000000E+02       # m12
+ 3   1.000000E+01       # tanb
+ 4   1                  # sign(mu)
+ 5   0.000000E+02       # A0
+Block SPhenoInput       # SPheno specific input
+ 1  -1                  # error level
+ 2   0                  # SPA conventions
+11   0                  # calculate branching ratios
+12   1.00000000E-04     # write only branching ratios larger than this value
+21   0                  # calculate cross section 
+Block Y24IN             # coupling of the 24-plet to 5-plet and H_u at M_GUT
+ 1  1   1  0.0 		# Y_24_11
+ 1  1   2 -0.7 		# Y_24_12
+ 1  1   3  0.7		# Y_24_13
+ 1  2   1  0.22         # Y_24_31
+ 1  2   2  0.22         # Y_24_22
+ 1  2   3  0.22		# Y_24_23
+ 1  3   1  0.0          # Y_24_31
+ 1  3   2  0.0          # Y_24_32
+ 1  3   3  0.0          # Y_24_33
+Block M24IN		# masses of the 24-plet at M_GUT
+ 1   1  3.000E+14	# m_24_1
+ 2   2  4.000E+14	# m_24_1
+ 3   3  5.000E+14       # m_24_1

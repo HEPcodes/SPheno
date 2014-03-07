@@ -1,0 +1,156 @@
+This are short instructions for compiling and running the program SPheno,
+version 3.1. Further details can be found in the manuals stored in the
+doc directory.
+Necessary requirements are a f90/f95 compiler and the (g)make utility.
+The following compilers compile SPheno sucessfully:
+NAG f95, INTEL ifort (version higher than 10.), g95, 
+PGI pgf90, Lahey/Fujitsu Fortran 95. However, several problems have
+been reported using the gfortran compiler.
+
+ 
+I) Content of the package
+The package consists of the following files fortran 90 modules:
+ SPheno3.f90 ................... main program containing also the input/output
+                                 routines
+ BranchingRatios.f90 ........... module for the calculation of the decay widths
+                                 and branching ratios of SUSY particles and
+                                 Higgs bosons
+ Chargino3.f90 ................. module, containing routines for the
+                                 calculation of three-body decays of
+                                 charginos
+ Control.f90 ................... module containing routines for warning and
+                                 error handling
+ Couplings.f90 ................. module, containing routines for the
+                                 calculation of the couplings
+ DecayFunctions.f90 ............ module, containing generic routines for
+                                 the calculation of two-body decays
+ EplusEminusProduction.f90 ..... module, containing routines for the
+                                 calculation of the production cross sections
+                                 in e+ e- annihilation
+ Gluino3.f90 ................... module, containing routines for the
+                                 calculation of three-body decays of the gluino
+ InputOutput.f90 ............... module, containing routines for input and output
+ LHC_observables.f90 ........... module, containing routines for LHC observables,
+                                 e.g. edge variables
+ LoopCouplings.f90 ............. module, containing routines for the 
+                                 calculation of the running couplings
+ LoopFunctions.f90 ............. module, contining 1-loop and 2-loop functions
+ LoopMasses.f90 ................ module, containing the routines for the
+                                 calculation of the loop masses
+ LowEnergy.f90 ................. module, containing routines for the
+                                 calculation of low energy observables
+ Mathematics.f90 ............... module, containing numerical routines
+ MathematicsQP.f90 ............. module, containing numerical routines with
+                                 quadrupole precision
+ Model_data.f90 ................ module containing variables concerning
+                                 SUSY parameters, masses, decay widths and
+                                 branching ratios
+ Neutralino3.f90 ............... module, containing routines for the
+                                 calculation of three-body decays of
+                                 neutralinos
+ NMSSM_tools.f90 ... ........... module, containing first modules for the NMSSM
+ RGEs.f90 ... .................. module, containing the RGEs
+ RPtools.f90 ... ............... module, containing additional modules for 
+                                 R-parity violation
+ Slepton3Body.f90 .............. module, containing routines for the calculation 
+                                 of three-body decays of sleptons
+ SPheno3.f90.....................The main program for the package.
+ 
+ StandardModel.f90 ............. module, storing the Standard Model parameters
+ 
+ Stop3BodyDecays.f90 ........... module, containing routines for the
+                                 calculation of three-body decays of
+                                 the lighter stop
+ SugraRuns.f90 ................. module, containing the routines for setting
+                                 the boundary conditions, controlling the
+                                 running of the parameters as well as calculating
+                                 the spectrum in case of high scale models
+ SusyDecays.f90 ................ module, containing routines for the
+                                 calculation of all two-body decays
+                                 of supersymmetric particles and Higgs bosons
+ SusyMasses.f90 ................ module, containing the routines for the
+                                 calculation of supersymmetric masses at
+                                 tree level 
+ ThreeBodyPhaseSpace.f90 ....... module, containing routines for the
+                                 calculation of the phase space integrals
+                                 for three-body decays of fermions
+ ThreeBodyPhaseSpaceS.f90 ...... module, containing routines for the
+                                 calculation of the phase space integrals
+                                 for three-body decays of scalars
+ TwoLoopHiggsMass.f90 .......... module, containing the 2-loop routines for
+                                 the calculation of neutral Higgs boson
+                                 masses and mu
+In addition the following set of input file exists in the subdirectory
+SPheno3.1.0/input:
+ LesHouches.in .............. mSUGRA input file (same as LesHouches.in.mSugra)
+ LesHouches.in.mSUGRA_NUHM .. mSUGRA input file but with non-universal Higgs
+                        mass parameters
+ LesHouches.in.AMSB ......... AMSB input file
+ LesHouches.in.GMSB ......... GMSB input file
+ LesHouches.in.mNUHM ........ mSUGRA scenario but fixing Higgs sector at the
+                        electroweak scale using the pole mass of the
+                        pseudoscalar Higgs boson and the mu parameters
+ LesHouches.in.SeesawI ....... example of an mSUGRA scenario combined with
+                        seesaw type I
+ LesHouches.in.SeesawII ...... example of an mSUGRA scenario combined with
+                        seesaw type II, requires the compilation with option
+                        -DSEESAWIII
+ LesHouches.in.SeesawIII ..... example of an mSUGRA scenario combined with
+                        seesaw type III, requires the compilation with option
+                        -DSEESAWIII
+
+The package includes also sample output data corresponding to the
+input files specified above, denoted by SPheno.out.xxx and
+SPheno.spc.xxx, where xxx stands for any of the models above in the
+directory SPheno3.1.0/input.
+
+II) Installation:
+   1) Please adapt the Makefile according to your f90/f95 compiler. The 
+      Makefile is written for the NAC f95 compiler but options have
+      been included for other compilers as well.
+   2) Run gmake.
+      This will compile the SPheno program and put the executable in the bin 
+      directory.
+      To run the program, change to the input directory and enter
+      ../bin/SPheno
+      The output will be written to two files:
+      - SPheno.spc containg all information about masses, mixing matrices,
+        decay widths, branching ratios and production cross sections.
+        The numbers should be identical to the ones given in the file
+        SPheno.spc.mSugra provided you did not change the file 
+        LesHouches.in
+      - Messages.out containing warnings and error messages and it should
+        be empty.
+   3) The library libSPheno.a is stored in the subdirectory lib.
+
+III) Running the program for different high scale models
+ The easiest way is to copy the corresponding LesHouches.in.xxx file to
+ LesHouches.in (xxx stands for the model considered, see above) and change the
+ numbers according to your needs. Various models for LesHouches.in.xxx are
+ in the subdirectory input. 
+
+IV) The compilation of the RGEs for the seesaw tpye II and type III models
+ is rather time consuming and can take up to one hour in the optimized mode.
+ For this reason they are not included in the compilation using the
+ default options. If you want to include, include the option -DSEESAWIII
+ in the Makefile that is located in the src directory. In this way
+ both set of RGEs are included.
+
+V) The manuals are in the directory doc.
+
+VI) In case of problems: please send an email to porod@physik.uni-wuerzburg.de
+explaining the problem. Useful informations is in general contained in
+the file Messages.out; moreover, you should provide me with the input files
+used so that I can try to repeat the run and to decect the source of the 
+problem.
+
+Have fun,
+
+Werner Porod
+
+History:
+14 July 2011: moving SPheno homepage to 
+                     http://projects.hepforge.org/spheno/
+              where also the developments and the solved bugs are given
+13 March 2011: release of SPheno 3.1.0, completely remodeled compared to 
+               version 2.3.0
