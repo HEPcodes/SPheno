@@ -53,10 +53,10 @@ Use InputOutput
  !----------------------------------
  ! low energy constraints
  !----------------------------------
- Real(dp) :: BRbtosgamma, Bs_mumu, BrBToSLL, BR_Bu_TauNu, a_e, a_mu, a_tau     &
+ Real(dp) :: BRbtosgamma, Bs_ll(3), BrBToSLL, BR_Bu_TauNu, a_e, a_mu, a_tau    &
    & , d_e, d_mu, d_tau, BrMutoEGamma, BrTautoEGamma, BrTautoMuGamma           &
    & , BrMu3e, BrTau3e, BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau, BtoSNuNu &
-   & , epsK, K0toPi0NuNu, KptoPipNuNu, Bd_mumu, R_Bu_TauNu
+   & , epsK, DeltaMK2, K0toPi0NuNu, KptoPipNuNu, Bd_ll(3), R_Bu_TauNu
  Complex(dp) :: DeltaMBd, DeltaMBs
  !------------------------------------
  ! auxiliary parameters
@@ -78,9 +78,42 @@ Use InputOutput
  Iname = 1
  NameOfUnit(1) = "SPheno3"
  !--------------------------------------------------------------------------
- ! set all parameters to zero
+ ! set all parameters and low energy observables to zero
  !--------------------------------------------------------------------------
  Call Set_All_Parameters_0()
+
+ BRbtosgamma = 0._dp
+ BToSNuNu = 0._dp
+ BrBToSLL = 0._dp
+ DeltaMBd = 0._dp
+ DeltaMBs = 0._dp
+ Bs_ll = 0._dp
+ Bd_ll = 0._dp
+ BR_Bu_TauNu = 0._dp
+ R_Bu_TauNu = 0._dp
+
+ epsK = 0._dp
+ DeltaMK2 = 0._dp
+ K0toPi0NuNu = 0._dp
+ KptoPipNuNu = 0._dp
+
+ a_e = 0._dp
+ a_mu = 0._dp
+ a_tau = 0._dp
+ d_e = 0._dp
+ d_mu = 0._dp
+ d_tau = 0._dp
+ BrMutoEGamma = 0._dp
+ BrTautoEGamma = 0._dp
+ BrTautoMuGamma = 0._dp
+ BrMu3e = 0._dp
+ BrTau3e = 0._dp
+ BrTau3Mu = 0._dp
+ BR_Z_e_mu = 0._dp
+ BR_Z_e_tau = 0._dp
+ BR_Z_mu_tau = 0._dp
+ rho_parameter = 0._dp
+ mf_nu = 0
 
  !--------------------------------------------------------------------------
  ! This routine call routines to
@@ -101,7 +134,6 @@ Use InputOutput
  ! must exist.
  !--------------------------------------------------------------------------
  Call ReadingData(kont)
-
  !---------------------------------------------
  ! parameters for branching ratio calculations
  !---------------------------------------------
@@ -145,11 +177,23 @@ Use InputOutput
     & , PhaseGlu, gauge, uL_L, uL_R, uD_L, uD_R, uU_L, uU_R, Y_l, Y_d, Y_u  &
     & , Mi, A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, m_GUT)
 
-   If (kont.eq.0) then
+   Q_in = Sqrt(GetRenormalizationScale())
+
+   If (kont.Eq.0) Then
     Chi0%m2 = Chi0%m**2
     ChiPm%m2 = ChiPm%m**2
     Glu%m2 = Glu%m**2
-   end If
+
+    Call Low_Energy_Constraints_MSSM(Q_in, gauge, Y_l, Y_d, Y_u, A_l, A_d, A_u &
+     & , Mi, mu, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, B, tanb_Q, P0%m2, S0%m2   &
+     & , Spm%m2, CKM, kont, GenerationMixing, rho_parameter, DeltaMBd          &
+     & , DeltaMBs, BRbtosgamma, Bs_ll, Bd_ll, BrBToSLL, BtoSNuNu, BR_Bu_TauNu  &
+     & , R_Bu_TauNu, epsK, DeltaMK2, K0toPi0NuNu, KptoPipNuNu                  &
+     & , a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMutoEGamma, BrTautoEGamma       &
+     & , BrTautoMuGamma, BrMu3e, BrTau3e, BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau      &
+     & , BR_Z_mu_tau)
+   End If
+
    !----------------------------------------------
    ! reorder state identification if necessary
    !----------------------------------------------
@@ -212,56 +256,14 @@ Use InputOutput
 
  End If
 
- If ( (kont.Eq.0).And.(HighScaleModel.Ne."NMSSM").And.    &
-    & (HighScaleModel.Ne."RPexplicit") ) Then
-
-  Q_in = Sqrt(GetRenormalizationScale())
-  Call Low_Energy_Constraints_MSSM(Q_in, gauge, Y_l, Y_d, Y_u, A_l, A_d, A_u    &
-   & , Mi, mu, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, B, P0%m2, S0%m2, Spm%m2, kont &
-   & , 1, GenerationMixing &
-   & , rho_parameter, DeltaMBd, DeltaMBs, BRbtosgamma, Bs_mumu, Bd_mumu         &
-   & , BrBToSLL, BtoSNuNu, BR_Bu_TauNu, R_Bu_TauNu &
-   & , a_e, a_mu, a_tau, d_e, d_mu, d_tau      &
-   & , BrMutoEGamma, BrTautoEGamma, BrTautoMuGamma, BrMu3e, BrTau3e, BrTau3Mu   &
-   & , BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau, epsK, K0toPi0NuNu, KptoPipNuNu)
-
- Else
-  BRbtosgamma = 0._dp
-  BToSNuNu = 0._dp
-  BrBToSLL = 0._dp
-  DeltaMBd = 0._dp
-  DeltaMBs = 0._dp
-  Bs_mumu = 0._dp
-  Bd_mumu = 0._dp
-  BR_Bu_TauNu = 0._dp
-  R_Bu_TauNu = 0._dp
-  a_e = 0._dp
-  a_mu = 0._dp
-  a_tau = 0._dp
-  d_e = 0._dp
-  d_mu = 0._dp
-  d_tau = 0._dp
-  BrMutoEGamma = 0._dp
-  BrTautoEGamma = 0._dp
-  BrTautoMuGamma = 0._dp
-  BrMu3e = 0._dp
-  BrTau3e = 0._dp
-  BrTau3Mu = 0._dp
-  BR_Z_e_mu = 0._dp
-  BR_Z_e_tau = 0._dp
-  BR_Z_mu_tau = 0._dp
-  rho_parameter = 0._dp
-  mf_nu = 0
- End If
-
  If (kont.Ne.0) Call WriteNumberOfErrors(ErrCan)
 
- Call LesHouches_Out(67, kont, id_p, c_name, HighScaleModel, M_GUT     &
-      & , BRbtosgamma, Bs_MuMu, Bd_MuMu, DeltaMBd, DeltaMBs, BrBToSLL      &
+ Call LesHouches_Out(67, kont, id_p, c_name, HighScaleModel, M_GUT         &
+      & , BRbtosgamma, Bs_ll, Bd_ll, DeltaMBd, DeltaMBs, BrBToSLL      &
       & , BtoSNuNu, BR_Bu_TauNu, R_Bu_TauNu                                &
       & , a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMuToEGamma, BrTauToEGamma  &
       & , BrTauToMuGamma, BrMu3e, BrTau3e, BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau &
-      & , BR_Z_mu_tau, epsK, K0toPi0NuNu, KptoPipNuNu                      &
+      & , BR_Z_mu_tau, epsK, DeltaMK2, K0toPi0NuNu, KptoPipNuNu             &
       & , Rho_parameter, Ecms, Pm, Pp, ISR, SigSup, SigSdown, SigSle       &
       & , SigSn, SigChi0, SigC, SigS0, SigSP, SigHp, f_name=Trim(outputFileName))
  !------------------------------------------------------------
@@ -333,9 +335,10 @@ Contains
     & , mass_new(32), mass_old(32), diff_m(32), sinW2, mf3(3), vev, Abs_mu2
   Complex(dp) :: U_T(2,2), V_T(2,2), N_T(4,4), RSpm_T(2,2), RSdown_T(6,6)  &
     & , RSup_T(6,6), RSlepton_T(6,6), RSneut_T(3,3), mu_T, B_T
+  Complex(dp), Dimension(3,3) :: Al_s, M2E_s, M2L_s, Ad_s, Au_s, M2D_s, M2Q_s &
+    & , M2U_s
   Integer :: i1, i2, i3, ierr
   Logical :: Converge, UseFixedScale
-
   !------------------------------------------------------------------
   ! Performing a first, very rough calculation of the parameters
   ! using 1-loop RGEs and tree-level boundary conditions for gauge and
@@ -489,11 +492,17 @@ Contains
    ! scale Q, mu and m_A(tree) serve as input in the Higgs sector
    ! calculate first gauge and Yukawa in DR-scheme at m_Z
    kont = 0
-   Call BoundaryEW(1, vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T, mSpm &
-    & , mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup              &
-    & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R           &
-    & , uD_L, uD_R, uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t         &
-    & , delta, g1, kont)
+   If (UseNewBoundaryEW) Then
+    Call BoundaryEW(1, mZ, tanb, Mi, Al_pmns, Ad_sckm, Au_sckm, M2E_pmns &
+    & , M2L_pmns, M2D_sckm, M2Q_sckm, M2U_sckm, mu, mP0_T(2), delta      &
+    & , GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
+   Else
+    Call BoundaryEW(1, vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T &
+     & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup  &
+     & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R     &
+     & , uD_L, uD_R, uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t   &
+     & , delta, g1, kont)
+   End If
 
    If (kont.Ne.0) Then
     Iname = Iname - 1
@@ -502,17 +511,9 @@ Contains
 
    converge = .False.
    If (.Not.UseFixedScale) Then
-    If (GenerationMixing) Then
-     Scale_Q = 1._dp
-     Do i1=1,6
-      If ((Abs(Rsup(i1,3))**2+Abs(Rsup(i1,6))**2).Gt.0.6_dp) &
-              & Scale_Q = Scale_Q*mSup(i1)
-     End Do
-     Scale_Q = Sqrt(Scale_Q)
-    Else
-     Scale_Q = Sqrt(mSup(5)*mSup(6))
-    End If
-    tz = SetRenormalizationScale(scale_Q**2)
+    Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+    tz = SetRenormalizationScale(scale_Q)
+    Scale_Q = Sqrt(Scale_Q)
    End If
 
    Do i1=1,n_run
@@ -543,6 +544,8 @@ Contains
      If (.Not.l_Au) A_u = AoY_u * Y_u
 
     
+!     Call QuarkMasses_and_PhaseShifts(Y_d, Y_u, vevSM, mf_t, uD_L, uD_R &
+!                                     & , mf_ta, uU_L, uU_R)
      Call FermionMass(Y_u, sqrt2, mf3, uU_L, uU_R, ierr)
      Call FermionMass(Y_d, sqrt2, mf3, uD_L, uD_R, ierr)
 !     CKM_Q =  Matmul(uU_L, Transpose(Conjg(ud_L)) )
@@ -601,17 +604,9 @@ Contains
     End If
 
     If (.Not.UseFixedScale) Then
-     If (GenerationMixing) Then
-      Scale_Q = 1._dp
-      Do i2=1,6
-       If ((Abs(Rsup(i2,3))**2+Abs(Rsup(i2,6))**2).Gt.0.6_dp) &
-               & Scale_Q = Scale_Q*mSup(i2)
-      End Do
-      Scale_Q = Sqrt(Scale_Q)
-     Else
-      Scale_Q = Sqrt(mSup(5)*mSup(6))
-     End If
-     tz = SetRenormalizationScale(scale_Q**2)
+     Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+     tz = SetRenormalizationScale(scale_Q)
+     Scale_Q = Sqrt(Scale_Q)
     End If
 
     !----------------------------------------------
@@ -728,11 +723,33 @@ Contains
     End If
 
     kont = 0
-    Call BoundaryEW(i1+1,vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T &
-      & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup   &
-      & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R      &
-      & , uD_L, uD_R , uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t   &
-      & , delta, g1, kont)
+    If (UseNewBoundaryEW) Then
+     Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ &
+      & , M2_U_mZ, Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
+     If (Maxval(Abs(MatNu)).Gt.0._dp) Then
+      Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
+                & , Al_s, M2E_s, M2L_s, .False. )
+     Else
+      Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
+                & , Al_s, M2E_s, M2L_s, .False. )
+     End If
+
+     Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi, Al_s, Ad_s, Au_s   &
+      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_mZ, mP0_T(2)   &
+      & , 0.1_dp*delta, GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
+
+     uU_R = id3C
+     uD_L = id3C
+     uD_R = id3C
+     uL_L = id3C
+     uL_R = id3C
+    Else 
+     Call BoundaryEW(i1+1,vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T &
+       & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup   &
+       & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R      &
+       & , uD_L, uD_R , uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t   &
+       & , delta, g1, kont)
+    End If
 
     If (kont.Ne.0) Then
      Iname = Iname - 1
@@ -752,11 +769,17 @@ Contains
    ! scale Q, m^2_(H_i) serve as input in the Higgs sector
    ! calculate first gauge and Yukawa in DR-scheme at m_Z
    kont = 0
-   Call BoundaryEW(1, vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T, mSpm &
-    & , mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup              &
-    & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R           &
-    & , uD_L, uD_R, uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t         &
-    & , delta, g1, kont)
+   If (UseNewBoundaryEW) Then
+    Call BoundaryEW(1, mZ, tanb, Mi, Al_pmns, Ad_sckm, Au_sckm, M2E_pmns &
+    & , M2L_pmns, M2D_sckm, M2Q_sckm, M2U_sckm, mu, mP0_T(2), delta      &
+    & , GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
+   Else
+    Call BoundaryEW(1, vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T, mSpm &
+     & , mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup              &
+     & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R           &
+     & , uD_L, uD_R, uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t         &
+     & , delta, g1, kont)
+   End If
 
    If (kont.Ne.0) Then
     Iname = Iname - 1
@@ -767,16 +790,9 @@ Contains
    tanb_mZ = tanb ! first gues, justified because tanb runs weakly
 
    If (.Not.UseFixedScale) Then
-    If (GenerationMixing) Then
-     Scale_Q = 1._dp
-     Do i1=1,6
-      If ((Abs(Rsup(i1,3))**2+Abs(Rsup(i1,6))**2).Gt.0.6_dp) Scale_Q = Scale_Q*mSup(i1)
-     End Do
-     Scale_Q = Sqrt(Scale_Q)
-    Else
-     Scale_Q = Sqrt(mSup(5)*mSup(6))
-    End If
-    tz = SetRenormalizationScale(scale_Q**2)
+    Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+    tz = SetRenormalizationScale(scale_Q)
+    Scale_Q = Sqrt(Scale_Q)
    End If
 
    Do i1=1,n_run
@@ -914,17 +930,9 @@ Contains
     vevSM(2) = tanb_mZ * vevSM(1)
     
     If (.Not.UseFixedScale) Then
-     If (GenerationMixing) Then
-      Scale_Q = 1._dp
-      Do i2=1,6
-       If ((Abs(Rsup(i2,3))**2+Abs(Rsup(i2,6))**2).Gt.0.6_dp) &
-          & Scale_Q = Scale_Q*mSup(i2)
-      End Do
-      Scale_Q = Sqrt(Scale_Q)
-     Else
-      Scale_Q = Sqrt(mSup(5)*mSup(6))
-     End If
-     tz = SetRenormalizationScale(scale_Q**2)
+     Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+     tz = SetRenormalizationScale(scale_Q)
+     Scale_Q = Sqrt(Scale_Q)
     End If
     !-----------------------------------
     ! mu and B parameters at tree-level
@@ -992,11 +1000,34 @@ Contains
     End If
 
     kont = 0
-    Call BoundaryEW(i1+1,vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T &
-      & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup   &
-      & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R      &
-      & , uD_L, uD_R , uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t   &
-      & , delta, g1, kont)
+    If (UseNewBoundaryEW) Then
+     Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ &
+      & , M2_U_mZ, Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
+     If (Maxval(Abs(MatNu)).Gt.0._dp) Then
+      Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
+                & , Al_s, M2E_s, M2L_s, .False. )
+     Else
+      Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
+                & , Al_s, M2E_s, M2L_s, .False. )
+     End If
+
+     Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi, Al_s, Ad_s, Au_s &
+      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_mZ, mP0_T(2) &
+      & , 0.1_dp*delta, GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
+
+     uU_R = id3C
+     uD_L = id3C
+     uD_R = id3C
+     uL_L = id3C
+     uL_R = id3C
+    Else 
+     Call BoundaryEW(i1+1,vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T &
+       & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup   &
+       & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R      &
+       & , uD_L, uD_R , uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t   &
+       & , delta, g1, kont)
+    End If
+
     If (kont.Ne.0) Then
      Iname = Iname - 1
      Return
@@ -1013,11 +1044,19 @@ Contains
   Else If (HighScaleModel.Eq."pMSSM") Then
 
    ! calculate first gauge and Yukawa in DR-scheme at m_Z
-   Call BoundaryEW(1, vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T, mSpm &
-    & , mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup              &
-    & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R           &
-    & , uD_L, uD_R, uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t         &
-    & , delta, g1, kont)
+!   If (
+
+   If (UseNewBoundaryEW) Then
+    Call BoundaryEW(1, mZ, tanb, Mi, Al_pmns, Ad_sckm, Au_sckm, M2E_pmns &
+    & , M2L_pmns, M2D_sckm, M2Q_sckm, M2U_sckm, mu, mP0_T(2), delta      &
+    & , GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
+   Else
+    Call BoundaryEW(1, vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T, mSpm &
+     & , mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup              &
+     & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R           &
+     & , uD_L, uD_R, uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t         &
+     & , delta, g1, kont)
+   End If
 
    If (kont.Ne.0) Then
     Iname = Iname - 1
@@ -1028,16 +1067,9 @@ Contains
    mP0(1) = mZ
    mP02(1) = mZ2
    If (.Not.UseFixedScale) Then
-    If (GenerationMixing) Then
-     Scale_Q = 1._dp
-     Do i1=1,6
-      If ((Abs(Rsup(i1,3))**2+Abs(Rsup(i1,6))**2).Gt.0.6_dp) Scale_Q = Scale_Q*mSup(i1)
-     End Do
-     Scale_Q = Sqrt(Scale_Q)
-    Else
-     Scale_Q = Sqrt(mSup(5)*mSup(6))
-    End If
-    tz = SetRenormalizationScale(scale_Q**2)
+    Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+    tz = SetRenormalizationScale(scale_Q)
+    Scale_Q = Sqrt(Scale_Q)
    End If
 
    Do i1=1,n_run
@@ -1065,7 +1097,8 @@ Contains
      Y_d = Transpose(Y_d)
      Y_u = Transpose(Y_u)
      Call Switch_from_superCKM(Y_d, Y_u, Ad_sckm, Au_sckm, M2D_sckm, M2Q_sckm &
-               & , M2U_sckm, A_d, A_u, M2_D, M2_Q, M2_U, .False. )
+               & , M2U_sckm, A_d, A_u, M2_D, M2_Q, M2_U, .False.)
+
      If (Maxval(Abs(MatNu)).Gt.0._dp) Then
       Call Switch_from_superPMNS(Y_l, MatNu, Al_pmns, M2E_pmns, M2L_pmns &
                 & , A_l, M2_E, M2_L, .False. )
@@ -1089,11 +1122,12 @@ Contains
     End If
 
     kont = 0
-    Call LoopMassesMSSM_2(delta, tanb, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d &
-       & , A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu                          &
-       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP02, RP0           &
-       & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2        &
-       & , RSup, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2           &
+
+    Call LoopMassesMSSM_2(delta, tanb_Q, gauge, Y_l, Y_d, Y_u, Mi  &
+       & , A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu         &
+       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP02, RP0    &
+       & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2 &
+       & , RSup, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2    &
        & , RSneut, mGlu, PhaseGlu, M2_H, B, kont)
 
     If (kont.Ne.0) Then
@@ -1134,7 +1168,7 @@ Contains
     A_l = Transpose(A_l) 
     A_d = Transpose(A_d) 
     A_u = Transpose(A_u) 
-  
+
     Call ParametersToG(gauge, y_l, y_d, y_u, Mi, A_l, A_d, A_u       &
                   & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, g2)
     !------------------------------
@@ -1156,12 +1190,6 @@ Contains
     Call GToParameters(g2, gauge_mZ, Y_l_mZ, Y_d_mZ, Y_u_mZ, Mi_mZ, A_l_mZ &
        & , A_d_mZ, A_u_mZ, M2_E_mZ, M2_L_mZ, M2_D_mZ, M2_Q_mZ, M2_U_mZ     &
        & , M2_H_mZ, mu_mZ, B_mZ)
-    Y_l = Transpose(Y_l)
-    Y_d = Transpose(Y_d)
-    Y_u = Transpose(Y_u)
-    A_l = Transpose(A_l)
-    A_d = Transpose(A_d)
-    A_u = Transpose(A_u)
 
     Y_l_mZ = Transpose(Y_l_mZ) 
     Y_d_mZ = Transpose(Y_d_mZ) 
@@ -1179,16 +1207,9 @@ Contains
     vevSM(2) = tanb_mZ * vevSM(1)
  
     If (.Not.UseFixedScale) Then
-     If (GenerationMixing) Then
-      Scale_Q = 1._dp
-      Do i2=1,6
-       If ((Abs(Rsup(i2,3))**2+Abs(Rsup(i2,6))**2).Gt.0.6_dp) Scale_Q = Scale_Q*mSup(i2)
-      End Do
-      Scale_Q = Sqrt(Scale_Q)
-     Else
-      Scale_Q = Sqrt(mSup(5)*mSup(6))
-     End If
-     tz = SetRenormalizationScale(scale_Q**2)
+     Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+     tz = SetRenormalizationScale(scale_Q)
+     Scale_Q = Sqrt(Scale_Q)
     End If
     !-----------------------------------
     ! mu and B parameters at tree-level
@@ -1254,11 +1275,33 @@ Contains
     End If
 
     kont = 0
-    Call BoundaryEW(i1+1,vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T &
+    If (UseNewBoundaryEW) Then
+     Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ &
+      & , M2_U_mZ, Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
+     If (Maxval(Abs(MatNu)).Gt.0._dp) Then
+      Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
+                & , Al_s, M2E_s, M2L_s, .False. )
+     Else
+      Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
+                & , Al_s, M2E_s, M2L_s, .False. )
+     End If
+
+     Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi, Al_s, Ad_s, Au_s &
+      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_mZ, mP0_T(2) &
+      & , 0.1_dp*delta, GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
+
+     uU_R = id3C
+     uD_L = id3C
+     uD_R = id3C
+     uL_L = id3C
+     uL_R = id3C
+    Else 
+     Call BoundaryEW(i1+1,vevSM, mC, U, V, mN, N, mS02, RS0, mP02_T, RP0_T &
       & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2, RSup   &
       & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R      &
       & , uD_L, uD_R , uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t   &
       & , delta, g1, kont)
+    End If
 
     If (kont.Ne.0) Then
      Iname = Iname - 1
@@ -1281,8 +1324,8 @@ Contains
    If (GenerationMixing) Then
 
     Call FermionMass(Y_l,vevSM(1),mf_l_mZ,uL_L,uL_R,kont)
-    Call FermionMass(Y_d,vevSM(1),mf_d_mZ,uD_L,uD_R,kont)
-    Call FermionMass(Y_u,vevSM(2),mf_u_mZ,uU_L,uU_R,kont)
+    Call QuarkMasses_and_PhaseShifts(Y_d, Y_u, vevSM, mf_d_mZ, uD_L, uD_R &
+                                     & , mf_u_mZ, uU_L, uU_R)
 
    Else
     uL_L = id3C
@@ -1318,6 +1361,22 @@ Contains
      & , M2_Q, M2_U, M2_H, mu, B, m_GUT, kont, WriteOut, n_run)
 !     & , M2_Q, M2_U, M2_H, mu, B, m_GUT, kont, .true., n_run)
   End If
+
+  !--------------------------------------------------------------
+  ! Saving the masses in an extra vector in case that the
+  ! output for at the mass scale of a specific is required
+  !--------------------------------------------------------------
+  Q_PDG_out(1) = mGlu
+  Q_PDG_out(2:3) = Abs(mC)
+  Q_PDG_out(4:7) = Abs(mN)
+  Q_PDG_out(8:9) = mS0
+  Q_PDG_out(10) = mP0(2)
+  Q_PDG_out(11) = mSpm(2)
+  Q_PDG_out(12:17) = mSup
+  Q_PDG_out(18:23) = mSdown
+  Q_PDG_out(24:29) = mSlepton
+  Q_PDG_out(30:32) = mSneut
+  Q_PDG_out(36) = mf_u(3) 
 
   Iname = Iname - 1
 

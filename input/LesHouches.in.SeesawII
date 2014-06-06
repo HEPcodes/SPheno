@@ -4,12 +4,12 @@ Block MODSEL                 # Select model
  5    0                      # switching off CKM CP violation
  6    1                      # switching on flavour violation
 Block SMINPUTS               # Standard Model inputs
- 2   1.166390E-05       # G_F, Fermi constant
- 3   1.1720000E-01       # alpha_s(MZ) SM MSbar
+ 2   1.166379E-05       # G_F, Fermi constant
+ 3   1.184000E-01       # alpha_s(MZ) SM MSbar
  4   9.118760E+01       # Z-boson pole mass
- 5   4.200000E+00       # m_b(mb) SM MSbar
- 6   1.712000E+02       # m_top(pole)
- 7   1.777000E+00       # m_tau(pole)
+ 5   4.180000E+00       # m_b(mb) SM MSbar
+ 6   1.731000E+02       # m_top(pole)
+ 7   1.776820E+00       # m_tau(pole)
 Block MINPAR                 # Input parameters
  1   5.000000E+02       # m0
  2   1.000000E+03       # m12

@@ -728,7 +728,8 @@ Contains
   ! special cases
   !------------------
   If (iz.Eq.0._dp) Then
-   CLi2 = Cmplx( Li2(rz), 0._dp,dp)
+   If (rz.le.1) CLi2 = Cmplx( Li2(rz), 0._dp,dp)
+   If (rz.Gt.1) CLi2 = Cmplx( Li2(rz), -Pi*Log(rz),dp)
    Return
   Else If (az.Lt.Epsilon(1._dp)) Then
    CLi2 = z
@@ -1616,7 +1617,7 @@ Contains
               icol=k
             Endif
           Else If (ipiv(k)>1) Then
-!            pause 'singular matrix in gaussj'
+          ! singular matrix 
             kont = -24
             Call AddError(24)
             Return
@@ -1642,7 +1643,7 @@ Contains
     indxr(i)=irow
     indxc(i)=icol
     If (a(icol,icol)==0._dp) Then
-!        pause 'singular matrix in gaussj'
+        ! singular matrix 
         kont = -24
         Call AddError(24)
         Return
@@ -1652,11 +1653,11 @@ Contains
     Do l=1,n
       a(icol,l)=a(icol,l)*pivinv
     Enddo
-If (Present(b)) Then
-    Do l=1,m
+    If (Present(b)) Then
+     Do l=1,m
       b(icol,l)=b(icol,l)*pivinv
-    Enddo
-End If
+     Enddo
+    End If
     Do ll=1,n
       If(ll/=icol)Then
         dum=a(ll,icol)
@@ -1664,11 +1665,11 @@ End If
         Do l=1,n
           a(ll,l)=a(ll,l)-a(icol,l)*dum
         Enddo
-If (Present(b)) Then
-        Do l=1,m
-          b(ll,l)=b(ll,l)-b(icol,l)*dum
-        Enddo
-End If
+        If (Present(b)) Then
+         Do l=1,m
+           b(ll,l)=b(ll,l)-b(icol,l)*dum
+         Enddo
+        End If
       Endif
     Enddo
   Enddo
@@ -1681,7 +1682,7 @@ End If
       Enddo
     Endif
   Enddo
-  Return
+
   End Subroutine gaussj
   
   Subroutine HTRIBK(AR, AI, TAU, ZR, ZI)

@@ -31,7 +31,8 @@ End Interface
 Contains
 
 
- Subroutine CalculateBR_MSSM(n_nu, id_nu, n_l, id_l, n_d, id_d, n_u, id_u, n_Z &
+
+ Subroutine CalculateBR_MSSM1(n_nu, id_nu, n_l, id_l, n_d, id_d, n_u, id_u, n_Z &
      & , id_Z, n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c, n_g, n_s0, n_p0  &
      & , n_Spm, id_grav, id_gl, id_ph, gauge, Glu, PhaseGlu, ChiPm, U, V, Chi0 &
      & , N, Sneut, RSneut, Slept, RSlepton, Sup, RSup, Sdown, RSdown, uL_L     &
@@ -205,6 +206,265 @@ Contains
   Logical :: OnlySM
 
   Iname = Iname + 1
+  NameOfUnit(Iname) = 'CalculateBR_MSSM1'
+
+  !----------------------------------------------------------
+  ! first all couplings are calculated, see module Couplings
+  !----------------------------------------------------------
+  sinW2 = gauge(1)**2 / (gauge(1)**2 + gauge(2)**2)
+  m_grav = 1.e-9_dp * m32
+  m_W = mW
+  m_Z = mZ
+  Spm(1)%g = gamW
+  P0(1)%g = gamZ
+
+  Sup2%m = Sup%m 
+  Sup2%id = Sup%id 
+  Slept2%m = Slept%m 
+  Slept2%id = Slept%id 
+  Sneut2%m  = Sneut%m 
+  Sneut2%id = Sneut%id 
+  ChiM%m = ChiPm%m
+  ChiM%id = ChiPm%id + 1
+  SMp%m = SPm%m
+  SMp%id = SPm%id + 1
+
+  Call AllCouplingsMSSM(gauge, Y_l, uL_L, uL_R, Y_d, uD_L, uD_R, Y_u, uU_L, uU_R   &
+    & , vevSM, RSpm, RP0, RS0, U, V, N, mu, PhaseGlu, RSlepton, A_l, Rsneut    &
+    & , RSup, A_u, RSdown, A_d                                                 &
+    & , c_SmpSlSn, c_SmpSdSu, c_SmpSnSl, c_SmpSuSd, c_SmpP03         &
+    & , c_SmpP0W, c_SmpS03, c_SmpS0W, c_SmpLNu_L, c_SmpLNu_R         &
+    & , c_SmpDU_L, c_SmpDU_R, c_SmpZ(:,:,1), c_DUW, c_LLZ_L, c_LLZ_R      &
+    & , c_DDZ_L, c_DDZ_R, c_UUZ_L, c_UUZ_R, c_NuNuZ_L, c_NuNuZ_R   &
+    & , c_CCZ_L(:,:,1), c_CCZ_R(:,:,1), c_NNZ_L(:,:,1), c_NNZ_R(:,:,1), c_NNS0_L, c_NNS0_R     &
+    & , c_NNP0_L, c_NNP0_R, c_GDSd_L, c_GDSd_R, c_DNSd_L             &
+    & , c_DNSd_R, c_GUSu_L, c_GUSu_R, c_UNSu_L, c_UNSu_R             &
+    & , c_LNSl_L, c_LNSl_R, c_NuNSn_L, c_NuNSn_R, c_DDP0_L           &
+    & , c_LLP0_L, c_UUP0_L, c_DDP0_R, c_LLP0_R, c_UUP0_R             &
+    & , c_DDS0_L, c_LLS0_L, c_UUS0_L, c_DDS0_R, c_LLS0_R             &
+    & , c_UUS0_R, c_CUSd_L, c_CUSd_R, c_CDSu_L, c_CDSu_R             &
+    & , c_CLSn_L, c_CLSn_R, c_CNuSl_L, c_CNuSl_R, c_GlGlS0           &
+    & , c_P0SdSd, c_P0SuSu, c_P0SlSl, c_P0SnSn, c_P0S0Z(:,:,1), c_P0S03   &
+    & , c_S0SdSd, c_S0SuSu, c_S0SlSl, c_S0SnSn, c_S03, c_S0WW(:,1)      &
+    & , c_S0ZZ(:,1), c_FFpW, c_LNuW, c_SdSuW(:,:,1), c_SuSdW(:,:,1), c_SlSnW(:,:,1)          &
+    & , c_SnSlW(:,:,1), c_SdSdZ(:,:,1), c_SlSlZ(:,:,1), c_SnSnZ(:,:,1) &
+    & , c_SuSuZ(:,:,1), c_CCP0_L      &
+    & , c_CCP0_R, c_CCS0_L, c_CCS0_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1) &
+    & , c_SmpCN_L, c_SmpCN_R, c_GraDSd_L, c_GraDSd_R, c_GraUSu_L, c_GraUSu_R &
+    & , c_GraLSl_L, c_GraLSl_R, c_GraNuSn_L, c_GraNuSn_R, GenerationMixing)
+
+  tanb = vevSM(2) / vevSM(1)
+  cosb = 1._dp / Sqrt(1._dp + tanb**2)
+  sinb = cosb * tanb 
+
+  F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
+
+  !------------------------------------------------
+  ! 2-body decays of u-squarks
+  !------------------------------------------------
+  Call SfermionTwoBodyDecays(5, n_Su, n_u, id_u, n_n, n_g, n_c, n_d, id_d &
+          & , n_W, id_W, n_Sd, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sup2 &
+          & , mf_u, mf_d, Chi0, c_UNSu_L, c_UNSu_R, ChiPm, c_CDSu_L  &
+          & , c_CDSu_R, Sdown, m_W, c_SuSdW, m_Z, c_SuSuZ, Spm       &
+          & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m_grav, F_eff   &
+          & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R)
+  Do i1=5,5
+   Sup(i1)%g = Sup2(i1)%g
+   Sup(i1)%gi2 = Sup2(i1)%gi2
+   Sup(i1)%bi2 = Sup2(i1)%bi2
+   Sup(i1)%id2 = Sup2(i1)%id2
+  End Do
+
+  !------------------------------------------------
+  ! 2-body decays of d-squarks
+  !------------------------------------------------
+  Call SfermionTwoBodyDecays(5, n_Sd, n_d, id_d, n_n, n_g, n_c, n_u, id_u    &
+          & , n_W, id_W+1, n_Su, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sdown &
+          & , mf_d, mf_u, Chi0, c_DNSd_L, c_DNSd_R, ChiM, c_CUSd_L      &
+          & , c_CUSd_R, Sup2, m_W, c_SdSuW, m_Z, c_SdSdZ, Smp           &
+          & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m_grav, F_eff      &
+          & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R)
+
+ 
+  Iname = Iname - 1
+
+ End Subroutine CalculateBR_MSSM1
+
+ Subroutine CalculateBR_MSSM(n_nu, id_nu, n_l, id_l, n_d, id_d, n_u, id_u, n_Z &
+     & , id_Z, n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c, n_g, n_s0, n_p0  &
+     & , n_Spm, id_grav, id_gl, id_ph, gauge, Glu, PhaseGlu, ChiPm, U, V, Chi0 &
+     & , N, Sneut, RSneut, Slept, RSlepton, Sup, RSup, Sdown, RSdown, uL_L     &
+     & , uL_R, uD_L, uD_R, uU_L, uU_R, S0, RS0, P0, RP0, Spm, RSpm, epsI       &
+     & , deltaM, CTBD, fac3, Y_d, A_d, Y_l, A_l, Y_u, A_u, mu, vevSM, Fgmsb    &
+     & , m32, grav_fac) 
+ !------------------------------------------------------------------
+ ! Calculates the branching of SUSY particles within the MSSM
+ ! it is assumed that the SUSY couplings as well as the parameters
+ ! are stored in the public variables in the module SusyParameters.
+ ! Input: - gauge(i) .... the gauge couplings
+ !        - epsI ........ precision to which the integrals for the
+ !                        3-body decays are evolved
+ !        - deltaM ...... maximal ratio of mass over phasespace in 
+ !                        3-body decays where the masses are set 0
+ !                        in the calculation of the phase space.
+ !        - CTBD ........ logical variable, it .true. then all 3-body
+ !          decays are calculated, even if 2-body decays are avaiable.
+ !          Otherwisethe 3-body decays are only calculated if 2-body decays
+ !          are kinematically forbidden
+ !        - fac3 ........ if a total two-body decay width devided by the
+ !          the correcponding mass is smaller than fac3, the width
+ !          will be recalculated using the routines for 3-body decays
+ !  the variable GenerationMixing is taken from the Module InputOutput
+ ! The exact form of the output depends partly on the variable
+ ! GenerationMixing. 
+ ! output:
+ !  - gT_Sn(i) .... total width of sneutrino_i, i=1-3
+ !  - BR_Sn(i,j) .. branching ratios of sneutrino_i
+ !    GenerationMixing=.false.
+ !     j=1-4 ... neutralino_j
+ !     j=5,6 ... chargino 1,2
+ !     j=7,8 ... W + slepton_(2*i-1,2*i)
+ !     j=9,10 .. H+ + slepton_(2*i-1,2*i)
+ !    GenerationMixing=.true.
+ !     j=1-4 ............. neutralino_j
+ !     j=5,10 ............ e+chargino_1,2 , myon+chargino_1,2, tau+chargino_1,2
+ !     j=11,16 ........... W + slepton_1-6
+ !     j=17,22 ........... H+ + slepton_1-6
+ !     j=22+j  ........... Z + sneutrino j=1,i-1 (formally, actually =0)
+ !     j=22+j,22+j*2  .... A0 + sneutrino j=1,i-1
+ !     j=22+j,22+j*3  .... h0 + sneutrino j=1,i-1
+ !     j=22+j,22+j*4  .... H0 + sneutrino j=1,i-1
+ !  - gT_Sn(i) .... total width of sneutrino_i, i=1-3
+ !  - BR_Sn(i,j) .. branching ratios of sneutrino_i
+ !    GenerationMixing=.false.
+ !     j=1-4 ... neutralino_j
+ !     j=5,6 ... chargino 1,2
+ !     j=7,8 ... W + slepton_(2*i-1,2*i)
+ !     j=9,10 .. H+ + slepton_(2*i-1,2*i)
+ !    GenerationMixing=.true.
+ !     j=1-4 ............. neutralino_j
+ !     j=5,10 ............ e+chargino_1,2 , myon+chargino_1,2, tau+chargino_1,2
+ !     j=11,16 ........... W + slepton_1-6
+ !     j=17,22 ........... H+ + slepton_1-6
+ !     j=22+j  ........... Z + sneutrino j=1,i-1 (formally, actually =0)
+ !     j=22+j,22+j*2  .... A0 + sneutrino j=1,i-1
+ !     j=22+j,22+j*3  .... h0 + sneutrino j=1,i-1
+ !     j=22+j,22+j*4  .... H0 + sneutrino j=1,i-1
+ !  
+ ! written by Werner Porod, 25.04.02
+ ! 16.09.02: instead of using globally defined couplings, now locally
+ !           defined couplings are used.
+ ! 29.11.02: adding three-body decays of the lighter stop
+ ! 09.12.02: adding decays:  neutralino_1 -> gravitino + photon
+ !                           sleptons -> lepton + photon
+ ! 14.08.03: adding decays:  neutralino_i -> neutralino_j + photon
+ !                           gluino -> neutralino_i + gluon
+ ! 21.08.03: adding new possibility concerning 2-body decay modes versus
+ !           3-body decay modes: if the new variable calc_2and3_body is
+ !           set true, then both possibilities will be calculated.
+ !           However, in the 3-body modes on-shell particles will be
+ !           negelected. This requires also a change in the output
+ !           format. Moreover, also the charge conjugated final states
+ !           will be printed in future. 
+ !           Starting with the gluino
+ ! 10.09.03: changing ordering for neutralino 2-body decays such that
+ !           charge conjugated final states are included
+ ! 11.09.03: merging branching ratio array for two- and three-body
+ !           decay modes of neutralinos
+ ! 19.01.09: m32 is given in eV, defining new variable m_grav to get
+ !           value in GeV
+ ! 28.02.14: changing units of m32 to GeV
+ !------------------------------------------------------------------
+ Implicit None
+
+  Integer, Intent(in) :: n_nu, n_l, n_d, n_u, n_Z, n_W, n_snu, n_sle, n_Sd &
+     & , n_su, n_n, n_c, n_g, n_s0, n_p0, n_Spm, id_grav, id_gl, id_ph 
+  Integer, Intent(in), Dimension(1) :: id_Z, id_W
+  Integer, Intent(in), Dimension(3) :: id_nu, id_l, id_d, id_u
+  
+  Real(dp), Intent(in) :: epsI, deltaM, gauge(3), fac3
+  Real(dp), Intent(in) :: RP0(2,2), RS0(2,2)
+  Complex(dp), Intent(in) :: PhaseGlu, RSpm(2,2), U(2,2), V(2,2), N(4,4) &
+         & , RSlepton(6,6), Rsneut(3,3), RSup(6,6), RSdown(6,6), uL_L(3,3) &
+         & , uL_R(3,3), uD_L(3,3), uD_R(3,3), uU_L(3,3), uU_R(3,3)
+  Complex(dp), Intent(in) :: A_d(3,3), A_l(3,3), A_u(3,3), Y_d(3,3), Y_l(3,3) &
+         & , Y_u(3,3), mu
+  Real(dp), Intent(in) :: vevSM(2), Fgmsb, m32, grav_fac
+  Logical, Intent(in) :: CTBD
+  Type(particle2), Intent(inout) :: Sdown(6), Spm(2), P0(2)
+  Type(particle23), Intent(inout) :: Slept(6), Chi0(4), Sup(6), ChiPm(2), Glu &
+         & , S0(2), Sneut(3)
+   ! contains only the information on the 2-body
+  Type(particle2) :: Sup2(6), Slept2(6), Sneut2(3)
+                             ! decays of the scalar up
+  Type(particle2) :: SMp(2) ! contains the identies of the negative charged ones
+  Type(particle23) :: ChiM(2) ! contains the identies of the negative charged ones
+                              
+  Integer :: i1, i2, k_neut
+  Real(dp) :: sinW
+
+  Complex(dp) :: c_SmpSlSn(2,6,3), c_SmpSdSu(2,6,6)   &
+      & , c_SmpSnSl(2,3,6), c_SmpSuSd(2,6,6), c_SmpP03(2,2,2)    &
+      & , c_SmpP0W(2,2,1), c_SmpS03(2,2,2), c_SmpS0W(2,2,1)          &
+      & , c_SmpLNu_L(2,3,3), c_SmpLNu_R(2,3,3), c_SmpDU_L(2,3,3) &
+      & , c_SmpDU_R(8,3,3), c_SmpZ(2,2,1), c_DUW(3,3)
+  Real(dp) :: c_LLZ_L, c_LLZ_R, c_DDZ_L, c_DDZ_R  &
+      & , c_UUZ_L, c_UUZ_R, c_NuNuZ_L, c_NuNuZ_R
+  Complex(dp) :: c_CCZ_L(2,2,1), c_CCZ_R(2,2,1)           &
+      & , c_NNZ_L(4,4,1), c_NNZ_R(4,4,1), c_NNS0_L(4,4,2)            &
+      & , c_NNS0_R(4,4,2), c_NNP0_L(4,4,2), c_NNP0_R(4,4,2) 
+  Complex(dp) :: c_GDSd_L(3,6), c_GDSd_R(3,6)          &
+      & , c_DNSd_L(3,4,6), c_DNSd_R(3,4,6), c_GUSu_L(3,6)         &
+      & , c_GUSu_R(3,6), c_UNSu_L(3,4,6), c_UNSu_R(3,4,6)         &
+      & , c_LNSl_L(3,4,6), c_LNSl_R(3,4,6), c_NuNSn_L(3,4,3)      & 
+      & , c_NuNSn_R(3,4,3), c_DDP0_L(3,3,2), c_LLP0_L(3,3,2)      &
+      & , c_UUP0_L(3,3,2), c_DDP0_R(3,3,2), c_LLP0_R(3,3,2)       &
+      & , c_UUP0_R(3,3,2), c_DDS0_L(3,3,2), c_LLS0_L(3,3,2)       &
+      & , c_UUS0_L(3,3,2), c_DDS0_R(3,3,2), c_LLS0_R(3,3,2)       &
+      & , c_UUS0_R(3,3,2)
+  Complex(dp) :: c_CUSd_L(2,3,6), c_CUSd_R(2,3,6)      &
+      & , c_CDSu_L(2,3,6), c_CDSu_R(2,3,6), c_CLSn_L(2,3,3)       &
+      & , c_CLSn_R(2,3,3), c_CNuSl_L(2,3,6), c_CNuSl_R(2,3,6)
+  Complex(dp) :: c_GlGlS0(2), c_GGS0(2),  c_GlGlP0(2), c_GGP0(2)
+  Complex(dp) :: c_P0SdSd(2,6,6), c_P0SuSu(2,6,6), c_P0SlSl(2,6,6) &
+      & , c_P0SnSn(2,3,3), c_P0S0Z(2,2,1) 
+  Real(dp) :: c_P0S03(2,2,2), c_S0WWvirt(2,1), c_S0ZZvirt(2,1), vev
+  Complex(dp) :: c_S0SdSd(2,6,6), c_S0SuSu(2,6,6) &
+      & , c_S0SlSl(2,6,6), c_S0SnSn(2,3,3), c_LNuW(3,3)
+  Real(dp) :: c_S03(2,2,2), c_S0WW(2,1), c_S0ZZ(2,1), c_FFpW
+  Complex(dp) :: c_SdSuW(6,6,1), c_SuSdW(6,6,1), c_SlSnW(6,3,1) &
+      & , c_SnSlW(3,6,1), c_SdSdZ(6,6,1), c_SlSlZ(6,6,1), c_SnSnZ(3,3,1)     &
+      & , c_SuSuZ(6,6,1)
+  Complex(dp) :: c_CCP0_L(2,2,2), c_CCP0_R(2,2,2)    &
+      & , c_CCS0_L(2,2,2), c_CCS0_R(2,2,2), c_CNW_L(2,4,1)        &
+      & , c_CNW_R(2,4,1), c_SmpCN_L(2,2,4), c_SmpCN_R(2,2,4), c_NGP &
+      & , c_NGZ, c_NGH
+  Complex(dp), Dimension(3,6) :: c_GraDSd_L, c_GraDSd_R, c_GraUSu_L &
+      & , c_GraUSu_R, c_GraLSl_L, c_GraLSl_R
+  Complex(dp), Dimension(3,3) :: c_GraNuSn_L, c_GraNuSn_R
+
+  Real(dp) :: tanb, sinW2, cosW, M2_H(2), g_i(3), CosW2
+  Complex(dp) :: M2_E(3,3), M2_L(3,3), M2_D(3,3), M2_Q(3,3), M2_U(3,3), Mi(3), B &
+      & , Y_l_h(3,3), Y_d_h(3,3), Y_u_h(3,3), A_l_h(3,3), A_d_h(3,3), A_u_h(3,3) &
+      & , mu_h, cR
+  Integer :: kont
+  Complex(dp) :: coup, g_u(3), g_d(3), g_l(3), g_c(2), g_sl(6), g_sd(6), g_su(6) 
+  Complex(dp), Dimension(3,3) :: uD_L_h, uD_R_h, uL_L_h, uL_R_h, uU_L_h, uU_R_h
+  Real(dp) :: g_W, g_Hp, m_W(1), m_Z(1), F_eff, gam, mf(3), mf_d2_h(3) &
+      & , mf_u2_h(3), mf_l2_h(3), mGlu, mC(2), mC2(2), mN(4), mN2(4)            &
+              & , mSneut(3), mSneut2(3), mSlepton(6), mSlepton2(6), mSdown(6)   &
+              & , mSdown2(6), mSup(6), mSup2(6), mP0(2), mP02(2), RP0_h(2,2)    &
+              & , mS0(2), mS02(2), RS0_h(2,2), mSpm(2), mSpm2(2), sinb, cosb
+  Complex(dp) :: U_h(2,2), V_h(2,2), N_h(4,4), Rsneut_h(3,3), RSlepton_h(6,6)  &
+              & , RSdown_h(6,6), RSup_h(6,6), RSpm_h(2,2), PhiGlu, yuk, A      &
+              & , Rsl(2,2) , Rsd(2,2) , Rsu(2,2) 
+  Real(dp) :: fakt, r_T, width
+  Real(dp), Parameter :: mf_nu(3)=0._dp, e_d = -1._dp/3._dp, e_u = 2._dp/3._dp
+  Complex(dp), Parameter :: g_sd0(6) = 0._dp, g_su0(6) = 0._dp &
+      & , g_u0(3) = (1._dp,0._dp), g_d0(3)  = (1._dp,0._dp)
+  Logical :: OnlySM
+
+  Iname = Iname + 1
   NameOfUnit(Iname) = 'CalculateBR_MSSM'
 
   !----------------------------------------------------------
@@ -212,9 +472,7 @@ Contains
   !----------------------------------------------------------
   sinW2 = gauge(1)**2 / (gauge(1)**2 + gauge(2)**2)
 
-  m_grav = 1.e-9_dp * m32
-
-  m_W = mW 
+  m_W = mW
   m_Z = mZ
   Spm(1)%g = gamW
   P0(1)%g = gamZ
@@ -261,8 +519,11 @@ Contains
                   & , Sup%m2, RSup, P0%m2 &
                   & , CKM, c_UNSu_R, c_GUSu_R)
 
-  F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
-
+  If (grav_fac.Ne.0._dp) Then
+   F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
+  Else 
+   F_eff = Fgmsb
+  End If
   !------------------------------------------------
   ! 2-body decays of sneutrinos
   !------------------------------------------------
@@ -270,7 +531,7 @@ Contains
           & , n_W, id_W, n_Sle, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sneut2 &
           & , mf_nu, mf_l, Chi0, c_NuNSn_L, c_NuNSn_R, ChiPm, c_CLSn_L        &
           & , c_CLSn_R, Slept2, m_W, c_SnSlW, m_Z, c_SnSnZ, Spm               &
-          & , c_SmpSnSl, P0, c_P0SnSn, S0, c_S0SnSn, m_grav, F_eff            &
+          & , c_SmpSnSl, P0, c_P0SnSn, S0, c_S0SnSn, m32, F_eff               &
           & , c_GraNuSn_L, c_GraNuSn_R, 1)
 
   Do i1=1,3
@@ -297,7 +558,7 @@ Contains
           & , n_W, id_W+1, n_Snu, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav       &
           & , Slept2, mf_l, mf_nu, Chi0, c_LNSl_L, c_LNSl_R, ChiM, c_CNuSl_L  &
           & , c_CNuSl_R, Sneut2, m_W, c_SlSnW, m_Z, c_SlSlZ, Smp, c_SmpSlSn   &
-          & , P0, c_P0SlSl, S0, c_S0SlSl, m_grav, F_eff, c_GraLSl_L           &
+          & , P0, c_P0SlSl, S0, c_S0SlSl, m32, F_eff, c_GraLSl_L              &
           & , c_GraLSl_R, 2)
 
   Do i1=1,6
@@ -327,7 +588,7 @@ Contains
           & , n_W, id_W, n_Sd, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sup2 &
           & , mf_u, mf_d, Chi0, c_UNSu_L, c_UNSu_R, ChiPm, c_CDSu_L  &
           & , c_CDSu_R, Sdown, m_W, c_SuSdW, m_Z, c_SuSuZ, Spm       &
-          & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m_grav, F_eff   &
+          & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m32, F_eff      &
           & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R)
   Do i1=1,6
    Sup(i1)%g = Sup2(i1)%g
@@ -343,7 +604,7 @@ Contains
           & , n_W, id_W+1, n_Su, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sdown &
           & , mf_d, mf_u, Chi0, c_DNSd_L, c_DNSd_R, ChiM, c_CUSd_L      &
           & , c_CUSd_R, Sup2, m_W, c_SdSuW, m_Z, c_SdSdZ, Smp           &
-          & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m_grav, F_eff      &
+          & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m32, F_eff         &
           & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R)
 
   !------------------------------------------------
@@ -443,20 +704,6 @@ Contains
               & , mSdown, mSdown2, RSdown_h, mSup, mSup2, RSup_h              &
               & , mP0, mP02, RP0_h, mS0, mS02, RS0_h, mSpm, mSpm2, RSpm_h     &
               & , GenerationMixing, kont, .False. )
-!------------------------------
-!  bug fix, has to be improved
-!------------------------------
-If (kont.Eq.-227) Then
-mP0 = P0%m
-mP02 = P0%m2
-RP0_h = RP0
-mS0 = S0%m
-mS02 = S0%m2
-RS0_h = RS0
-mSpm = Spm%m
-mSpm2 = Spm%m2
-RSpm_h = RSpm
-End If
 
   If (GenerationMixing) Then
    Do i1 = 1,3
@@ -707,17 +954,17 @@ End If
    If (.Not.CTBD) Then
     sinW = Sqrt(sinW2)
     cosW = Sqrt(1._dp - sinW2)    
-    c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / (grav_fac*Fgmsb)
+    c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / F_eff
     c_NGZ = ( (- N(i1,1)*sinW+ N(i1,2)*cosW)                                   &
-          & + 0.5_dp * (cosb * N(i1,3) - sinb * N(i1,4) ) ) / (grav_fac*Fgmsb)
-    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2)) / (grav_fac*Fgmsb)
+          & + 0.5_dp * (cosb * N(i1,3) - sinb * N(i1,4) ) ) / F_eff
+    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2)) / F_eff
     Call NeutralinoTwoBodyDecays(i1, Chi0, n_nu, id_nu, n_l, id_l, n_d, id_d   &
       & , n_u, id_u, n_Z, id_Z, n_W, id_W , n_snu, n_sle, n_Sd, n_su, n_n, n_c &
       & , n_s0, n_p0, n_Spm, id_ph, id_grav, Slept, c_LNSl_L, c_LNSl_R, mf_l   &
       & , Sneut, c_NuNSn_L, c_NuNSn_R, Sdown, c_DNSd_L, c_DNSd_R, mf_d, Sup    &
       & , c_UNSu_L, c_UNSu_R, mf_u, ChiPm, m_W, c_CNW_L, c_CNW_R, Spm          &
       & , c_SmpCN_L, c_SmpCN_R, m_Z, c_NNZ_L, c_NNZ_R, P0, c_NNP0_L, c_NNP0_R  &
-      & , S0, c_NNS0_L, c_NNS0_R, m_grav, c_NGP, c_NGZ, c_NGH, 1 )
+      & , S0, c_NNS0_L, c_NNS0_R, m32, c_NGP, c_NGZ, c_NGH, 1 )
 
     If (Chi0(i1)%g.Lt.fac3*Abs(Chi0(i1)%m)) Then
      Chi0(i1)%gi2 = 0._dp
@@ -753,7 +1000,7 @@ End If
        & , Glu, c_GUSu_L, c_GUSu_R, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L         &
        & , c_CUSd_R, c_GDSd_L, c_GDSd_R, Sneut, c_NuNSn_L, c_NuNSn_R, c_CLSn_L  &
        & , c_CLSn_R, Slept, c_LNSl_L, c_LNSl_R, c_CNuSl_L, c_CNuSl_R, gauge(2)  &
-       & , sinW2, GenerationMixing, .False., epsI, deltaM, .True., 0._dp, 200    &
+       & , sinW2, GenerationMixing, OnlySM, epsI, deltaM, .True., 0._dp, 200    &
        & , 2500)
 
     End If
@@ -774,7 +1021,7 @@ End If
        & , Glu, c_GUSu_L, c_GUSu_R, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L         &
        & , c_CUSd_R, c_GDSd_L, c_GDSd_R, Sneut, c_NuNSn_L, c_NuNSn_R, c_CLSn_L  &
        & , c_CLSn_R, Slept, c_LNSl_L, c_LNSl_R, c_CNuSl_L, c_CNuSl_R, gauge(2)  &
-       & , sinW2, GenerationMixing, .False., epsI, deltaM, .False., 0._dp, 200   &
+       & , sinW2, GenerationMixing, OnlySM, epsI, deltaM, .False., 0._dp, 200   &
        & , 2500)
 
     End If ! CTBD
@@ -994,6 +1241,7 @@ End If
  !           decay modes of neutralinos
  ! 19.01.09: m32 is given in eV, defining new variable m_grav to get
  !           value in GeV
+ ! 28.02.14: changing units of m32 to GeV
  !------------------------------------------------------------------
  Implicit None
 
@@ -1022,7 +1270,7 @@ End If
   Type(particle23) :: ChiM(2) ! contains the identies of the negative charged ones
 
   Integer :: i1, k_neut
-  Real(dp) :: m_grav, sinW
+  Real(dp) :: sinW
 
   Complex(dp) :: c_SmpSlSn(2,6,3), c_SmpSdSu(2,6,6)   &
       & , c_SmpSnSl(2,3,6), c_SmpSuSd(2,6,6), c_SmpP03(2,2,3)    &
@@ -1075,7 +1323,6 @@ End If
   ! first all couplings are calculated, see module Couplings
   !----------------------------------------------------------
   sinW2 = gauge(1)**2 / (gauge(1)**2 + gauge(2)**2)
-  m_grav = 1.e-9_dp * m32
   
   m_W = mW
   m_Z = mZ
@@ -1121,7 +1368,11 @@ End If
   cosb = 1._dp / Sqrt(1._dp + tanb**2)
   sinb = cosb * tanb 
    
-  F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
+  If (grav_fac.Ne.0._dp) Then
+   F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
+  Else 
+   F_eff = Fgmsb
+  End If
 
   !------------------------------------------------
   ! 2-body decays of sneutrinos
@@ -1130,7 +1381,7 @@ End If
           & , n_W, id_W, n_Sle, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sneut2 &
           & , mf_nu, mf_l, Chi0, c_NuNSn_L, c_NuNSn_R, ChiPm, c_CLSn_L        &
           & , c_CLSn_R, Slept2, m_W, c_SnSlW, m_Z, c_SnSnZ, Spm, c_SmpSnSl    &
-          & , P0, c_P0SnSn, S0, c_S0SnSn, m_grav, F_eff, c_GraNuSn_L          &
+          & , P0, c_P0SnSn, S0, c_S0SnSn, m32, F_eff, c_GraNuSn_L          &
           & , c_GraNuSn_R, 1)
 
   Do i1=1,3
@@ -1157,7 +1408,7 @@ End If
           & , n_W, id_W+1, n_Snu, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav      &
           & , Slept2, mf_l, mf_nu, Chi0, c_LNSl_L, c_LNSl_R, ChiM, c_CNuSl_L &
           & , c_CNuSl_R, Sneut2, m_W, c_SlSnW, m_Z, c_SlSlZ, Smp, c_SmpSlSn  &
-          & , P0, c_P0SlSl, S0, c_S0SlSl, m_grav, F_eff, c_GraLSl_L          &
+          & , P0, c_P0SlSl, S0, c_S0SlSl, m32, F_eff, c_GraLSl_L          &
           & , c_GraLSl_R, 2)
 
   Do i1=1,6
@@ -1188,7 +1439,7 @@ End If
           & , n_W, id_W, n_Sd, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sup2 &
           & , mf_u, mf_d, Chi0, c_UNSu_L, c_UNSu_R, ChiPm, c_CDSu_L  &
           & , c_CDSu_R, Sdown, m_W, c_SuSdW, m_Z, c_SuSuZ, Spm       &
-          & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m_grav, F_eff   &
+          & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m32, F_eff   &
           & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R)
   Do i1=1,6
    Sup(i1)%g = Sup2(i1)%g
@@ -1204,7 +1455,7 @@ End If
           & , n_W, id_W+1, n_Su, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sdown &
           & , mf_d, mf_u, Chi0, c_DNSd_L, c_DNSd_R, ChiM, c_CUSd_L      &
           & , c_CUSd_R, Sup2, m_W, c_SdSuW, m_Z, c_SdSdZ, Smp           &
-          & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m_grav, F_eff      &
+          & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m32, F_eff      &
           & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R)
 
   !------------------------------------------------
@@ -1353,18 +1604,18 @@ End If
    If (.Not.CTBD) Then
     sinW = Sqrt(sinW2)
     cosW = Sqrt(1._dp - sinW2)    
-    c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / (grav_fac * Fgmsb)
+    c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / F_eff
     c_NGZ = ( (- N(i1,1)*sinW+ N(i1,2)*cosW)                                   &
-          & + 0.5_dp * (cosb * N(i1,3) - sinb * N(i1,4) ) ) / (grav_fac*Fgmsb)
+          & + 0.5_dp * (cosb * N(i1,3) - sinb * N(i1,4) ) ) / F_eff
     c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2) + N(i1,5)*RS0(1,3) )        &
-          & / (grav_fac * Fgmsb)
+          & / F_eff
     Call NeutralinoTwoBodyDecays(i1, Chi0, n_nu, id_nu, n_l, id_l, n_d, id_d   &
       & , n_u, id_u, n_Z, id_Z, n_W, id_W , n_snu, n_sle, n_Sd, n_su, n_n, n_c &
       & , n_s0, n_p0, n_Spm, id_ph, id_grav, Slept, c_LNSl_L, c_LNSl_R, mf_l   &
       & , Sneut, c_NuNSn_L, c_NuNSn_R, Sdown, c_DNSd_L, c_DNSd_R, mf_d, Sup    &
       & , c_UNSu_L, c_UNSu_R, mf_u, ChiPm, m_W, c_CNW_L, c_CNW_R, Spm          &
       & , c_SmpCN_L, c_SmpCN_R, m_Z, c_NNZ_L, c_NNZ_R, P0, c_NNP0_L, c_NNP0_R  &
-      & , S0, c_NNS0_L, c_NNS0_R, m_grav, c_NGP, c_NGZ, c_NGH, 1 )
+      & , S0, c_NNS0_L, c_NNS0_R, m32, c_NGP, c_NGZ, c_NGH, 1 )
 
     If (Chi0(i1)%g.Lt. fac3*Abs(Chi0(i1)%m)) Then
      Chi0(i1)%gi2 = 0._dp
@@ -1555,6 +1806,7 @@ End If
  !           decay modes of neutralinos
  ! 19.01.09: m32 is given in eV, defining new variable m_grav to get
  !           value in GeV
+ ! 28.02.14: changing units of m32 to GeV
  !------------------------------------------------------------------
  Implicit None
 
@@ -1582,7 +1834,7 @@ End If
   Type(particle23) :: ChiM(5) ! contains the identies of the negative charged ones
 
   Integer :: i1, k_neut
-  Real(dp) :: m_grav, sinW2
+  Real(dp) :: sinW2
 
  !----------------------------
  ! dummy couplings
@@ -1648,7 +1900,6 @@ End If
   sinW2 = gauge(1)**2 / (gauge(1)**2 + gauge(2)**2)
   bi(1) = mu
   bi(2:4) = eps
-  m_grav = 1.e-9_dp * m32
 
   m_W = mW
   m_Z = mZ
@@ -1664,7 +1915,11 @@ End If
 
   tanb = vevSM(2) / vevSM(1)
    
-  F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
+  If (grav_fac.Ne.0._dp) Then
+   F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
+  Else 
+   F_eff = Fgmsb
+  End If
 
   Call AllCouplingsEps3(gauge, Y_l, Y_d, uD_L, uD_R, Y_u, uU_L, uU_R, vevSM  &
     &  , vL, RSpm, RP0, RS0, U, V, N, bi, PhaseGlu, A_l, RSup, A_u    &
@@ -1694,7 +1949,7 @@ c_GraUSu_R = 0
           & , n_W, id_W, n_Sd, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sup2 &
           & , mf_u, mf_d, Chi0, c_UNSu_L, c_UNSu_R, ChiPm, c_CDSu_L  &
           & , c_CDSu_R, Sdown, m_W, c_SuSdW, m_Z, c_SuSuZ, Spm       &
-          & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m_grav, F_eff   &
+          & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m32, F_eff   &
           & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R)
   Do i1=1,6
    Sup(i1)%g = Sup2(i1)%g
@@ -1708,7 +1963,7 @@ c_GraUSu_R = 0
           & , n_W, id_W+1, n_Su, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sdown &
           & , mf_d, mf_u, Chi0, c_DNSd_L, c_DNSd_R, ChiM, c_CUSd_L      &
           & , c_CUSd_R, Sup2, m_W, c_SdSuW, m_Z, c_SdSdZ, Smp           &
-          & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m_grav, F_eff      &
+          & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m32, F_eff      &
           & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R)
   Do i1=1,6
    Call check_charge(Sdown(i1)%id,Sdown(i1)%id2)
@@ -1889,16 +2144,16 @@ c_GraUSu_R = 0
    If (.Not.CTBD) Then
     sinW = Sqrt(sinW2)
     cosW = Sqrt(1._dp - sinW2)    
-    c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / (grav_fac * Fgmsb)
-    c_NGZ = (- N(i1,1)*sinW+ N(i1,2)*cosW) / (grav_fac * Fgmsb)
-    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2)) / (grav_fac * Fgmsb)
+    c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / F_eff
+    c_NGZ = (- N(i1,1)*sinW+ N(i1,2)*cosW) / F_eff
+    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2)) / F_eff
     Call NeutralinoTwoBodyDecays(i1, Chi0, n_nu, id_nu, n_l, id_l, n_d, id_d   &
       & , n_u, id_u, n_Z, id_Z, n_W, id_W , n_snu, n_sle, n_Sd, n_su, n_n, n_c &
       & , n_s0, n_p0, n_Spm, id_ph, id_grav, Slept, c_LNSl_L, c_LNSl_R, mf_l   &
       & , Sneut, c_NuNSn_L, c_NuNSn_R, Sdown, c_DNSd_L, c_DNSd_R, mf_d, Sup    &
       & , c_UNSu_L, c_UNSu_R, mf_u, ChiPm, m_W, c_CNW_L, c_CNW_R, Spm          &
       & , c_SmpCN_L, c_SmpCN_R, m_Z, c_NNZ_L, c_NNZ_R, P0, c_NNP0_L, c_NNP0_R  &
-      & , S0, c_NNS0_L, c_NNS0_R, m_grav, c_NGP, c_NGZ, c_NGH, 1 )
+      & , S0, c_NNS0_L, c_NNS0_R, m32, c_NGP, c_NGZ, c_NGH, 1 )
     Call check_charge(Chi0(i1)%id,Chi0(i1)%id2)
 
     If (Chi0(i1)%g.Lt. fac3*Abs(Chi0(i1)%m)) Then
@@ -2093,6 +2348,7 @@ c_GraUSu_R = 0
  !           decay modes of neutralinos
  ! 19.01.09: m32 is given in eV, defining new variable m_grav to get
  !           value in GeV
+ ! 28.02.14: changing units of m32 to GeV
  !------------------------------------------------------------------
  Implicit None
 
@@ -2120,7 +2376,7 @@ c_GraUSu_R = 0
   Type(particle23) :: ChiM(5) ! contains the identies of the negative charged ones
 
   Integer :: i1, k_neut
-  Real(dp) :: m_grav, sinW2
+  Real(dp) :: sinW2
 
  !----------------------------
  ! dummy couplings
@@ -2186,7 +2442,6 @@ c_GraUSu_R = 0
   sinW2 = gauge(1)**2 / (gauge(1)**2 + gauge(2)**2)
   bi(1) = mu
   bi(2:4) = eps
-  m_grav = 1.e-9_dp * m32
 
   m_W = mW
   m_Z = mZ
@@ -2202,7 +2457,11 @@ c_GraUSu_R = 0
 
   tanb = vevSM(2) / vevSM(1)
    
-  F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
+  If (grav_fac.Ne.0._dp) Then
+   F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
+  Else 
+   F_eff = Fgmsb
+  End If
 
   Call AllCouplingsLam(gauge, Y_l, Y_d, uD_L, uD_R, Y_u, uU_L, uU_R, A_l, RSup &
     & , A_u, RSdown, A_d, vevSM, vL, RP_lam, RP_lamp, RSpm, RP0, RS0, U, V, N  &
@@ -2231,7 +2490,7 @@ c_GraUSu_R = 0
           & , n_W, id_W, n_Sd, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sup2 &
           & , mf_u, mf_d, Chi0, c_UNSu_L, c_UNSu_R, ChiPm, c_CDSu_L  &
           & , c_CDSu_R, Sdown, m_W, c_SuSdW, m_Z, c_SuSuZ, Spm       &
-          & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m_grav, F_eff   &
+          & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m32, F_eff   &
           & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R)
   Do i1=1,6
    Sup(i1)%g = Sup2(i1)%g
@@ -2245,7 +2504,7 @@ c_GraUSu_R = 0
           & , n_W, id_W+1, n_Su, n_Spm, n_Z, id_Z, n_P0, n_S0, id_grav, Sdown &
           & , mf_d, mf_u, Chi0, c_DNSd_L, c_DNSd_R, ChiM, c_CUSd_L      &
           & , c_CUSd_R, Sup2, m_W, c_SdSuW, m_Z, c_SdSdZ, Smp           &
-          & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m_grav, F_eff      &
+          & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m32, F_eff      &
           & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R)
   Do i1=1,6
    Call check_charge(Sdown(i1)%id,Sdown(i1)%id2)
@@ -2426,16 +2685,16 @@ c_GraUSu_R = 0
    If (.Not.CTBD) Then
     sinW = Sqrt(sinW2)
     cosW = Sqrt(1._dp - sinW2)    
-    c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / (grav_fac * Fgmsb)
-    c_NGZ = (- N(i1,1)*sinW+ N(i1,2)*cosW) / (grav_fac * Fgmsb)
-    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2)) / (grav_fac * Fgmsb)
+    c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / F_eff
+    c_NGZ = (- N(i1,1)*sinW+ N(i1,2)*cosW) / F_eff
+    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2)) / F_eff
     Call NeutralinoTwoBodyDecays(i1, Chi0, n_nu, id_nu, n_l, id_l, n_d, id_d   &
       & , n_u, id_u, n_Z, id_Z, n_W, id_W , n_snu, n_sle, n_Sd, n_su, n_n, n_c &
       & , n_s0, n_p0, n_Spm, id_ph, id_grav, Slept, c_LNSl_L, c_LNSl_R, mf_l   &
       & , Sneut, c_NuNSn_L, c_NuNSn_R, Sdown, c_DNSd_L, c_DNSd_R, mf_d, Sup    &
       & , c_UNSu_L, c_UNSu_R, mf_u, ChiPm, m_W, c_CNW_L, c_CNW_R, Spm          &
       & , c_SmpCN_L, c_SmpCN_R, m_Z, c_NNZ_L, c_NNZ_R, P0, c_NNP0_L, c_NNP0_R  &
-      & , S0, c_NNS0_L, c_NNS0_R, m_grav, c_NGP, c_NGZ, c_NGH, 1 )
+      & , S0, c_NNS0_L, c_NNS0_R, m32, c_NGP, c_NGZ, c_NGH, 1 )
     Call check_charge(Chi0(i1)%id,Chi0(i1)%id2)
 
     If (Chi0(i1)%g.Lt. fac3*Abs(Chi0(i1)%m)) Then

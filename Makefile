@@ -8,7 +8,7 @@
 # F90 = lf95
 F90 = ifort
 Model = src
-version = 301.11
+version = 330.00
 bin/SPheno:
 	cd ${Model} ; ${MAKE} F90=${F90} version=${version}
 clean:
