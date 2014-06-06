@@ -633,7 +633,6 @@ Contains
   !----------------------------------------------------------------
   ! the RGE paper defines the Yukawas transposed to my conventions
   !----------------------------------------------------------------
-Write(10,*) "resum",i_loop
   Yl_mZ = Y_l
   Yd_mZ = Y_d
   Yu_mZ = Y_u

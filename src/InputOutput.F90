@@ -2129,7 +2129,7 @@ Contains
       End If
 
      Case(9) ! use old version of BoundaryEW
-      If (Int(wert).eq.1) Then
+      If (Int(wert).Eq.1) Then
        UseNewBoundaryEW = .False.
       Else
        UseNewBoundaryEW = .True.
@@ -2330,11 +2330,11 @@ Contains
      ! save data
      !-------------------------
      If (i_c.Eq.0) Then
-      r_extpar(i_par) = wert
-      in_extpar(i_par,1) = 1
+      If (i_par.Ne.1000039) r_extpar(i_par) = wert
+      If (i_par.Ne.1000039) in_extpar(i_par,1) = 1
      Else
-      i_extpar(i_par) = wert
-      in_extpar(i_par,2) = 1
+      If (i_par.Ne.1000039) i_extpar(i_par) = wert
+      If (i_par.Ne.1000039) in_extpar(i_par,2) = 1
      End If
 
      If ((i_par.Eq.0).And.(i_c.Eq.0)) Then
@@ -2678,6 +2678,7 @@ Contains
 
      Else If (i_par.Eq.1000039) Then ! gravitino mass
       m32 = wert
+      Fgmsb = m32 / 2.4e-19_dp   ! needed for calculation of decay widths
       l_m32_in = .True.
 
      Else

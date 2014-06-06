@@ -1202,6 +1202,12 @@ Use Control
 ! Complex(dp) :: PhaseGlu
  Type(particle23) :: Glu
  !---------------------------------------------------------------------------
+ ! gluino mass, phase of the parameter M_3 (=Mi(3))
+ ! total decay width, partial decay widths, branching ratios
+ !---------------------------------------------------------------------------
+! Complex(dp) :: PhaseGlu
+ Type(particle2) :: Grav
+ !---------------------------------------------------------------------------
  ! sneutrino masses, masses squared, corresponding mixing matrix
  ! total decay widths, partial decay widths, branching ratios
  !---------------------------------------------------------------------------
@@ -1332,7 +1338,7 @@ Contains
     find_charge = 0
 
    ! scalar/pseudoscalars for MSSM extensions
-   Case(1000017, 1000018, 1000019, 45, 46)
+   Case(1000017, 1000018, 1000019, 1000039, 45, 46)
     find_charge = 0
 
   Case default
@@ -1608,6 +1614,7 @@ Contains
   ! Gravitino
   !-----------------------------
   id_grav = 86
+  Grav%id = 86
   id_p(id_grav) = id_gravitino
   c_name(id_grav) = "~G"
 

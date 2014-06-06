@@ -211,7 +211,6 @@ Use InputOutput
  ! correctly (kont.eq.0) 
  !-------------------------------------------------------------------
   If ((L_BR).And.(kont.Eq.0)) Then
-
    Call CalculateBR(n_nu, id_nu, n_l, id_l, n_d, id_d, n_u, id_u, n_Z, id_Z     &
      & , n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c, n_g, n_s0, n_p0, n_Spm  &
      & , id_grav, id_gl, id_ph, gauge, Glu, PhaseGlu, ChiPM, U, V, Chi0, N      &
@@ -724,14 +723,25 @@ Contains
 
     kont = 0
     If (UseNewBoundaryEW) Then
-     Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ &
-      & , M2_U_mZ, Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
-     If (Maxval(Abs(MatNu)).Gt.0._dp) Then
-      Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
+     If (GenerationMixing) then
+      Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ &
+       & , M2_U_mZ, Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
+      If (Maxval(Abs(MatNu)).Gt.0._dp) Then
+       Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
+                 & , Al_s, M2E_s, M2L_s, .False. )
+      Else
+       Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
                 & , Al_s, M2E_s, M2L_s, .False. )
+      End If
      Else
-      Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
-                & , Al_s, M2E_s, M2L_s, .False. )
+      Ad_s = A_d_mZ
+      Au_s = A_u_mZ
+      Al_s = A_l_mZ
+      M2D_s = M2_D_mZ
+      M2Q_s = M2_Q_mZ
+      M2U_s = M2_U_mZ
+      M2E_s = M2_E_mZ
+      M2L_s = M2_L_mZ
      End If
 
      Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi, Al_s, Ad_s, Au_s   &
@@ -1001,14 +1011,25 @@ Contains
 
     kont = 0
     If (UseNewBoundaryEW) Then
-     Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ &
-      & , M2_U_mZ, Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
-     If (Maxval(Abs(MatNu)).Gt.0._dp) Then
-      Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
-                & , Al_s, M2E_s, M2L_s, .False. )
+     If (GenerationMixing) then
+      Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ &
+       & , M2_U_mZ, Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
+      If (Maxval(Abs(MatNu)).Gt.0._dp) Then
+       Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
+                 & , Al_s, M2E_s, M2L_s, .False. )
+      Else
+       Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
+                 & , Al_s, M2E_s, M2L_s, .False. )
+      End If
      Else
-      Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
-                & , Al_s, M2E_s, M2L_s, .False. )
+      Ad_s = A_d_mZ
+      Au_s = A_u_mZ
+      Al_s = A_l_mZ
+      M2D_s = M2_D_mZ
+      M2Q_s = M2_Q_mZ
+      M2U_s = M2_U_mZ
+      M2E_s = M2_E_mZ
+      M2L_s = M2_L_mZ
      End If
 
      Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi, Al_s, Ad_s, Au_s &
@@ -1276,14 +1297,25 @@ Contains
 
     kont = 0
     If (UseNewBoundaryEW) Then
-     Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ &
-      & , M2_U_mZ, Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
-     If (Maxval(Abs(MatNu)).Gt.0._dp) Then
-      Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
-                & , Al_s, M2E_s, M2L_s, .False. )
+     If (GenerationMixing) then
+      Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ &
+       & , M2_U_mZ, Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
+      If (Maxval(Abs(MatNu)).Gt.0._dp) Then
+       Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
+                 & , Al_s, M2E_s, M2L_s, .False. )
+      Else
+       Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
+                 & , Al_s, M2E_s, M2L_s, .False. )
+      End If
      Else
-      Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
-                & , Al_s, M2E_s, M2L_s, .False. )
+      Ad_s = A_d_mZ
+      Au_s = A_u_mZ
+      Al_s = A_l_mZ
+      M2D_s = M2_D_mZ
+      M2Q_s = M2_Q_mZ
+      M2U_s = M2_U_mZ
+      M2E_s = M2_E_mZ
+      M2L_s = M2_L_mZ
      End If
 
      Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi, Al_s, Ad_s, Au_s &

@@ -1349,17 +1349,17 @@ Contains
     Do i3=1,Size(mS02)
      coupLC = c_DDS0_1L_L(i1,i2,i3)
      coupRC = c_DDS0_1L_R(i1,i2,i3)
-     B_LR2 = B_LR2 - 16._dp * Pi2 * coupLC * coupRC / mS02(i3) 
-     B_SLL1 = B_SLL1 - 8._dp * Pi2 * coupLC**2 / mS02(i3) 
-     B_SRR1 = B_SRR1 - 8._dp * Pi2 * coupRC**2 / mS02(i3)
+     B_LR2 = B_LR2 + 16._dp * Pi2 * coupLC * coupRC / mS02(i3) 
+     B_SLL1 = B_SLL1 + 8._dp * Pi2 * coupLC**2 / mS02(i3) 
+     B_SRR1 = B_SRR1 + 8._dp * Pi2 * coupRC**2 / mS02(i3)
     End Do
 
     Do i3=2,Size(mP02)
      coupLC = c_DDP0_1L_L(i1,i2,i3)
      coupRC = c_DDP0_1L_R(i1,i2,i3)
-     B_LR2 = B_LR2 - 16._dp * Pi2  * coupLC * coupRC / mP02(i3) 
-     B_SLL1 = B_SLL1 - 8._dp * Pi2 * coupLC**2 / mP02(i3) 
-     B_SRR1 = B_SRR1 - 8._dp * Pi2 * coupRC**2 / mP02(i3)
+     B_LR2 = B_LR2 + 16._dp * Pi2  * coupLC * coupRC / mP02(i3) 
+     B_SLL1 = B_SLL1 + 8._dp * Pi2 * coupLC**2 / mP02(i3) 
+     B_SRR1 = B_SRR1 + 8._dp * Pi2 * coupRC**2 / mP02(i3)
     End Do
     WC_4d_VLL(is,i1,i2) = B_VLL
     WC_4d_VRR(is,i1,i2) = B_VRR
@@ -5676,9 +5676,6 @@ end if
   ! NPB 659 are for B_q 
   !-------------------------------------------------------------
   F_A = Conjg(F_A)
-!Write(*,*) i,l,MassBq(i),mhat
-!Write(*,*) "A",Cmplx(2._dp * mf_l(l) * F_A),Cmplx(F_S),Cmplx(F_P)
-!Write(*,*) "B",Cmplx(c10*sw2),Cmplx(cS),Cmplx(cP)
   !---------------------------------------------
   ! the life-time is in ps -> division by hbar
   !---------------------------------------------

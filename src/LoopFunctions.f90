@@ -1246,11 +1246,9 @@ Contains
     Return
 
    End If
-!Write(*,*) "xpi1,xpi2,xpi3",xpi1,xpi2,xpi3
-!Write(*,*) "d12,d13,d23",d12,d13,d23
-!    -------------------------
+!-------------------------
 !    m3 = 0
-!    -------------------------
+!-------------------------
    If (xpi3.Eq.0._dp) Then
     d12 = d12 / xpi1
     If (d12.Eq.0._dp) Then ! m1 = m2
@@ -1318,12 +1316,8 @@ Contains
     End Do
     C0_3m = (1._dp + LogR + C0_3m) / xpi1
 
-    
-    
-!   Else If ( (d13.Lt.3.e-4_dp).Or.  &
-!           & ((d12.Lt.1.e-4_dp).And.(d23.Lt.1.e-4_dp)) ) Then ! all masses nearly equal
    Else If (d13.Lt.1.e-3_dp) Then ! all masses nearly equal
-!Write(*,*) "Am I here"
+
     sum = d13**9
     Do i1=1,8
      sum = sum + d12**i1 * d13**(9-i1)
@@ -1340,7 +1334,7 @@ Contains
     C0_3m = - (0.5_dp + C0_3m) / xpi1
 
    Else If (d12.Lt.1.e-4_dp) Then ! m1 nearly m2
-!Write(*,*) "Well, I guess, I am here",Log(xpi3/xpi1)
+
     LogR = Log(xpi3/xpi1)
     C0_3m = 0._dp
     Coeff(0) = -xpi1 + xpi3 - LogR*xpi3    
@@ -1368,16 +1362,13 @@ Contains
      C0_3m = Coeff(7) * d12 / d13
 
      Do i1=6,1,-1
-!write(*,*) Coeff(i1),C0_3m
+
       C0_3m = (Coeff(i1) + C0_3m) * d12 / d13
      End Do
     End If ! d12 .gt. 0._dp
-!Write(*,*) Coeff(0) + C0_3m
+
     C0_3m = (Coeff(0) + C0_3m) / d13**2
-!Write(*,*) "final",c0_3m, d12 / d13   
-    !    MEK: 05.07.2013
-!         m2 and m3 both much smaller than m1
-!    Else If ((xpi2.Lt.1.e-4_dp).And.((xpi2-xpi3).Lt.1.e-12_dp).And.(r13.Lt.1.e-4_dp)) Then 
+
    Else If ((r12.Lt.1.e-4_dp).And.(r13.Lt.1.e-4_dp)) Then 
      LogR = Log(xpi2/xpi3)
      C0_3m = 0._dp
@@ -1555,7 +1546,7 @@ Contains
  Complex(dp) Function C00_3m(a,b,c)
   Real(dp), Intent(in) :: a,b,c
   C00_3m = 0.125_dp + 0.25_dp*vertexC0tilde(a,b,c) 
- ! Write(*,*) "C00", C00_3m
+
  End function C00_3m
 
 
