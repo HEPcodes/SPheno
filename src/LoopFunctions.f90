@@ -10111,7 +10111,7 @@ Goto 200
    Gloop = - A0(m22) + (p2 - m22) * B0(p2,m12,m22)
 
   Else If (m22.eq.0._dp) then
-   Gloop = - A0(m22) + (p2 - m12) * B0(p2,m12,m22)
+   Gloop = - A0(m12) + (p2 - m12) * B0(p2,m12,m22)
 
   Else If (m12.eq.m22) then
    Gloop =  - 2._dp * A0(m12) + (p2 - m12 - m22) * B0(p2,m12,m22)
