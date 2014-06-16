@@ -926,7 +926,7 @@ Contains
 
   Integer :: i1, i2, i3, i_start, i_end, i_count
   Real(dp) :: gam, m_in, mN(n_n), mSlepton(n_sle), mSneut(n_snu), mSdown(n_sd) &
-         & , mSup(n_su), mC(n_c), mS0(n_S0), mSpm(n_Spm), mP0(n_P0)
+         & , mSup(n_su), mC(n_c), mS0(n_S0), mSpm(n_Spm), mP0(n_P0), x1, x2, sq1
   !-----------------
   ! Initialization
   !-----------------
@@ -1151,7 +1151,10 @@ Contains
     !-----------------------------------------
     ! gravitino photon
     !-----------------------------------------
-    Chi0(i1)%gi2(i_count) = oo16pi * Abs(c_NGP)**2 * Abs(mN(i1))**5
+    sq1 = Abs(m32/mN(i1))
+    x1 = sq1**2
+    Chi0(i1)%gi2(i_count) = oo16pi * Abs(c_NGP)**2 * Abs(mN(i1))**5 &
+                          &        * (1._dp-x1)**3 * (1._dp + 3._dp*x1)
     Chi0(i1)%id2(i_count,1) = id_grav
     Chi0(i1)%id2(i_count,2) = id_ph
 
@@ -1160,8 +1163,17 @@ Contains
     ! gravitino Z
     !-----------------------------------------
     If (Abs(mN(i1)).Gt.(m32+mZ(1))) Then ! to be changed
-     Chi0(i1)%gi2(i_count) = oo16pi * Abs(c_NGZ)**2 * Abs(mN(i1))  &
-                     &                          * (mN(i1)**4 - mZ(1)**4)
+     x2 = (mZ(1)/mN(i1))**2
+     Chi0(i1)%gi2(i_count) = oo16pi * Abs(mN(i1))**5                          &
+        &      * Sqrt(1._dp-2._dp*(x1+x2)+(x1-x2)**2)                         &
+        &      * ( Abs(c_NGZ)**2  * ( (1._dp-x1)**2 * (1._dp + 3._dp*x1)      &
+        &                           - x2 * (3._dp + x1**2                     &
+        &                                  - 12._dp * x1 * sq1                &
+        &                                  - x2 * (3._dp-x1-x2) ) )           &
+        &         + Abs(c_NGH)**2 * ( (1._dp-x1)**2 * (1._dp + sq1)**2        &
+        &                      - x2 * ( (1-sq1)**2                            &
+        &                               * (3._dp + 2._dp*sq1 - 9._dp*x1)      & 
+        &                             - x2 * (3._dp-2._dp*sq1-9._dp*x1-x2) )) )
      Chi0(i1)%id2(i_count,1) = id_grav
      Chi0(i1)%id2(i_count,2) = id_Z(1)
 
@@ -1171,8 +1183,13 @@ Contains
    ! gravitino h0
    !-----------------------------------------
     If (Abs(mN(i1)).Gt.(m32+mS0(1))) Then ! h0
-     Chi0(i1)%gi2(i_count) = oo16pi * Abs(c_NGH)**2 * Abs(mN(i1))  &
-                     &                          * (mN(i1)**4 - mS0(1)**4)
+     x2 = (mS0(1)/mN(i1))**2
+     Chi0(i1)%gi2(i_count) = oo16pi * Abs(c_NGH)**2 * Abs(mN(i1))**5        &
+                     &       * Sqrt(1._dp-2._dp*(x1+x2)+(x1-x2)**2)         &
+                     &       * ( (1._dp-x1)**2 * (1._dp + sq1)**2           &
+                     &         - x2 * ( (1+sq1)**2                          &
+                     &                  * (3._dp - 2._dp*sq1 + 3._dp*x1)    & 
+                     &                - x2 * (3._dp+2._dp*sq1+3._dp*x1-x2) ))
      Chi0(i1)%id2(i_count,1) = id_grav
      Chi0(i1)%id2(i_count,2) = S0(1)%id
 
@@ -2300,7 +2317,6 @@ Contains
       Sf(i1)%gi2(i_count) = gam 
       Sf(i1)%id2(i_count,1) = Sfp(i2)%id
       Sf(i1)%id2(i_count,2) = id_W(i3)
-
       i_count = i_count + 1
      End If
     End Do
@@ -3215,6 +3231,67 @@ Contains
   Iname = Iname - 1
 
  End Subroutine NeutralVectorTwoBodyDecays
+
+  Subroutine Zdecays(gp, g, mZ, mf_l, mf_d, mf_u, BR_ll, BR_inv, BR_dd, BR_uu &
+                    &, gT, gP_ll, gP_inv, gP_dd, gP_uu)
+  implicit none
+
+   Real(dp), Intent(in) :: gp, g, mf_l(3), mf_d(3), mf_u(3), mZ
+   Real(dp), intent(out) :: BR_ll(3), BR_inv, BR_dd(3), BR_uu(2), gT
+   Real(dp), Intent(out), optional :: gP_ll(3), gP_inv, gP_dd(3), gP_uu(2)
+
+   Real(dp) :: sinW2, cL, cR, gam, g_ll(3), g_inv, g_dd(3), g_uu(2)
+
+   sinW2 = gp**2/(gp**2 + g**2)
+   gT = 0._dp
+Write(*,*) gp,g,sinw2
+   Call CoupFermionZ(-0.5_dp,-1._dp, g,sinW2,cL,cR)
+   Call VectorBosonToTwoFermions(mZ,0._dp,0._dp,1,cL,cR,gam)
+   g_LL(1:2) = gam
+   Call VectorBosonToTwoFermions(mZ,mf_l(3),mf_l(3),1,cL,cR,gam)
+   g_LL(3) = gam
+   gT = sum(g_LL)
+         
+   call CoupFermionZ(0.5_dp,0._dp, g,sinW2,cL,cR)
+   Call VectorBosonToTwoFermions(mZ,0._dp,0._dp,1,cL,cR,gam)
+   g_inv = 3._dp * gam
+   gT = gT + g_inv
+
+   Call CoupFermionZ(-0.5_dp,-1._dp/3._dp, g,sinW2,cL,cR)
+   Call VectorBosonToTwoFermions(mZ,0._dp,0._dp,3,cL,cR,gam) 
+   g_dd(1:2) = gam
+   Call VectorBosonToTwoFermions(mZ,mf_d(3),mf_d(3),3,cL,cR,gam) 
+   g_dd(3) = gam
+   gT = gT + Sum(g_dd)
+
+   Call CoupFermionZ(0.5_dp,2._dp/3._dp, g,sinW2,cL,cR)
+   Call VectorBosonToTwoFermions(mZ,0._dp,0._dp,3,cL,cR,gam)
+   g_uu(1) = gam
+   Call VectorBosonToTwoFermions(mZ,mf_u(2),mf_u(2),3,cL,cR,gam)
+   g_uu(2) = gam
+   gT = gT + Sum(g_uu)
+ 
+   BR_ll = g_ll / gT
+   BR_inv = g_inv / gT
+   BR_dd = g_dd / gT
+   BR_uu = g_uu / gT
+
+   Write(*,*) "total",gT
+   Write(*,*) " L",g_lL
+   Write(*,*) "Nu",g_inv
+   Write(*,*) " d",g_dd
+   Write(*,*) " u",g_uu
+   Write(*,*) "BR"
+   Write(*,*) " L",br_lL
+   Write(*,*) "Nu",br_inv
+   Write(*,*) " d",br_dd
+   Write(*,*) " u",br_uu
+  If (Present(gP_ll)) gP_ll = g_ll
+  If (Present(gP_inv)) gP_inv = g_inv
+  If (Present(gP_dd)) gP_dd = g_dd
+  If (Present(gP_uu)) gP_uu = g_uu
+
+ End Subroutine Zdecays
 
 End Module  SusyDecays
 

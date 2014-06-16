@@ -690,6 +690,64 @@ Contains
  End Subroutine Set_All_Parameters_0
 
 
+ Real(dp) Function product_stop_masses(mSup, RSup, GenerationMixing)
+ !--------------------------------------------------------------
+ ! is needed to determine the renormalisation scale
+ ! written by Werner Porod, 09.12.2013
+ !--------------------------------------------------------------
+ Implicit None
+  Real(dp), Intent(in) :: mSup(6)
+  Complex(dp), Intent(in) :: RSup(6,6)
+  Logical, Intent(in) :: GenerationMixing
+
+  Integer :: i1, count
+  Real(dp) :: v(6), max_stop
+
+  Iname = Iname + 1
+  NameOfUnit(Iname) = "product_stop_masses"
+
+  If (GenerationMixing) Then
+   v = Abs(RSup(:,3))**2 + Abs(RSup(:,6))**2
+   max_stop = Maxval(v)
+   count = 0
+   product_stop_masses = 1._dp
+ 
+   Do i1=1,6
+    If (max_stop.Eq.v(i1)) Then
+     product_stop_masses = mSup(i1)
+     v(i1) = 0._dp
+     count = count + 1
+     Exit
+    End If
+   End Do
+
+   max_stop = Maxval(v)
+
+   Do i1=1,6
+    If (max_stop.Eq.v(i1)) Then
+     product_stop_masses = product_stop_masses * mSup(i1)
+     v(i1) = 0._dp
+     count = count + 1
+     Exit
+    End If
+   End Do
+
+   If (count.Ne.2) Then
+    Write(ErrCan,*) "Problem in routine "//Trim(NameOfUnit(Iname))
+    Write(ErrCan,*) "count =", count
+    Write(ErrCan,*) "Setting scale to 1 TeV"
+    product_stop_masses = 1.6_dp
+    If (ErrorLevel.Eq.2) Call TerminateProgram
+   End If
+
+  Else ! .not.GenerationMixing
+   product_stop_masses = mSup(5)*mSup(6)
+  End If
+
+  Iname = Iname - 1
+
+ End Function product_stop_masses
+
  Subroutine Switch_from_superCKM(Y_d, Y_u, Ad_in, Au_in, MD_in, MQ_in, MU_in &
                       &, Ad_out, Au_out, MD_out, MQ_out, MU_out, tr        &
                       &, RSd_in, RSu_in, RSd_out, RSu_out, CKM_out, Yd, Yu )
@@ -1144,6 +1202,12 @@ Use Control
 ! Complex(dp) :: PhaseGlu
  Type(particle23) :: Glu
  !---------------------------------------------------------------------------
+ ! gluino mass, phase of the parameter M_3 (=Mi(3))
+ ! total decay width, partial decay widths, branching ratios
+ !---------------------------------------------------------------------------
+! Complex(dp) :: PhaseGlu
+ Type(particle2) :: Grav
+ !---------------------------------------------------------------------------
  ! sneutrino masses, masses squared, corresponding mixing matrix
  ! total decay widths, partial decay widths, branching ratios
  !---------------------------------------------------------------------------
@@ -1274,7 +1338,7 @@ Contains
     find_charge = 0
 
    ! scalar/pseudoscalars for MSSM extensions
-   Case(1000017, 1000018, 1000019, 45, 46)
+   Case(1000017, 1000018, 1000019, 1000039, 45, 46)
     find_charge = 0
 
   Case default
@@ -1550,6 +1614,7 @@ Contains
   ! Gravitino
   !-----------------------------
   id_grav = 86
+  Grav%id = 86
   id_p(id_grav) = id_gravitino
   c_name(id_grav) = "~G"
 

@@ -18,12 +18,12 @@ Block YNURLHUIN           # neutrino Yukawas at m_GUT OR m(SS)
  2   3   1  0.29743962E-02   # Y_nu_32
  3   3   1  0.29743962E-02   # Y_nu_33
 Block SMINPUTS         # Standard Model inputs
-  2   1.166390E-05     # G_F, Fermi constant
-  3   1.190000E-01     # alpha_s(MZ) SM MSbar
-  4   9.118760E+01     # Z-boson pole mass
-  5   4.200000E+00     # m_b(mb) SM MSbar
-  6   1.712000E+02     # m_top(pole)
-  7   1.777000E+00     # m_tau(pole)
+ 2   1.166379E-05       # G_F, Fermi constant
+ 3   1.184000E-01       # alpha_s(MZ) SM MSbar
+ 4   9.118760E+01       # Z-boson pole mass
+ 5   4.180000E+00       # m_b(mb) SM MSbar
+ 6   1.731000E+02       # m_top(pole)
+ 7   1.776820E+00       # m_tau(pole)
 Block MINPAR           # Input parameters
   1   1.200000000E+02  # m0
   2   6.000000000E+02  # m12

@@ -26,6 +26,10 @@ Logical, Save ::  Add_Rparity = .False.
 Real(dp), Save :: grav_fac = 1._dp
 ! used in combination with Fittino
 Character(len=80), Save :: Old_Data=""
+! for input/output at various and different scales
+Real(dp), Save :: Qout=0._dp, Qin, Q_PDG_out(36)
+Integer, Save :: n_Q_out = 0
+Logical, Save :: l_Q_out = .False., l_PDG_out(36) = .False., Calc_Mass=.False.
 ! using 1st SLHA2 output with flavour ordered states
 Logical, Save, Private :: Use_Flavour_States = .False.
 ! branching ratios larger than BrMin are written out
@@ -58,6 +62,8 @@ Logical, Private :: minpar_set = .False. ! in case that PMNS is given
 Logical, Private :: BR_Higgs_with_offshell_V = .False. 
 ! for the nat-SUSY project  with SASHA
 Logical, Private :: MADGraph_style = .False. 
+! for gravitino mass as input
+Logical, Private :: l_m32_in = .False.
                                         
 Contains
 
@@ -143,7 +149,7 @@ Contains
   ! these variables are only used in GMSB and will be set correctly below
   !-----------------------------------------------------------------------
   Fgmsb = 1.e12_dp
-  m32 = 1.e20_dp ! set an abitrary large gravitino mass in eV
+  m32 = 1.e10_dp ! set an abitrary large gravitino mass in GeV
 
   kont = 0
 
@@ -396,6 +402,7 @@ Contains
      AU_sckm = Transpose(AU_0_sckm) ! unfortunatly there is a transpose due
                                     ! to the RGE implemenation
      l_Au = .True.
+     set_mod_par(4) = 1
 
     Else If (read_line(7:12).Eq."IMTUIN") Then
      If (i_cpv.Lt.2) Then
@@ -406,6 +413,8 @@ Contains
      AU_sckm = Transpose(AU_0_sckm) ! unfortunatly there is a transpose due
                                     ! to the RGE implemenation
      l_Au = .True.
+     set_mod_par(4) = 1
+
 
     Else If (read_line(7:10).Eq."TDIN") Then
      Call ReadMatrixC(99, 3, AD_0_sckm, 0, "Re(T_D)", kont)
@@ -413,6 +422,8 @@ Contains
                                     ! to the RGE implemenation
 
      l_Ad = .True.
+     set_mod_par(5) = 1
+
     Else If (read_line(7:12).Eq."IMTDIN") Then
      If (i_cpv.Lt.2) Then
       Call Warn_CPV(i_cpv, "IMTD") 
@@ -422,12 +433,15 @@ Contains
      AD_sckm = Transpose(AD_0_sckm) ! unfortunatly there is a transpose due
                                     ! to the RGE implemenation
      l_Ad = .True.
+     set_mod_par(5) = 1
 
     Else If (read_line(7:10).Eq."TEIN") Then
      Call ReadMatrixC(99, 3, Al_0_pmns, 0, "Re(T_E)", kont)
      Al_pmns = Transpose(Al_0_pmns) ! unfortunatly there is a transpose due
                                     ! to the RGE implemenation
      l_Al = .True.
+     set_mod_par(6) = 1
+
     Else If (read_line(7:12).Eq."IMTEIN") Then
      If (i_cpv.Lt.2) Then
       Call Warn_CPV(i_cpv, "IMTE") 
@@ -437,6 +451,7 @@ Contains
      Al_pmns = Transpose(Al_0_pmns) ! unfortunatly there is a transpose due
                                     ! to the RGE implemenation
      l_Al = .True.
+     set_mod_par(6) = 1
 
     Else If (read_line(7:15).Eq."YNURLHUIN")Then
 
@@ -663,6 +678,15 @@ Contains
     Else If (read_line(7:10).Eq."MASS") Then
      Call Read_MASS(99)
 
+    Else If (read_line(7:11).Eq."FMASS") Then
+     Call Read_FMASS(99)
+
+    Else If (read_line(7:11).Eq."FLIFE") Then
+     Call Read_FLIFE(99)
+
+    Else If (read_line(7:12).Eq."FCONST") Then
+     Call Read_FCONST(99)
+
     Else If (read_line(7:10).Eq."UMIX") Then
      Call ReadMatrixC(99, 2, U, 0, "Re(U)", kont)
 
@@ -823,6 +847,7 @@ Contains
    End If ! i_mod.eq.0
 
      kont = -305 ! model has not specified completly
+
      If ((i_model.Eq.0).And.(Sum(set_mod_par(1:25)).Eq.23)) kont = 0 ! MSSM
      If ((i_model.Eq.1).And.(Sum(set_mod_par(1:5)).Eq.5)) kont = 0 ! mSugra 
      If ((i_model.Eq.2).And.(Sum(set_mod_par(1:5)).Eq.5)) Then ! GMSB 
@@ -833,9 +858,9 @@ Contains
       AoY_u_0 = 0._dp
       Fgmsb = Lambda * MlambdaS ! needed for the calculation of NLSP
       If (grav_fac.Ge.0) Then
-       m32 = grav_fac * 2.4e-10_dp * Fgmsb  ! gravitino mass in eV  
+       m32 = grav_fac * 2.4e-19_dp * Fgmsb  ! gravitino mass in GeV  
       Else
-       m32 = 2.4e-10_dp * Fgmsb  ! gravitino mass in eV  
+       m32 = 2.4e-19_dp * Fgmsb  ! gravitino mass in GeV  
       End If
 
       If (Lambda.Gt.MlambdaS) Then
@@ -1437,6 +1462,108 @@ Contains
   End Subroutine Read_MASS
 
 
+  Subroutine Read_FCONST(io)
+  Implicit None
+   Integer, Intent(in) :: io
+
+   Integer :: i1, i2
+
+    Do 
+     Read(io,*,End=200) read_line
+     If (read_line(1:1).Eq."#") Cycle ! this loop
+     Backspace(io) ! resetting to the beginning of the line
+     If ((read_line(1:1).Eq."B").Or.(read_line(1:1).Eq."b") ) Exit ! this loop
+     Read(io,*) i1, i2, wert, read_line
+     Select Case(i1)
+     Case(311)
+      If (i2.Eq.1) FK = wert
+     Case(321)
+      If (i2.Eq.1) FK = wert
+     Case(511)
+      If (i2.Eq.1) FB(1) = wert
+     Case(521)
+      If (i2.Eq.1) FB(1) = wert
+     Case(531)
+      If (i2.Eq.1) FB(2) = wert
+     Case default
+      Write(ErrCan,*) "Block FCONST, particle with id=",i1," is unknown"
+      Write(ErrCan,*) "The assigned mass is",wert," GeV"
+     End Select
+
+    End Do
+
+  200 Return
+
+  End Subroutine Read_FCONST
+
+
+  Subroutine Read_FMASS(io)
+  Implicit None
+   Integer, Intent(in) :: io
+
+   Integer :: i_scheme
+   Real(dp) :: scale
+
+    Do 
+     Read(io,*,End=200) read_line
+     If (read_line(1:1).Eq."#") Cycle ! this loop
+     Backspace(io) ! resetting to the beginning of the line
+     If ((read_line(1:1).Eq."B").Or.(read_line(1:1).Eq."b") ) Exit ! this loop
+     Read(io,*) i1, wert, i_scheme, scale, read_line
+     Select Case(i1)
+     Case(311)
+      MassK0 = wert
+     Case(511)
+      MassBq(1) = wert
+     Case(521)
+      MassBm(1) = wert
+     Case(531)
+      MassBq(2) = wert
+     Case(541)
+      MassBm(1) = wert
+     Case default
+      Write(ErrCan,*) "Block FMASS, particle with id=",i1," is unknown"
+      Write(ErrCan,*) "The assigned mass is",wert," GeV"
+     End Select
+
+    End Do
+
+  200 Return
+
+  End Subroutine Read_FMASS
+
+
+  Subroutine Read_FLIFE(io)
+  Implicit None
+   Integer, Intent(in) :: io
+
+    Do 
+     Read(io,*,End=200) read_line
+     If (read_line(1:1).Eq."#") Cycle ! this loop
+     Backspace(io) ! resetting to the beginning of the line
+     If ((read_line(1:1).Eq."B").Or.(read_line(1:1).Eq."b") ) Exit ! this loop
+     Read(io,*) i1, wert, read_line
+     Select Case(i1)
+     Case(511)
+      TauBq(1) = wert
+     Case(521)
+      TauBm(1) = wert
+     Case(531)
+      TauBq(2) = wert
+     Case(541)
+      TauBm(2) = wert
+     Case default
+      Write(ErrCan,*) "Block FLIFE, particle with id=",i1," is unknown"
+      Write(ErrCan,*) "The assigned life time is",wert," s"
+     End Select
+
+    End Do
+
+  200 Return
+
+  End Subroutine Read_FLIFE
+
+
   Subroutine Read_Higgs3(io)
   Implicit None
    Integer, Intent(in) :: io
@@ -1823,10 +1950,107 @@ Contains
        Return
       End If
 
+     Else If (i_test.Eq.11) Then
+      If (i_mod.Lt.0) Then
+       Write(*,*) &
+          & "You must not give a negative step number for entry 11 of Model",i_mod 
+       Write(*,*) "It will be ignored"
+      Else If (i_mod.Ge.1) Then ! do nothing in case of 0 
+       n_Q_out = i_mod
+       l_Q_out = .True.
+      End If
+
      Else If (i_test.Eq.12) Then
-      Call SetRGEScale(r_mod**2)  ! set Q_EWSB
+      Qout = r_mod
+      If (.Not.l_Q_out) Then ! set inital value only in case that entry 11
+       n_Q_out = 1           ! was not yet set
+       l_Q_out = .True.
+      End If
+       
+!      Call SetRGEScale(r_mod**2)  ! set Q_EWSB
+
+     Else If (i_test.Eq.21) Then
+      Select Case(i_mod)
+      Case(6)
+       l_PDG_out(36) = .True. 
+      Case(25) ! h0
+       l_PDG_out(8) = .True. 
+      Case(35) ! H0
+       l_PDG_out(9) = .True. 
+      Case(36) ! A0
+       l_PDG_out(10) = .True. 
+      Case(37) ! H+
+       l_PDG_out(11) = .True. 
+      Case(45) ! H03
+       l_PDG_out(36) = .True. 
+      Case(46) ! A02
+       l_PDG_out(36) = .True. 
+      Case(1000001) ! ~d_1
+       l_PDG_out(18) = .True. 
+      Case(1000002)  ! ~u_1
+       l_PDG_out(12) = .True. 
+      Case(1000003)  ! ~d_2
+       l_PDG_out(20) = .True. 
+      Case(1000004)  ! ~u_2
+       l_PDG_out(14) = .True. 
+      Case(1000005) ! ~d_3
+       l_PDG_out(22) = .True. 
+      Case(1000006)  ! ~u_3
+       l_PDG_out(16) = .True. 
+      Case(1000011)  ! ~l_1
+       l_PDG_out(24) = .True. 
+      Case(1000012)  ! ~nu_1
+       l_PDG_out(30) = .True. 
+      Case(1000013)  ! ~l_2
+       l_PDG_out(26) = .True. 
+      Case(1000014)  ! ~nu_2
+       l_PDG_out(31) = .True. 
+      Case(1000015)  ! ~l_3
+       l_PDG_out(28) = .True. 
+      Case(1000016)  ! ~nu_3
+       l_PDG_out(33) = .True. 
+      Case(1000022) ! neutralino_1
+       l_PDG_out(4) = .True. 
+      Case(1000023) ! neutralino_2
+       l_PDG_out(5) = .True. 
+      Case(1000024) ! chargino_1
+       l_PDG_out(2) = .True. 
+      Case(1000025) ! neutralino_3
+       l_PDG_out(6) = .True. 
+      Case(1000035) ! neutralino_4
+       l_PDG_out(7) = .True. 
+      Case(1000037) ! chargino_2
+       l_PDG_out(3) = .True. 
+      Case(1000045) ! neutralino_5
+       l_PDG_out(36) = .True. 
+      Case(1000021)  ! gluino
+       l_PDG_out(1) = .True. 
+      Case(2000001) ! ~d_4
+       l_PDG_out(19) = .True. 
+      Case(2000002) ! ~u_4
+       l_PDG_out(13) = .True. 
+      Case(2000003) ! ~d_5
+       l_PDG_out(21) = .True. 
+      Case(2000004) ! ~u_5
+       l_PDG_out(15) = .True. 
+      Case(2000005) ! ~d_6
+       l_PDG_out(23) = .True. 
+      Case(2000006) ! ~u_6
+       l_PDG_out(17) = .True. 
+      Case(2000011) ! ~l_4
+       l_PDG_out(25) = .True. 
+      Case(2000013)  ! ~l_5
+       l_PDG_out(27) = .True. 
+      Case(2000015)  ! ~l_6
+       l_PDG_out(29) = .True. 
+      Case default
+       Write(ErrCan,*) "In block MODSEL, entry 21"
+       Write(ErrCan,*) "The number",i_mod,"either does not exist or corresponds"
+       Write(ErrCan,*) "to a particle with mass below m_Z. It is thus ignored."
+      End Select
 
      End If
+
     End Do ! i_mod
 
     If ((i_rp.Eq.1).And.(i_model.Eq.0)) Then
@@ -1895,6 +2119,20 @@ Contains
        Only_1loop_Higgsmass = .True.
       Else
        Only_1loop_Higgsmass = .False.
+      End If
+
+     Case(8) ! calculates Masses for extra scales if required
+      If (Int(wert).Ne.0) Then
+       Calc_Mass = .True.
+      Else
+       Calc_Mass = .False.
+      End If
+
+     Case(9) ! use old version of BoundaryEW
+      If (Int(wert).Eq.1) Then
+       UseNewBoundaryEW = .False.
+      Else
+       UseNewBoundaryEW = .True.
       End If
 
      Case(11)  ! whether to calculate  branching ratios or not
@@ -2092,11 +2330,11 @@ Contains
      ! save data
      !-------------------------
      If (i_c.Eq.0) Then
-      r_extpar(i_par) = wert
-      in_extpar(i_par,1) = 1
+      If (i_par.Ne.1000039) r_extpar(i_par) = wert
+      If (i_par.Ne.1000039) in_extpar(i_par,1) = 1
      Else
-      i_extpar(i_par) = wert
-      in_extpar(i_par,2) = 1
+      If (i_par.Ne.1000039) i_extpar(i_par) = wert
+      If (i_par.Ne.1000039) in_extpar(i_par,2) = 1
      End If
 
      If ((i_par.Eq.0).And.(i_c.Eq.0)) Then
@@ -2438,6 +2676,11 @@ Contains
 
 ! Florian Staub, Seesaw II+III
 
+     Else If (i_par.Eq.1000039) Then ! gravitino mass
+      m32 = wert
+      Fgmsb = m32 / 2.4e-19_dp   ! needed for calculation of decay widths
+      l_m32_in = .True.
+
      Else
       If (i_c.Eq.0) Then
        If (output_screen)  Write(*,*) &
@@ -2694,11 +2937,11 @@ Contains
 
 
  Subroutine LesHouches_Out(io_L, kont, id_p, names, HighScaleModel, M_GUT &
-      & , BRbtosgamma, Bs_MuMu, Bd_MuMu, DeltaMBd, DeltaMBs, BrBToSLL         &
+      & , BRbtosgamma, Bs_ll, Bd_ll, DeltaMBd, DeltaMBs, BrBToSLL         &
       & , BtoSNuNu, BR_Bu_TauNu, R_Bu_TauNu  &
       & , a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMuToEGamma, BrTauToEGamma  &
       & , BrTauToMuGamma, BrMu3e, BrTau3e, BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau &
-      & , BR_Z_mu_tau, epsK, K0toPi0NuNu, KptoPipNuNu  &
+      & , BR_Z_mu_tau, epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu  &
       & , Rho_parameter, Ecms, Pm, Pp, ISR, SigSup, SigSdown, SigSle &
       & , SigSn, SigChi0, SigC, SigS0, SigSP, SigHp, omega, f_name)
  !--------------------------------------------------------------------
@@ -2729,12 +2972,13 @@ Contains
  Implicit None
   Integer, Intent(in) :: io_L
   Integer, Intent(inout) :: id_p(:), kont
-  Real(dp), Intent(in) :: M_GUT, BRbtosgamma, Bs_MuMu, BrBToSLL, BR_Bu_TauNu &
-      & , BtoSNuNu, a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMuToEGamma         &
-      & , BrTauToEGamma, BrTauToMuGamma, BrMu3e, BrTau3e, BrTau3Mu, Bd_MuMu  &
-      & , BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau, epsK, K0toPi0NuNu, KptoPipNuNu &
-      & , R_Bu_TauNu, Rho_parameter, Ecms(:), Pm(:) &
-      & , Pp(:), SigSup(:,:,:), SigSdown(:,:,:), SigSle(:,:,:), SigSn(:,:,:) &
+  Real(dp), Intent(in) :: M_GUT, BRbtosgamma, Bs_ll(3), BrBToSLL, BR_Bu_TauNu &
+      & , BtoSNuNu, a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMuToEGamma          &
+      & , BrTauToEGamma, BrTauToMuGamma, BrMu3e, BrTau3e, BrTau3Mu, Bd_ll(3)  &
+      & , BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau                                  &
+      & , epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu                             &
+      & , R_Bu_TauNu, Rho_parameter, Ecms(:), Pm(:)                           &
+      & , Pp(:), SigSup(:,:,:), SigSdown(:,:,:), SigSle(:,:,:), SigSn(:,:,:)  &
       & , SigChi0(:,:,:), SigC(:,:,:), SigS0(:,:), SigSP(:,:,:), SigHp(:,:,:)
   Complex(dp), Intent(in) :: DeltaMBd, DeltaMBs
   Character(len=15), Intent(in) :: HighScaleModel
@@ -2781,6 +3025,10 @@ Contains
   ! LHC edge variables
   !--------------------------------------------------------------------- 
   Real(dp) :: LHC_observ(50), mSle(6), mSu(6), mSd(6), m4(4), m5(5), m7(7)
+  !--------------------------------------------------------------------- 
+  ! for output at various scales
+  !--------------------------------------------------------------------- 
+  Real(dp) :: delta_Q, Q_act, tb_save
   !--------------------------------------------------------------------- 
   ! dummy particles
   !--------------------------------------------------------------------- 
@@ -4430,8 +4678,8 @@ Contains
     Write(io_L,102) 1000037,ChiPm(2)%m,"# ~chi_2+"
    End If
 
-   If (HighScaleModel.Eq."GMSB") &
-     & Write(io_L,102) 1000039,1.e-9_dp * m32,"# ~G"
+   If ((HighScaleModel.Eq."GMSB").or.l_m32_in) &
+     & Write(io_L,102) 1000039, m32,"# ~G"
 
    If (Maxval(MnuR).Gt.0._dp) Then
     Write(io_L,100) "# masses of right handed neutrinos"
@@ -4585,15 +4833,77 @@ Contains
                          &, "chargino mixing matrix", "V(")
   End If
 
+ !-------------------------------------------------------------------------
+ ! before writing the decays and other information, the above information
+ ! is given at different scales, if required
+ !-------------------------------------------------------------------------
+ If (l_Q_out) then ! need parameters and potentially also the masses at another scale
+  If (Qout.eq.0._dp) Qout=Q 
+  delta_Q = Exp( Log(Qout/mZ) / n_Q_out )
+  Q_act = mZ
+  Do i1=0,n_Q_out
+   if (i1.gt.0) Q_act = Q_act * delta_Q
+   Write(io_L,100) "###########################################################"
+   If (Calc_Mass) then
+    Write(io_L,301) Q_act
+   Else
+    Write(io_L,300) Q_act
+   End If
+   Write(io_L,100) "###########################################################"
+   tb_save = tanb_Q  ! unfortunately, this value gets changed in the
+                     ! current implementation and needs to be re-adjusted
+                     ! afterwards. Requires a major modification of the code
+                     ! to avoid this trick here
+   Call WriteParametersAtQ(Q, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, tanb_Q, phase_mu      &
+          & , GenerationMixing, Q_act, 1.e-4_dp, io_L)
+   tanb_Q = tb_save 
+   Write(io_L,100) "###########################################################"
+   If (Calc_Mass) then
+    Write(io_L,311) Q_act
+   Else
+    Write(io_L,310) Q_act
+   End If
+   Write(io_L,100) "###########################################################"
+  End Do
+ End If
+
+ Do i1=1,36 ! at the pol-masses of the differnt particles
+  Q_PDG_out = abs(Q_PDG_out) ! in case that a fermion mass is negative
+  If (l_PDG_out(i1)) Then
+   Write(io_L,100) "###########################################################"
+   If (Calc_Mass) then
+    Write(io_L,301) Q_PDG_out(i1)
+   Else
+    Write(io_L,300) Q_PDG_out(i1)
+   End If
+   Write(io_L,100) "###########################################################"
+   tb_save = tanb_Q  ! unfortunately, this value gets changed in the
+                     ! current implementation and needs to be re-adjusted
+                     ! afterwards. Requires a major modification of the code
+                     ! to avoid this trick here
+   Call WriteParametersAtQ(Q, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, tanb_Q, phase_mu      &
+          & , GenerationMixing, Q_PDG_out(i1), 1.e-4_dp, io_L)
+   tanb_Q = tb_save 
+   Write(io_L,100) "###########################################################"
+   If (Calc_Mass) then
+    Write(io_L,311) Q_PDG_out(i1)
+   Else
+    Write(io_L,310) Q_PDG_out(i1)
+   End If
+   Write(io_L,100) "###########################################################"
+  End If
+ End Do
  !------------------
  ! branching ratios
  !------------------
  If (L_BR) Then
 ! for MADGraph use
-  If (MADGraph_style) Then
+!  If (MADGraph_style) Then
    Write(io_L,200) id_Z,2.4952_dp,"Z"
    Write(io_L,200) id_W,2.085_dp,"W"
-  End If
+!  End If
   !---------------------------------
   ! sleptons
   !---------------------------------
@@ -4806,6 +5116,7 @@ Contains
      p_id2 =part23%id3(i2,2) 
      p_id3 =part23%id3(i2,3) 
      If (part23%bi3(i2).Gt.BrMin) Then
+!      If ((id_p(p_id2).Eq.12).And.(id_p(p_id2).Eq.-12)) 
       Write(io_L,402) part23%bi3(i2),3,id_p(p_id1),id_p(p_id2),id_p(p_id3) &
                    & , Trim(names(p_id)), Trim(names(p_id1))               &
                    & , Trim(names(p_id2)), Trim(names(p_id3))
@@ -4922,12 +5233,12 @@ Contains
                   & , Trim(names(p_id)),Trim(names(p_id1)),Trim(names(6))        &
                   & , Trim(names(7))
        Do i3=1,3
-        Write(io_L,402) BrZqq(i2)*part23%bi3(i2),3,id_p(p_id1),id_d_quark(i3) &
+        Write(io_L,402) BrZqq(i3)*part23%bi3(i2),3,id_p(p_id1),id_d_quark(i3) &
                    & , -id_d_quark(i3), Trim(names(p_id)),Trim(names(p_id1))  &
                    & , Trim(names(22+2*i3)), Trim(names(23+2*i3))
        End Do
        Do i3=1,2
-        Write(io_L,402) BrZqq(i2+2)*part23%bi3(i2),3,id_p(p_id1),id_u_quark(i3) &
+        Write(io_L,402) BrZqq(i3+3)*part23%bi3(i2),3,id_p(p_id1),id_u_quark(i3) &
                    & , -id_u_quark(i3), Trim(names(p_id)),Trim(names(p_id1))    &
                    & , Trim(names(16+2*i3)), Trim(names(17+2*i3))
        End Do
@@ -5118,16 +5429,21 @@ Contains
   Write(io_L,101) 1,1.e-4*BrBToSGamma," # BR(b -> s gamma)"
   Write(io_L,101) 2,BrBToSLL," # BR(b -> s mu+ mu-)"
   Write(io_L,101) 3,BToSNuNu," # BR(b -> s nu nu)"
-  Write(io_L,101) 4,Bd_mumu," # BR(Bd -> mu+ mu-)"
-  Write(io_L,101) 5,Bs_mumu," # BR(Bs -> mu+ mu-)"
-  Write(io_L,101) 6,BR_Bu_TauNu," # BR(B_u -> tau nu)"
-  Write(io_L,101) 7,R_Bu_TauNu," # BR(B_u -> tau nu)/BR(B_u -> tau nu)_SM"
-  Write(io_L,101) 8,Abs(DeltaMbd)," # |Delta(M_Bd)| [ps^-1] "
-  Write(io_L,101) 9,Abs(DeltaMbs)," # |Delta(M_Bs)| [ps^-1] "
+  Write(io_L,101) 4,Bd_ll(1)," # BR(Bd -> e+ e-)"
+  Write(io_L,101) 5,Bd_ll(2)," # BR(Bd -> mu+ mu-)"
+  Write(io_L,101) 6,Bd_ll(3)," # BR(Bd -> tau+ tau-)"
+  Write(io_L,101) 7,Bs_ll(1)," # BR(Bs -> e+ e-)"
+  Write(io_L,101) 8,Bs_ll(2)," # BR(Bs -> mu+ mu-)"
+  Write(io_L,101) 9,Bs_ll(3)," # BR(Bs -> tau+ tau-)"
+  Write(io_L,101) 10,BR_Bu_TauNu," # BR(B_u -> tau nu)"
+  Write(io_L,101) 11,R_Bu_TauNu," # BR(B_u -> tau nu)/BR(B_u -> tau nu)_SM"
+  Write(io_L,101) 12,Abs(DeltaMbd)," # |Delta(M_Bd)| [ps^-1] "
+  Write(io_L,101) 13,Abs(DeltaMbs)," # |Delta(M_Bs)| [ps^-1] "
 
-!  Write(io_L,101) 10, epsK       , " # epsilon_K" 
-!  Write(io_L,101) 12, K0toPi0NuNu, " # BR(K^0 -> pi^0 nu nu)" 
-!  Write(io_L,101) 13, KptoPipNuNu, " # BR(K^+ -> pi^+ nu nu)" 
+  Write(io_L,101) 16, epsK       , " # epsilon_K" 
+  Write(io_L,101) 17, DeltaMK    , " # Delta(M_K)" 
+  Write(io_L,101) 18, K0toPi0NuNu, " # BR(K^0 -> pi^0 nu nu)" 
+  Write(io_L,101) 19, KptoPipNuNu, " # BR(K^+ -> pi^+ nu nu)" 
 
   Write(io_L,101) 20,A_e," # Delta(g-2)_electron/2"
   Write(io_L,101) 21,A_mu," # Delta(g-2)_muon/2"
@@ -5325,6 +5641,10 @@ Contains
 110 Format(3x,2i3,3x,"# ",a)
 111 Format(2i5,4x,"# ",a)
 200 Format("DECAY",1x,I9,3x,1P,E16.8,0P,3x,"# ",a)
+300 Format("# start writing paramaters at Q=",1P,E16.8)
+301 Format("# start writing paramaters and masses at Q=",1P,E16.8)
+310 Format("# stop writing paramaters at Q=",1P,E16.8)
+311 Format("# stop writing paramaters and masses at Q=",1P,E16.8)
 
 401 Format(3x,1P,e16.8,0p,3x,I2,3x,2(i9,1x),2x,"# BR(",a," -> ",a," ",a,")")
 402 Format(3x,1P,e16.8,0p,3x,I2,3x,3(i9,1x),2x,"# BR(",a," -> ",a," ",a," ",a,")")
@@ -10936,6 +11256,398 @@ Contains
 
  End Subroutine WriteMSSMParameters
 
+
+ Subroutine WriteParametersAtQ(Qin, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, tanb, phase_mu            &
+          & , GenerationMixing, Qout, delta, io_L)
+ !-----------------------------------------------------------------------
+ ! runs the parameters given at a scale Qin to the scale Qout, calculates
+ ! the masses within the MSSM and prints them out 
+ !-----------------------------------------------------------------------
+ Implicit None
+  Integer, Intent(in) :: io_L
+  Logical, Intent(in) :: GenerationMixing
+  Real(dp), Intent(in) :: Qin, Qout, gauge(3), M2_H(2), tanb, delta
+  Complex(dp), Intent(in) :: Mi(3), phase_mu
+  Complex(dp), Intent(in), Dimension(3,3) :: Y_l, Y_d, Y_u, A_l, A_d, A_u &
+    & , M2_E, M2_L, M2_D, M2_Q, M2_U
+
+  ! local variables
+  Integer :: kont, i1, id_su(6), id_sd(6), id_sle(6), id_snu(3)
+  Real(dp) :: g2(214), gQ(3), M2_H_Q(2), tanb_Q, tz, dt, old_scale
+  Complex(dp) :: Mi_Q(3), B, mu
+  Complex(dp), Dimension(3,3) :: Y_l_Q, Y_d_Q, Y_u_Q, A_l_Q, A_d_Q, A_u_Q  &
+    & , M2_E_Q, M2_L_Q, M2_D_Q, M2_Q_Q, M2_U_Q, Ad_sckm, Au_sckm, M2D_sckm &
+    & , M2Q_sckm, M2U_sckm, Al_pmns , M2E_pmns, M2L_pmns, PMNS_Q
+  Real(dp) :: mC(2), mC2(2), mN(4), mN2(4), mS0(2), mS02(2), RS0(2,2)       &
+     & , mP0(2), mP02(2), RP0(2,2), mSpm(2), mSpm2(2), mSdown(6)          &
+     & , mSdown2(6), mSup(6), mSup2(6), mSlepton(6), mSlepton2(6) &
+     & , mSneut(3), mSneut2(3), mGlu, Yd_Q(3), Yu_Q(3), Yl_Q(3)
+  Complex(dp) :: U(2,2), V(2,2), N(4,4), RSpm(2,2), RUsquark(6,6) &
+     & , RDsquark(6,6), RSlepton(6,6), RSneutrino(3,3), phase_glu, CKM_Q(3,3)
+
+  Iname = Iname + 1
+  NameOfUnit(Iname) = "WriteParametersAtQ"
+
+  tz = Log(Qin/Qout)
+  dt = tz / 50._dp
+
+  B = ZeroC  ! will be calculated from tadpole equaitons
+  mu = ZeroC
+
+  Y_u_Q = Transpose(Y_u)
+  Y_d_Q = Transpose(Y_d)
+  Y_l_Q = Transpose(Y_l)
+  A_u_Q = Transpose(A_u)
+  A_d_Q = Transpose(A_d)
+  A_l_Q = Transpose(A_l)
+  Call ParametersToG(gauge, Y_l_Q, Y_d_Q, Y_u_Q, Mi, A_l_Q, A_d_Q, A_u_Q &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, g2(1:213))
+  g2(214) = Log( tanb )
+
+  g2(1) = Sqrt(5._dp/3._dp) * g2(1)
+  Call odeint(g2, 214, tz, 0._dp, 0.1_dp * delta, dt, 0._dp, rge214, kont)
+
+  g2(1) = Sqrt(3._dp/5._dp) * g2(1)
+  Call GToParameters(g2(1:213), gQ, Y_l_Q, Y_d_Q, Y_u_Q, Mi_Q, A_l_Q, A_d_Q &
+            & , A_u_Q, M2_E_Q, M2_L_Q, M2_D_Q, M2_Q_Q, M2_U_Q, M2_H_Q, mu, B)
+  Y_u_Q = Transpose(Y_u_Q)
+  Y_d_Q = Transpose(Y_d_Q)
+  Y_l_Q = Transpose(Y_l_Q)
+  A_u_Q = Transpose(A_u_Q)
+  A_d_Q = Transpose(A_d_Q)
+  A_l_Q = Transpose(A_l_Q)
+  tanb_Q = Exp( g2(214) )
+
+  If (Calc_Mass) Then ! do this only when required, extends the standard
+   kont = 0
+   old_scale = SetRenormalizationScale(Qout**2)
+
+   tanb_in_at_Q = .True.
+   Call LoopMassesMSSM(0.1_dp*delta, tanb_Q, gQ, Y_l_Q, Y_d_Q, Y_u_Q, Mi_Q, A_l_Q &
+     & , A_d_Q, A_u_Q, M2_E_Q, M2_L_Q, M2_D_Q, M2_Q_Q, M2_U_Q, M2_H_Q, phase_mu  &
+     & , mu, B, 2, uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                            &
+     & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0, mSpm  &
+     & , mSpm2, RSpm, mSdown, mSdown2, RDsquark, mSup, mSup2  &
+     & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2 &
+     & , RSneutrino, mGlu, phase_glu, kont)
+  End If
+
+  If (GenerationMixing) Then
+    Call Switch_to_superCKM(Y_d_Q, Y_u_Q, A_d_Q, A_u_Q, M2_D_Q, M2_Q_Q, M2_U_Q &
+              & , Ad_sckm, Au_sckm, M2D_sckm, M2Q_sckm, M2U_sckm, .False. &
+              & , CKM_out=CKM_Q, Yd=Yd_Q, Yu=Yu_Q )
+    Call Switch_to_superPMNS(Y_l_Q, id3C, A_l_Q, M2_E_Q, M2_L_Q, Al_pmns  &
+        & , M2E_pmns, M2L_pmns, .False., PMNS_out=PMNS_Q, Yl=Yl_Q)
+  Else ! .non.GenerationMixing
+
+    Do i1=1,3
+     Yu_Q(i1) = Real(Y_u_Q(i1,i1),dp)
+     Yd_Q(i1) = Real(Y_d_Q(i1,i1),dp)
+     Yl_Q(i1) = Real(Y_l_Q(i1,i1),dp)
+    End Do
+    Al_pmns = A_l_Q
+    Ad_sckm = A_d_Q
+    Au_sckm = A_u_Q
+    M2D_SCKM = M2_D_Q
+    M2U_SCKM = M2_U_Q
+    M2Q_SCKM = M2_Q_Q
+    M2E_pmns = M2_E_Q
+    M2L_pmns = M2_L_Q
+
+  End If
+
+! couplings
+  Write(io_L,106) "Block gauge Q=",Qout,"# (SUSY scale)"
+  Write(io_L,104) 1,gQ(1),"# g'(Q)^DRbar"
+  Write(io_L,104) 2,gQ(2),"# g(Q)^DRbar"
+  Write(io_L,104) 3,gQ(3),"# g3(Q)^DRbar"
+
+  Write(io_L,106) "Block Yu Q=",Qout,"# (SUSY scale)"
+  Write(io_L,107) 1,1,Yu_Q(1), "# Y_u(Q)^DRbar"
+  Write(io_L,107) 2,2,Yu_Q(2), "# Y_c(Q)^DRbar"
+  Write(io_L,107) 3,3,Yu_Q(3), "# Y_t(Q)^DRbar"
+
+  Write(io_L,106) "Block Yd Q=",Qout,"# (SUSY scale)"
+  Write(io_L,107) 1,1,Yd_Q(1), "# Y_d(Q)^DRbar"
+  Write(io_L,107) 2,2,Yd_Q(2), "# Y_s(Q)^DRbar"
+  Write(io_L,107) 3,3,Yd_Q(3), "# Y_b(Q)^DRbar"
+
+  Write(io_L,106) "Block Ye Q=",Qout,"# (SUSY scale)"
+  Write(io_L,107) 1,1,Yl_Q(1), "# Y_e(Q)^DRbar"
+  Write(io_L,107) 2,2,Yl_Q(2), "# Y_mu(Q)^DRbar"
+  Write(io_L,107) 3,3,Yl_Q(3), "# Y_tau(Q)^DRbar"
+
+  Write(io_L,100) "Block EXTPAR  # non-universal input parameters"
+  Write(io_L,104) 0,Qout,"# Q"
+  If (Calc_Mass) Write(io_L,104) 23,Real(mu,dp),"# Re(mu)"
+  Write(io_L,104) 25,tanb_Q,"# tan(beta)"
+  If (Calc_Mass) Then
+   If (Aimag(mu).Ne.0._dp) Then
+    Write(io_L,100) "Block IMEXTPAR  # non-universal input parameters"
+    Write(io_L,104) 23,Aimag(mu),"# Im(mu)"
+   End If
+  End If
+
+  If (GenerationMixing) Then 
+                             
+   Call WriteMatrixBlockC(io_L,3,CKM_Q,Qout &
+                         & ,"VCKM","V_CKM at the SUSY scale","V_(")
+
+   Call WriteMatrixBlockC(io_L,3,PMNS_Q,Qout &
+                         & ,"UPMNS","U_PMNS at the SUSY scale","V_(")
+
+  End If ! generationmixing
+
+
+  If (GenerationMixing) Then
+
+   Call WriteMatrixBlockC(io_L,3,Au_sckm,Qout,"Tu","SUSY scale","T_(u,",tr=.True.)
+   Call WriteMatrixBlockC(io_L,3,Ad_sckm,Qout,"Td","SUSY scale","T_(d,",tr=.True.)
+   Call WriteMatrixBlockC(io_L,3,Al_pmns,Qout,"Te","SUSY scale","T_(l,", tr=.True.)
+
+  Else 
+   Write(io_L,106) "Block Au Q=",Qout,"# (SUSY scale)"
+   If (Abs(Yu_Q(1)).Gt.0._dp) &
+        & Write(io_L,107) 1,1,Real(Au_sckm(1,1)/Yu_Q(1),dp), "# A_u(Q)^DRbar"
+   If (Abs(Yu_Q(2)).Gt.0._dp) &
+        & Write(io_L,107) 2,2,Real(Au_sckm(2,2)/Yu_Q(2),dp), "# A_c(Q)^DRbar"
+   If (Abs(Yu_Q(3)).Gt.0._dp) &
+        & Write(io_L,107) 3,3,Real(Au_sckm(3,3)/Yu_Q(3),dp), "# A_t(Q)^DRbar"
+   If (Maxval(Abs(Aimag(Au_sckm))).Gt.0._dp) Then
+    Write(io_L,106) "Block IMAu Q=",Qout,"# (SUSY scale)"
+    If (Abs(Yu_Q(1)).Gt.0._dp) &
+        & Write(io_L,107) 1,1,Aimag(Au_sckm(1,1)/Yu_Q(1)), "# Im(A_u)(Q)^DRbar"
+    If (Abs(Yu_Q(2)).Gt.0._dp) &
+        & Write(io_L,107) 2,2,Aimag(Au_sckm(2,2)/Yu_Q(2)), "# Im(A_c)(Q)^DRbar"
+    If (Abs(Yu_Q(3)).Gt.0._dp) &
+        & Write(io_L,107) 3,3,Aimag(Au_sckm(3,3)/Yu_Q(3)), "# Im(A_t)(Q)^DRbar"
+   End If
+
+   Write(io_L,106) "Block Ad Q=",Qout,"# (SUSY scale)"
+   If (Abs(Yd_Q(1)).Gt.0._dp) &
+        & Write(io_L,107) 1,1,Real(Ad_sckm(1,1)/Yd_Q(1),dp), "# A_d(Q)^DRbar"
+   If (Abs(Yd_Q(2)).Gt.0._dp) &
+        & Write(io_L,107) 2,2,Real(Ad_sckm(2,2)/Yd_Q(2),dp), "# A_s(Q)^DRbar"
+   If (Abs(Yd_Q(3)).Gt.0._dp) &
+        & Write(io_L,107) 3,3,Real(Ad_sckm(3,3)/Yd_Q(3),dp), "# A_b(Q)^DRbar"
+   If (Maxval(Abs(Aimag(Ad_sckm))).Gt.0._dp) Then
+    Write(io_L,106) "Block IMAd Q=",Qout,"# (SUSY scale)"
+    If (Abs(Yd_Q(1)).Gt.0._dp) &
+        & Write(io_L,107) 1,1,Aimag(Ad_sckm(1,1)/Yd_Q(1)), "# Im(A_d)(Q)^DRbar"
+    If (Abs(Yd_Q(2)).Gt.0._dp) &
+        & Write(io_L,107) 2,2,Aimag(Ad_sckm(2,2)/Yd_Q(2)), "# Im(A_s)(Q)^DRbar"
+    If (Abs(Yd_Q(3)).Gt.0._dp) &
+        & Write(io_L,107) 3,3,Aimag(Ad_sckm(3,3)/Yd_Q(3)), "# Im(A_b)(Q)^DRbar"
+   End If
+
+   Write(io_L,106) "Block Ae Q=",Qout,"# (SUSY scale)"
+   If (Abs(Yl_Q(1)).Gt.0._dp) &
+        & Write(io_L,107) 1,1,Real(Al_pmns(1,1)/Yl_Q(1),dp), "# A_e(Q)^DRbar"
+   If (Abs(Yl_Q(2)).Gt.0._dp) &
+        & Write(io_L,107) 2,2,Real(Al_pmns(2,2)/Yl_Q(2),dp), "# A_mu(Q)^DRbar"
+   If (Abs(Yl_Q(3)).Gt.0._dp) &
+        & Write(io_L,107) 3,3,Real(Al_pmns(3,3)/Yl_Q(3),dp), "# A_tau(Q)^DRbar"
+   If (Maxval(Abs(Aimag(Al_pmns))).Gt.0._dp) Then
+    Write(io_L,106) "Block IMAe Q=",Qout,"# (SUSY scale)"
+    If (Abs(Yl_Q(1)).Gt.0._dp) &
+        & Write(io_L,107) 1,1,Aimag(Al_pmns(1,1)/Yl_Q(1)), "# Im(A_e)(Q)^DRbar"
+    If (Abs(Yl_Q(2)).Gt.0._dp) &
+        & Write(io_L,107) 2,2,Aimag(Al_pmns(2,2)/Yl_Q(2)), "# Im(A_mu)(Q)^DRbar"
+    If (Abs(Yl_Q(3)).Gt.0._dp) &
+        & Write(io_L,107) 3,3,Aimag(Al_pmns(3,3)/Yl_Q(3)), "# Im(A_tau)(Q)^DRbar"
+   End If
+  End If
+
+
+  Write(io_L,106) "Block MSOFT Q=",Qout,"# soft SUSY breaking masses at Q"
+  Write(io_L,104) 1,Real(Mi_Q(1),dp),"# M_1"
+  Write(io_L,104) 2,Real(Mi_Q(2),dp),"# M_2"
+  Write(io_L,104) 3,Real(Mi_Q(3),dp),"# M_3"
+  Write(io_L,104) 21,M2_H_Q(1),"# M^2_(H,d)"
+  Write(io_L,104) 22,M2_H_Q(2),"# M^2_(H,u)"
+  Write(io_L,104) 31,Sqrt(Real(M2L_pmns(1,1),dp)),"# M_(L,11)"
+  Write(io_L,104) 32,Sqrt(Real(M2L_pmns(2,2),dp)),"# M_(L,22)"
+  Write(io_L,104) 33,Sqrt(Real(M2L_pmns(3,3),dp)),"# M_(L,33)"
+  Write(io_L,104) 34,Sqrt(Real(M2E_pmns(1,1),dp)),"# M_(E,11)"
+  Write(io_L,104) 35,Sqrt(Real(M2E_pmns(2,2),dp)),"# M_(E,22)"
+  Write(io_L,104) 36,Sqrt(Real(M2E_pmns(3,3),dp)),"# M_(E,33)"
+  Write(io_L,104) 41,Sqrt(Real(M2Q_SCKM(1,1),dp)),"# M_(Q,11)"
+  Write(io_L,104) 42,Sqrt(Real(M2Q_SCKM(2,2),dp)),"# M_(Q,22)"
+  Write(io_L,104) 43,Sqrt(Real(M2Q_SCKM(3,3),dp)),"# M_(Q,33)"
+  Write(io_L,104) 44,Sqrt(Real(M2U_SCKM(1,1),dp)),"# M_(U,11)"
+  Write(io_L,104) 45,Sqrt(Real(M2U_SCKM(2,2),dp)),"# M_(U,22)"
+  Write(io_L,104) 46,Sqrt(Real(M2U_SCKM(3,3),dp)),"# M_(U,33)"
+  Write(io_L,104) 47,Sqrt(Real(M2D_SCKM(1,1),dp)),"# M_(D,11)"
+  Write(io_L,104) 48,Sqrt(Real(M2D_SCKM(2,2),dp)),"# M_(D,22)"
+  Write(io_L,104) 49,Sqrt(Real(M2D_SCKM(3,3),dp)),"# M_(D,33)"
+
+  If (Maxval(Abs(Aimag(Mi_Q))).Ne.0._dp) Then
+   Write(io_L,106) "Block IMMSOFT Q=",Qout &
+           & ,"# soft SUSY breaking masses at Q, imaginary parts"
+   Write(io_L,104) 1,Aimag(Mi_Q(1)),"# M_1"
+   Write(io_L,104) 2,Aimag(Mi_Q(2)),"# M_2"
+   Write(io_L,104) 3,Aimag(Mi_Q(3)),"# M_3"
+  End If
+
+  If (GenerationMixing) Then
+
+   Call WriteMatrixBlockC(io_L,3,M2L_pmns,Qout,"MSL2" &
+           & ,"M^2_L soft SUSY breaking masses","M^2_(L,")
+
+   Call WriteMatrixBlockC(io_L,3,M2E_pmns,Qout,"MSE2" &
+           & ,"M^2_E soft SUSY breaking masses","M^2_(E,")
+
+   Call WriteMatrixBlockC(io_L,3,M2Q_SCKM,Qout,"MSQ2" &
+           & ,"M^2_Q soft SUSY breaking masses","M^2_(Q,")
+
+   Call WriteMatrixBlockC(io_L,3,M2U_SCKM,Qout,"MSU2" &
+           & ,"M^2_U soft SUSY breaking masses","M^2_(U,")
+
+   Call WriteMatrixBlockC(io_L,3,M2D_SCKM,Qout,"MSD2" &
+           & ,"M^2_D soft SUSY breaking masses","M^2_(D,")
+
+  End If
+
+  If (.Not.(Calc_Mass.And.(kont.Eq.0))) Then ! return
+   If (Calc_Mass) old_scale = SetRenormalizationScale(old_scale)
+   Iname = Iname - 1
+   Return
+  End If
+  ! extends the standard
+
+!   Write(io_L,103) "Block Hmix Q=",Qout, "# Higgs mixing parameters"
+!   Write(io_L,104) 1,Real(mu,dp),"# mu"
+!   Write(io_L,104) 2,tanb_Q,"# tan[beta](Q)"
+!   Write(io_L,104) 3,vev_Q,"# v(Q)"
+!   Write(io_L,104) 4,mA2_Q,"# m^2_A(Q)"
+!   If (Aimag(mu).Ne.0._dp) Then
+!    Write(io_L,103) "Block IMHmix Q=",Qout, "# Higgs mixing parameters"
+!    Write(io_L,104) 1,Aimag(mu),"# Im(mu)"
+!   End If
+
+   Write(io_L,100) "Block MASS  # Mass spectrum"
+   Write(io_L,100) "#   PDG code      mass          particle"
+   Write(io_L,102) 25,mS0(1),"# h0" 
+   Write(io_L,102) 35,mS0(2),"# H0" 
+   Write(io_L,102) 36,mP0(2),"# A0" 
+   Write(io_L,102) 37,mSpm(2),"# H+"
+
+   If (GenerationMixing) Then
+    id_sd(1) = 1000001
+    id_sd(2) = 1000003
+    id_sd(3) = 1000005
+    id_sd(4) = 2000001
+    id_sd(5) = 2000003
+    id_sd(6) = 2000005
+    Do i1=1,6
+     Write(io_L,102) id_sd(i1),mSdown(i1),"#~d_"//Bu(i1) 
+    End Do
+
+    id_su(1) = 1000002
+    id_su(2) = 1000004
+    id_su(3) = 1000006
+    id_su(4) = 2000002
+    id_su(5) = 2000004
+    id_su(6) = 2000006
+    Do i1=1,6
+     Write(io_L,102) id_su(i1),mSup(i1),"# ~u_"//Bu(i1)
+    End Do
+
+    id_snu(1) = 1000012
+    id_snu(2) = 1000014
+    id_snu(3) = 1000016
+    Do i1=1,3
+     Write(io_L,102) id_snu(i1),mSneut(i1),"# ~nu_"//Bu(i1)
+    End Do
+
+    id_sle(1) = 1000011
+    id_sle(2) = 1000013
+    id_sle(3) = 1000015
+    id_sle(4) = 2000011
+    id_sle(5) = 2000013
+    id_sle(6) = 2000015
+    Do i1=1,6
+     Write(io_L,102) id_sle(i1),mSlepton(i1),"# ~l_"//Bu(i1)
+    End Do
+
+  Else ! .not.GenerationMixing
+
+   If (Abs(rsdown(1,1)).Gt.0.5_dp) Then
+    Write(io_L,102) 1000001,mSdown(1),"# ~d_L"
+    Write(io_L,102) 2000001,mSdown(2),"# ~d_R"
+   Else
+    Write(io_L,102) 1000001,mSdown(2),"# ~d_L"
+    Write(io_L,102) 2000001,mSdown(1),"# ~d_R"
+   End If
+   If (Abs(rsup(1,1)).Gt.0.5_dp) Then
+    Write(io_L,102) 1000002,mSup(1),"# ~u_L"
+    Write(io_L,102) 2000002,mSup(2),"# ~u_R"
+   Else
+    Write(io_L,102) 1000002,mSup(2),"# ~u_L"
+    Write(io_L,102) 2000002,mSup(1),"# ~u_R"
+   End If
+   If (Abs(rsdown(3,3)).Gt.0.5_dp) Then
+    Write(io_L,102) 1000003,mSdown(3),"# ~s_L"
+    Write(io_L,102) 2000003,mSdown(4),"# ~s_R"
+   Else
+    Write(io_L,102) 1000003,mSdown(4),"# ~s_L"
+    Write(io_L,102) 2000003,mSdown(3),"# ~s_R"
+   End If
+   If (Abs(rsup(3,3)).Gt.0.5_dp) Then
+    Write(io_L,102) 1000004,mSup(3),"# ~c_L"
+    Write(io_L,102) 2000004,mSup(4),"# ~c_R"
+   Else
+    Write(io_L,102) 1000004,mSup(4),"# ~c_L"
+    Write(io_L,102) 2000004,mSup(3),"# ~c_R"
+   End If
+   Write(io_L,102) 1000005,mSdown(5),"# ~b_1"
+   Write(io_L,102) 2000005,mSdown(6),"# ~b_2"
+   Write(io_L,102) 1000006,mSup(5),"# ~t_1"
+   Write(io_L,102) 2000006,mSup(6),"# ~t_2"
+
+   If (Abs(Rslepton(1,1)).Gt.0.5_dp) Then
+    Write(io_L,102) 1000011,mslepton(1),"# ~e_L-"
+    Write(io_L,102) 2000011,mslepton(2),"# ~e_R-"
+   Else
+    Write(io_L,102) 1000011,mslepton(2),"# ~e_L-"
+    Write(io_L,102) 2000011,mslepton(1),"# ~e_R-"
+   End If
+   Write(io_L,102) 1000012,mSneut(1),"# ~nu_eL"
+   If (Abs(Rslepton(3,3)).Gt.0.5_dp) Then
+    Write(io_L,102) 1000013,mslepton(3),"# ~mu_L-"
+    Write(io_L,102) 2000013,mslepton(4),"# ~mu_R-"
+   Else
+    Write(io_L,102) 1000013,mslepton(4),"# ~mu_L-"
+    Write(io_L,102) 2000013,mslepton(3),"# ~mu_R-"
+   End If
+   Write(io_L,102) 1000014,mSneut(2),"# ~nu_muL"
+   Write(io_L,102) 1000015,mslepton(5),"# ~tau_1-"
+   Write(io_L,102) 2000015,mslepton(6),"# ~tau_2-"
+   Write(io_L,102) 1000016,mSneut(3),"# ~nu_tauL"
+  End If ! GenerationMixing
+
+  Write(io_L,102) 1000021,mGlu,"# ~g"
+  Write(io_L,102) 1000022,mN(1),"# ~chi_10" 
+  Write(io_L,102) 1000023,mN(2),"# ~chi_20" 
+  Write(io_L,102) 1000025,mN(3),"# ~chi_30" 
+  Write(io_L,102) 1000035,mN(4),"# ~chi_40" 
+  Write(io_L,102) 1000024,mC(1),"# ~chi_1+" 
+  Write(io_L,102) 1000037,mC(2),"# ~chi_2+"
+
+  If (Calc_Mass) old_scale = SetRenormalizationScale(old_scale)
+
+  Iname = Iname - 1
+
+100 Format(a)
+101 Format(2x,i3,2x,1P,e16.8,2x,a) 
+102 Format(1x,i9,3x,1P,e16.8,2x,a)
+103 Format(a13,1P,e16.8,2x,a)
+104 Format(i4,2x,1P,e16.8,2x,a)
+106 Format(a,1P,e16.8,2x,a)
+107 Format(2i3,3x,1P,e16.8,3x,a)
+
+ End Subroutine WriteParametersAtQ
 
  Subroutine WriteRealMatrix(n, matrix, OnlyDiagonal)
  !---------------------------------------------------------------

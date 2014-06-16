@@ -4,8 +4,12 @@ Module Neut3Decays
 Use Control
 Use LoopFunctions
 Use ThreeBodyPhaseSpace
-! load modules
 
+! for check, if there is a numerical problem in the 3-body decays
+ Real(dp), Private :: p_test 
+ Real(dp), Private, Parameter :: prec=100._dp*Epsilon(1._dp)
+
+! load modules
 Contains
 
 
@@ -1842,15 +1846,18 @@ Contains
   !----------
   gNNN = sum( gNNNSum(1:Isum) )
   If (gNNN.Lt.0._dp) Then
-   Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
-   Write(ErrCan,*) &
-     & 'Gamma(Chi_'//Bu(i_in)//' -> Chi_'//Bu(i1)//Bu(i2)//Bu(i3)//') < 0 :' &
-     & ,i_in,i1,i2,i3,gNNN
-   Write(ErrCan,*) 'The different contributions are :'
-   Do n1=1,Isum
-    If (gNNNSum(n1).Ne.0._dp)  Write(ErrCan,*) Contribution(n1),gNNNSum(n1)
-   End Do
+   p_test = Abs(gNNN) / Maxval(Abs(gNNNSum(1:Isum)))
    gNNN = 0._dp
+   If (p_test.gt.prec) then
+    Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
+    Write(ErrCan,*) &
+      & 'Gamma(Chi_'//Bu(i_in)//' -> Chi_'//Bu(i1)//Bu(i2)//Bu(i3)//') < 0 :' &
+      & ,i_in,i1,i2,i3,gNNN
+    Write(ErrCan,*) 'The different contributions are :'
+    Do n1=1,Isum
+     If (gNNNSum(n1).Ne.0._dp)  Write(ErrCan,*) Contribution(n1),gNNNSum(n1)
+    End Do
+   End If
   End If
 
   !----------------------------------------------
@@ -2649,15 +2656,18 @@ Contains
   !----------
   gNCC = sum( gNCCSum(1:Isum) )
   If (gNCC.Lt.0._dp) Then
-   Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
-   Write(ErrCan,*) &
+   p_test = Abs(gNCC) / Maxval(Abs(gNCCSum(1:Isum)))
+   gNCC = 0._dp
+   If (p_test.gt.prec) then 
+    Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
+    Write(ErrCan,*) &
      & 'Gamma(Chi_'//Bu(i_in)//' -> Chi_'//Bu(i1)//' Chi^-_'//Bu(i2)// &
      & ' Chi^-_'//Bu(i3)//') < 0 :',i_in,i1,i2,i3,gNCC
-   Write(ErrCan,*) 'The different contributions are :'
-   Do n1=1,Isum
-    If (gNCCSum(n1).Ne.0._dp)  Write(ErrCan,*) Contribution(n1),gNCCSum(n1)
-   End Do
-   gNCC = 0._dp
+    Write(ErrCan,*) 'The different contributions are :'
+    Do n1=1,Isum
+     If (gNCCSum(n1).Ne.0._dp)  Write(ErrCan,*) Contribution(n1),gNCCSum(n1)
+    End Do
+   End If
   End If
 
   gNCC = fac * gNCC
@@ -3484,6 +3494,9 @@ Contains
     Do i2=1,n_f
      gNff(i1,i2) = Sum( gNffSum(i1,i2,1:Isum) )
      If (gNff(i1,i2).Lt.0._dp) Then
+      p_test = Abs(gNff(i1,i2)) / Maxval(Abs(gNffSum(i1,i2,1:Isum)))
+      gNff(i1,i2) = 0._dp
+      If (p_test.le.prec) cycle ! this is a numerical zero
       Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) &
       & 'Gamma(Chi_'//Bu(i_in)//' -> Chi_'//Bu(i_out)//state//') < 0 :' &
@@ -3493,13 +3506,15 @@ Contains
       If (gNffSum(i1,i2,i3).Ne.0._dp) &
         &      Write(ErrCan,*) Contribution(i1,i2,i3),gNffSum(i1,i2,i3)
       End Do
-      gNff(i1,i2) = 0._dp
      End If
     End Do
 
    Else
     gNff(i1,i1) = Sum( gNffSum(i1,i1,1:Isum) )
     If (gNff(i1,i1).Lt.0._dp) Then
+     p_test = Abs(gNff(i1,i1)) / Maxval(Abs(gNffSum(i1,i1,1:Isum)))
+     gNff(i1,i1) = 0._dp
+     If (p_test.le.prec) cycle ! this is a numerical zero
      Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) &
       & 'Gamma(Chi_'//Bu(i_in)//' -> Chi_'//Bu(i_out)//state//') < 0 :' &
@@ -3509,7 +3524,6 @@ Contains
       If (gNffSum(i1,i1,i3).Ne.0._dp) &
         & Write(ErrCan,*) Contribution(i1,i1,i3),gNffSum(i1,i1,i3)
      End Do
-     gNff(i1,i1) = 0._dp
     End If
    End If
   End Do
@@ -3908,6 +3922,9 @@ Contains
     Do i2=1,n_f
      gNff(i1,i2) = Sum( gNffSum(i1,i2,1:Isum) )
      If (gNff(i1,i2).Lt.0._dp) Then
+      p_test = Abs(gNff(i1,i2)) / Maxval(Abs(gNffSum(i1,i2,1:Isum)))
+      gNff(i1,i2) = 0._dp
+      If (p_test.le.prec) cycle ! this is a numerical zero
       Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) &
       & 'Gamma(Chi_'//Bu(i_in)//' -> Chi_'//Bu(i_out)//' nu nu ) < 0 :' &
@@ -3917,13 +3934,15 @@ Contains
       If (gNffSum(i1,i2,i3).Ne.0._dp) &
         &      Write(ErrCan,*) Contribution(i1,i2,i3),gNffSum(i1,i2,i3)
       End Do
-      gNff(i1,i2) = 0._dp
      End If
     End Do
 
    Else
     gNff(i1,i1) = Sum( gNffSum(i1,i1,1:Isum) )
     If (gNff(i1,i1).Lt.0._dp) Then
+      p_test = Abs(gNff(i1,i1)) / Maxval(Abs(gNffSum(i1,i1,1:Isum)))
+      gNff(i1,i1) = 0._dp
+      If (p_test.le.prec) cycle ! this is a numerical zero
      Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) &
       & 'Gamma(Chi_'//Bu(i_in)//' -> Chi_'//Bu(i_out)//' nu nu ) < 0 :' &
@@ -3933,7 +3952,6 @@ Contains
       If (gNffSum(i1,i1,i3).Ne.0._dp) &
         & Write(ErrCan,*) Contribution(i1,i1,i3),gNffSum(i1,i1,i3)
      End Do
-     gNff(i1,i1) = 0._dp
     End If
    End If
   End Do
@@ -5044,8 +5062,11 @@ i_count=3
     Do i2=1,n_f
      gCffp(i1,i2) = Sum( gCffpSum(i1,i2,1:Isum) )
      If (gCffp(i1,i2).Lt.0._dp) Then
+      p_test = Abs(gCffp(i1,i2)) / Maxval(Abs(gCffpSum(i1,i2,1:Isum)))
+      gCffp(i1,i2) = 0._dp
+      If (p_test.le.prec) cycle ! this is a numerical zero
       Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
-     Write(ErrCan,*) &
+      Write(ErrCan,*) &
       & 'Gamma(Chi_'//Bu(i_in)//' -> Chi^-_'//Bu(i_out)//') < 0 :' &
       & ,i1,i2,gCffp(i1,i2)
       Write(ErrCan,*) 'The different contributions are :'
@@ -5053,13 +5074,15 @@ i_count=3
       If (gCffpSum(i1,i2,i3).Ne.0._dp) &
         &      Write(ErrCan,*) Contribution(i1,i2,i3),gCffpSum(i1,i2,i3)
       End Do
-      gCffp(i1,i2) = 0._dp
      End If
     End Do
 
    Else
     gCffp(i1,i1) = Sum( gCffpSum(i1,i1,1:Isum) )
     If (gCffp(i1,i1).Lt.0._dp) Then
+     p_test = Abs(gCffp(i1,i1)) / Maxval(Abs(gCffpSum(i1,i1,1:Isum)))
+     gCffp(i1,i1) = 0._dp
+     If (p_test.le.prec) cycle ! this is a numerical zero
      Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) &
       & 'Gamma(Chi_'//Bu(i_in)//' -> Chi^-_'//Bu(i_out)//') < 0 :' &
@@ -5069,7 +5092,6 @@ i_count=3
       If (gCffpSum(i1,i1,i3).Ne.0._dp) &
         & Write(ErrCan,*) Contribution(i1,i1,i3),gCffpSum(i1,i1,i3)
      End Do
-     gCffp(i1,i1) = 0._dp
     End If
    End If
   End Do
@@ -5428,21 +5450,26 @@ i_count=3
     Do i2=1,3
      gGff(i1,i2) = Sum( gGffSum(i1,i2,1:Isum) )
      If (gGff(i1,i2).Lt.0._dp) Then
+      p_test = Abs(gGff(i1,i2)) / Maxval(Abs(gGffSum(i1,i2,1:Isum)))
+      gGff(i1,i2) = 0._dp
+      If (p_test.le.prec) cycle ! this is a numerical zero
       Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
-     Write(ErrCan,*) 'Gamma(Chi_'//Bu(i_in)//' -> g '//state//') < 0 :' &
+      Write(ErrCan,*) 'Gamma(Chi_'//Bu(i_in)//' -> g '//state//') < 0 :' &
       & ,i1,i2,gGff(i1,i2)
       Write(ErrCan,*) 'The different contributions are :'
       Do i3=1,Isum
       If (gGffSum(i1,i2,i3).Ne.0._dp) &
         &      Write(ErrCan,*) Contribution(i1,i2,i3),gGffSum(i1,i2,i3)
       End Do
-      gGff(i1,i2) = 0._dp
      End If
     End Do
 
    Else
     gGff(i1,i1) = Sum( gGffSum(i1,i1,1:Isum) )
     If (gGff(i1,i1).Lt.0._dp) Then
+     p_test = Abs(gGff(i1,i1)) / Maxval(Abs(gGffSum(i1,i1,1:Isum)))
+     gGff(i1,i1) = 0._dp
+     If (p_test.le.prec) cycle ! this is a numerical zero
      Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) 'Gamma(Chi_'//Bu(i_in)//' -> g '//state//') < 0 :' &
       & ,i1,i1,gGff(i1,i1)
@@ -5451,7 +5478,6 @@ i_count=3
       If (gGffSum(i1,i1,i3).Ne.0._dp) &
         & Write(ErrCan,*) Contribution(i1,i1,i3),gGffSum(i1,i1,i3)
      End Do
-     gGff(i1,i1) = 0._dp
     End If
    End If
   End Do

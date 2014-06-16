@@ -16,6 +16,9 @@ Use LoopFunctions, Only: Igamma, I2gamma, Jgamma, Kgamma &
      & , mgSb2(2), mst2, mgT2
  Complex(dp), Private :: coeffSbB(3,0:2), coeffSbT(2,0:2,0:1)
  Logical :: WStB_contri(3)
+ ! for check, if there is a numerical problem in the 3-body decays
+ Real(dp), Private :: p_test 
+ Real(dp), Private, Parameter :: prec=100._dp*Epsilon(1._dp)
 
 Contains
 
@@ -560,6 +563,10 @@ Contains
     Do i2=1,3
      gNff(i1,i2) = Sum( gNffSum(i1,i2,1:Isum) )
      If (gNff(i1,i2).Lt.0._dp) Then
+      p_test = Abs(gNff(i1,i2)) / Maxval(Abs(gNffSum(i1,i2,1:Isum)))
+      gNff(i1,i2) = 0._dp
+      If (p_test.le.prec) cycle ! this is a numerical zero
+
       Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) &
       & 'Gamma(G -> Chi_'//Bu(i_out)//state//') < 0 :' &
@@ -569,13 +576,15 @@ Contains
       If (gNffSum(i1,i2,i3).Ne.0._dp) &
         &      Write(ErrCan,*) Contribution(i1,i2,i3),gNffSum(i1,i2,i3)
       End Do
-      gNff(i1,i2) = 0._dp
      End If
     End Do
 
    Else
     gNff(i1,i1) = Sum( gNffSum(i1,i1,1:Isum) )
     If (gNff(i1,i1).Lt.0._dp) Then
+     p_test = Abs(gNff(i1,i1)) / Maxval(Abs(gNffSum(i1,i1,1:Isum)))
+     gNff(i1,i1) = 0._dp
+     If (p_test.le.prec) cycle ! this is a numerical zero
      Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) &
       & 'Gamma( G -> Chi_'//Bu(i_out)//state//') < 0 :' &
@@ -585,7 +594,6 @@ Contains
       If (gNffSum(i1,i1,i3).Ne.0._dp) &
         & Write(ErrCan,*) Contribution(i1,i1,i3),gNffSum(i1,i1,i3)
      End Do
-     gNff(i1,i1) = 0._dp
     End If
    End If
   End Do
@@ -990,6 +998,9 @@ Contains
     Do i2=1,3
      gCffp(i1,i2) = Sum( gCffpSum(i1,i2,1:Isum) )
      If (gCffp(i1,i2).Lt.0._dp) Then
+      p_test = Abs(gCffp(i1,i2)) / Maxval(Abs(gCffpSum(i1,i2,1:Isum)))
+      gCffp(i1,i2) = 0._dp
+      If (p_test.le.prec) cycle ! this is a numerical zero
       Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) &
       & 'Gamma(G -> Chi^-_'//Bu(i_out)//') < 0 :' &
@@ -999,13 +1010,15 @@ Contains
       If (gCffpSum(i1,i2,i3).Ne.0._dp) &
         &      Write(ErrCan,*) Contribution(i1,i2,i3),gCffpSum(i1,i2,i3)
       End Do
-      gCffp(i1,i2) = 0._dp
      End If
     End Do
 
    Else
     gCffp(i1,i1) = Sum( gCffpSum(i1,i1,1:Isum) )
     If (gCffp(i1,i1).Lt.0._dp) Then
+     p_test = Abs(gCffp(i1,i1)) / Maxval(Abs(gCffpSum(i1,i1,1:Isum)))
+     gCffp(i1,i1) = 0._dp
+     If (p_test.le.prec) cycle ! this is a numerical zero
      Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write(ErrCan,*) &
       & 'Gamma(G -> Chi^-_'//Bu(i_out)//') < 0 :' &
@@ -1015,7 +1028,6 @@ Contains
       If (gCffpSum(i1,i1,i3).Ne.0._dp) &
         & Write(ErrCan,*) Contribution(i1,i1,i3),gCffpSum(i1,i1,i3)
      End Do
-     gCffp(i1,i1) = 0._dp
     End If
    End If
   End Do

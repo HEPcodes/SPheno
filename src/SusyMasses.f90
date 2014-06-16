@@ -4,7 +4,7 @@ Module SusyMasses
 Use Control
 Use Mathematics
 Use StandardModel, Only: mW, mW2, mZ, mZ2, mf_l, mf_l2, mf_u, mf_u2, mf_d &
-    & , mf_d2, AlphaS_mB, alphaS_mZ, G_F, FermionMass
+    & , mf_d2, AlphaS_mB, alphaS_mZ, G_F, FermionMass, QuarkMasses_and_PhaseShifts
 ! load modules
 
 
@@ -3215,6 +3215,10 @@ Contains
    End If
   End If
 
+  !----------------------------------
+  ! phase convention
+  !----------------------------------
+  If (RS0(1,2).Lt.0._dp) RS0 = - RS0
   Iname = Iname - 1
 
  Contains
@@ -5637,7 +5641,7 @@ Contains
 
   Integer :: i1, ierr
   Real(dp) :: D_sneut, T3, Yl, Yr, Ml, Mr, msf(2), msf2(2), cosb, sinb
-  Real(dp) :: mStop2(2), mSbottom2(2), mT, mB, mf_t(3), test(2)
+  Real(dp) :: mStop2(2), mSbottom2(2), mT, mB, mf_t(3), test(2), mf_ta(3)
   Complex(dp) :: A, Y, Rsf(2,2), Ap, mat3(3,3)
 
   Iname = Iname + 1
@@ -5649,9 +5653,9 @@ Contains
   !-------------------------------
   If (GenerationMixing) Then
    Call FermionMass(Y_l,vevSM(1),mf_t,uL_L,uL_R,kont)
-   Call FermionMass(Y_d,vevSM(1),mf_t,uD_L,uD_R,kont)
-   Call FermionMass(Y_u,vevSM(2),mf_t,uU_L,uU_R,kont)
-   If (Present(mf_u_Q)) mf_u_Q = mf_t
+   Call QuarkMasses_and_PhaseShifts(Y_d, Y_u, vevSM, mf_t, uD_L, uD_R &
+                                     & , mf_ta, uU_L, uU_R)
+   If (Present(mf_u_Q)) mf_u_Q = mf_ta
   Else
    uL_L = id3C
    uL_R = id3C
@@ -6026,7 +6030,7 @@ Contains
 
   Integer :: i1, ierr
   Real(dp) :: D_sneut, T3, Yl, Yr, Ml, Mr, msf(2), msf2(2), cosb, sinb
-  Real(dp) :: mStop2(2), mSbottom2(2), mT, mB, mf_t(3), test(2)
+  Real(dp) :: mStop2(2), mSbottom2(2), mT, mB, mf_t(3), test(2), mf_ta(3)
   Complex(dp) :: A, Y, Rsf(2,2), Ap, mat3(3,3)
   Complex(dp), Dimension(3,3) :: uL_L, uL_R, uD_L, uD_R, uU_L, uU_R
 
@@ -6039,8 +6043,8 @@ Contains
   !-------------------------------
   If (GenerationMixing) Then
    Call FermionMass(Y_l,vevSM(1),mf_t,uL_L,uL_R,kont)
-   Call FermionMass(Y_d,vevSM(1),mf_t,uD_L,uD_R,kont)
-   Call FermionMass(Y_u,vevSM(2),mf_t,uU_L,uU_R,kont)
+   Call QuarkMasses_and_PhaseShifts(Y_d, Y_u, vevSM, mf_t, uD_L, uD_R &
+                                     & , mf_ta, uU_L, uU_R)
   Else
    uL_L = id3C
    uL_R = id3C
