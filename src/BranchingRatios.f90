@@ -351,8 +351,9 @@ Contains
   ! gluino decays
   !------------------------------------------------
   If (.Not.CTBD) Then
-   Call GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, Glu, Sdown   &
-         & , c_GDSd_L, c_GDSd_R, mf_d, Sup, c_GUSu_L, c_GUSu_R, mf_u, 0 )
+   Call GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, id_grav, id_gl &
+     & , Glu, Sdown, c_GDSd_L, c_GDSd_R, mf_d, Sup, c_GUSu_L, c_GUSu_R, mf_u &
+     & , m32, Fgmsb, 0 )
 
    If (Glu%g.Lt.fac3*Glu%m) Then
     Glu%gi2 = 0._dp
@@ -1206,8 +1207,9 @@ Contains
   ! gluino decays
   !------------------------------------------------
   If (.Not.CTBD) Then
-   Call GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, Glu, Sdown   &
-         & , c_GDSd_L, c_GDSd_R, mf_d, Sup, c_GUSu_L, c_GUSu_R, mf_u, 0 )
+   Call GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, id_grav, id_gl &
+     & , Glu, Sdown, c_GDSd_L, c_GDSd_R, mf_d, Sup, c_GUSu_L, c_GUSu_R, mf_u &
+     & , m32, Fgmsb, 0 )
 
    If (Glu%g.Lt.fac3*Glu%m) Then
     Glu%gi2 = 0._dp
@@ -1721,8 +1723,9 @@ c_GraUSu_R = 0
 
 
   If (.Not.CTBD) Then
-   Call GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, Glu, Sdown   &
-         & , c_GDSd_L, c_GDSd_R, mf_d, Sup, c_GUSu_L, c_GUSu_R, mf_u, 0 )
+   Call GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, id_grav, id_gl &
+     & , Glu, Sdown, c_GDSd_L, c_GDSd_R, mf_d, Sup, c_GUSu_L, c_GUSu_R, mf_u &
+     & , m32, Fgmsb, 0 )
    Call check_charge(Glu%id,Glu%id2)
 
    If (Glu%g.Lt.fac3*Glu%m) Then
@@ -2269,8 +2272,9 @@ c_GraUSu_R = 0
 
 
   If (.Not.CTBD) Then
-   Call GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, Glu, Sdown   &
-         & , c_GDSd_L, c_GDSd_R, mf_d, Sup, c_GUSu_L, c_GUSu_R, mf_u, 0 )
+   Call GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, id_grav, id_gl &
+     & , Glu, Sdown, c_GDSd_L, c_GDSd_R, mf_d, Sup, c_GUSu_L, c_GUSu_R, mf_u &
+     & , m32, Fgmsb, 0 )
    Call check_charge(Glu%id,Glu%id2)
 
    If (Glu%g.Lt.fac3*Glu%m) Then

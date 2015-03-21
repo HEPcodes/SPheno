@@ -595,9 +595,9 @@ Contains
  End Subroutine CharginoTwoBodyDecays
 
 
- Subroutine GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, Glu, Sdown &
-               & , cpl_DGSd_L, cpl_DGSd_R, mf_d, Sup, cpl_UGSu_L, cpl_UGSu_R &
-               & , mf_u, k_neut)
+ Subroutine GluinoTwoBodyDecays(n_d, id_d, n_Sd, n_u, id_u, n_Su, id_grav, id_gl &
+       & , Glu, Sdown, cpl_DGSd_L, cpl_DGSd_R, mf_d, Sup, cpl_UGSu_L, cpl_UGSu_R &
+       & , mf_u, m32, Fgmsb, k_neut)
  !-----------------------------------------------------------------------
  ! Calculates the 2-body decays of gluinos at tree-level:
  ! input:
@@ -622,20 +622,22 @@ Contains
  ! 24.08.03: up to now there has been a sum over charged conjuagted states
  !           due to the need for the Les Houches Interface this will be
  !           removed
+ ! 05.03.2015: adding decay into gravitino and gluon
  !-----------------------------------------------------------------------
  Implicit None
 
-  Integer, Intent(in) :: k_neut, n_d, id_d(:), n_Sd, n_u, id_u(:), n_Su
-  Real(dp), Intent(in) ::  mf_d(:), mf_u(:)
+  Integer, Intent(in) :: k_neut, n_d, id_d(:), n_Sd, n_u, id_u(:), n_Su &
+      & , id_grav, id_gl
+  Real(dp), Intent(in) ::  mf_d(:), mf_u(:), m32, Fgmsb
   Complex(dp), Intent(in) :: cpl_DGSd_L(:,:), cpl_DGSd_R(:,:)   &
                           &, cpl_UGSu_L(:,:), cpl_UGSu_R(:,:)
 
   Type(particle2), Intent(in) :: Sdown(:)
   Type(particle23), Intent(in) :: Sup(:)
-  Type(particle23), intent(inout) :: Glu
+  Type(particle23), Intent(inout) :: Glu
 
   Integer :: i1, i2, i_count 
-  Real(dp) :: mSdown(n_Sd), mGlu, gam, mSup(n_su)
+  Real(dp) :: mSdown(n_Sd), mGlu, gam, mSup(n_su), x1
   !-----------------
   ! Initialization
   !-----------------
@@ -660,7 +662,7 @@ Contains
   !----------------------------------------------------
   Do i1 = 1,n_su
    Do i2 = 1,n_u
-    If ( (Abs(cpl_UGSu_L(i2,i1))+abs(cpl_UGSu_R(i2,i1))).ne.0._dp) then
+    If ( (Abs(cpl_UGSu_L(i2,i1))+Abs(cpl_UGSu_R(i2,i1))).Ne.0._dp) Then
      Call  FermionToFermionScalar(mglu, mf_u(i2), mSup(i1) &
              & , cpl_UGSu_L(i2,i1), cpl_UGSu_R(i2,i1), gam)
      gam = 2._dp * gam ! colour
@@ -690,7 +692,7 @@ Contains
   !----------------------------------------------------
   Do i1 = 1,n_sd
    Do i2 = 1,n_d
-    If ( (Abs(cpl_UGSu_L(i2,i1))+abs(cpl_UGSu_R(i2,i1))).ne.0._dp) then
+    If ( (Abs(cpl_UGSu_L(i2,i1))+Abs(cpl_UGSu_R(i2,i1))).Ne.0._dp) Then
      Call FermionToFermionScalar(mglu, mf_d(i2), mSdown(i1) &
             & , cpl_DGSd_L(i2,i1), cpl_DGSd_R(i2,i1), gam)
      gam = 2._dp * gam ! colour
@@ -715,9 +717,22 @@ Contains
    If (k_neut.Eq.1) i_count = i_count + 2
   End Do
      
+ 
+  !-----------------------------------------
+  ! gravitino gluon
+  !-----------------------------------------
+  If (mglu.Gt.m32) Then
+   x1 = m32 / mglu
+   Glu%gi2(i_count) = oo16pi * Abs(mGlu)**5 / Fgmsb**2 &
+                   &        * (1._dp-x1)**3 * (1._dp + 3._dp*x1)
+   Glu%id2(i_count,1) = id_grav
+   Glu%id2(i_count,2) = id_gl
+
+   i_count = i_count + 1
+  End If
 
   Glu%g = Sum(Glu%gi2)
-  If (Glu%g.ne.0._dp) then
+  If (Glu%g.Ne.0._dp) Then
    Glu%bi2 = Glu%gi2 / Glu%g
   Else
    Glu%bi2 = 0._dp

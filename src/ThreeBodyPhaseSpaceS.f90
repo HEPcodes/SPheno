@@ -1254,5 +1254,88 @@ Contains
 
  End Function I2tdtm1g1
 
+!---------------------------------------------------------------------
+! integrals for multiple vector bosons in 3-body decays of fermions
+! provided by L. Mitzka, 04.03.2015
+!---------------------------------------------------------------------
+  Subroutine VaVbIntegrands (s,erg)
+  Implicit None
+
+  Real(dp), Intent(in) :: s(2)
+  Real(dp), Intent(out) :: erg(2)
+
+  Integer :: i1
+  Real(dp) :: x, x2, yplus, yminus, hOnexrarb, hTwoxrarb, l1abbr, l2abbr
+
+  erg = 0._dp
+
+  Do i1=1,2
+   x = s(i1)
+   x2 = x**2
+
+   yplus = 1._dp / ( 2._dp * ( 1._dp - x + rkt2 ) )                           &
+      &    * ( (2._dp-x) * (Rsquared - x) + Sqrt(x2-4._dp*rkt2)               &
+      &                                     * kappa(1._dp-x+rkt2,rmt2,rjt2) )
+   yminus = 1._dp / ( 2._dp * ( 1._dp - x + rkt2 ) )                          &
+      &    * ( (2._dp-x) * (Rsquared - x) - Sqrt(x2-4._dp*rkt2)               &
+      &                                     * kappa(1._dp-x+rkt2,rmt2,rjt2) )
+
+   l1abbr = Log( Abs( ( yplus  + x - 1._dp + rjt2 - rat2 )         &
+          &           / ( yminus + x - 1._dp + rjt2 - rat2 )   ) )
+
+   l2abbr = Log( Abs( ( yplus  + x - 1._dp + rjt2 - rbt2 )         &
+           &          / ( yminus + x - 1._dp + rjt2 - rbt2 )   ) )
+
+   hOnexrarb =  ( l1abbr - l2abbr  ) / (rat2 - rbt2)
+
+   hTwoxrarb =   l2abbr + (1._dp - x -rjt2 + rat2 )*hOnexrarb
+
+   erg(1) = erg(1) +   ( -3._dp * rkt2 + rmt2 + 4._dp * x - 4._dp) *hTwoxrarb &
+                &  +   (  rjt2 * (rkt2 + rmt2 - 4._dp)                        &
+                &  -         rkt2*rkt2                                        &
+                &  +      rkt2 * (2._dp * rmt2 + x + 3._dp)                   &
+                &  -      rmt2 * (rmt2 + 3._dp * x - 3._dp)                   &
+                &  -       4._dp * x + 4._dp                      )*hOnexrarb
+
+   erg(2) = erg(2) + hTwoxrarb + (x - rjt2 - 3._dp)*hOnexrarb
+
+  End Do
+
+ End Subroutine VaVbIntegrands
+
+
+ Subroutine IntegrateVaVb(mass,m_in, r_out, coup,smin,smax,eps,gam)
+ Implicit None
+
+  Real(dp), Intent(in)    :: mass(:)
+  Real(dp), Intent(in)    :: m_in
+  Real(dp), Intent(in)    :: r_out(:)
+  Complex(dp), Intent(in) :: coup(:)
+  Real(dp), Intent(in)    :: smin
+  Real(dp), Intent(in)    :: smax
+  Real(dp), Intent(in)    :: eps
+  Complex(dp), Intent(out)   :: gam
+
+  Real(dp) :: I_VaVb(2)
+
+  rjt2 = r_out(1)
+  rkt2 = r_out(2)
+  rmt2 = r_out(3)
+
+  rat2 = ( mass(1) / m_in )**2
+  rbt2 = ( mass(2) / m_in )**2
+  Rsquared = 1._dp - rjt2 + rkt2 + rmt2
+
+  Call DGaussInt(VaVbIntegrands,2,smin,smax,I_VaVb(:),eps)
+
+  gam = (coup(2)*Conjg(coup(5)) + coup(3)*Conjg(coup(6)) )  * I_VaVb(1)  &
+    & + (coup(2)*Conjg(coup(6)) + coup(3)*Conjg(coup(5)) )  * 2._dp      &
+    &    *Sqrt( rmt2 * rkt2 )*I_VaVb(2)
+
+  gam = 2._dp * oo512pi3 * m_in * coup(1) *Conjg(coup(4)) *gam
+
+
+ End Subroutine IntegrateVaVb
+
 End Module ThreeBodyPhaseSpaceS
 
