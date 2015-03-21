@@ -301,6 +301,38 @@ Use LoopFunctions
 Contains
 
 
+ Real(dp) Function CalcScale_from_Stops(M2U, M2Q, Y, T, vevs, mu, g, gp)
+ !-----------------------------------------------------------------
+ ! using tree-level mass formula to obtain the square of the
+ ! renormalisation scale related to the tree-level stop masses
+ ! [ CalcScale_from_Stops ] = m^2
+ ! written by Werner Porod, 11.09.2014
+ !-----------------------------------------------------------------
+ Implicit None
+  Complex(dp), Intent(in) :: Y, T, mu
+  Real(dp), Intent(in) :: M2U, M2Q, vevs(2), g, gp
+  
+  Real(dp) :: diag(2), det, vev2
+  Complex(dp) :: offdiag
+
+  Real(dp), Parameter :: T3 = 0.5_dp, Yl = 1._dp / 3._dp  &
+   &                     , Yr = -4._dp / 3._dp
+
+
+  vev2 = 0.25_dp * (vevs(1)**2 - vevs(2)**2)
+  diag(1) = M2Q + 0.5_dp * Abs(Y)**2 * vevs(2)**2        &
+     &     + (T3 * g**2 - 0.5_dp * Yl * gp**2) * vev2
+  diag(2) = M2U + 0.5_dp * Abs(Y)**2 * vevs(2)**2        &
+     &     - 0.5_dp * Yr * gp**2 * vev2
+
+  offdiag = (Conjg(T) * vevs(2) - mu * vevs(1) * Conjg(Y)) * oosqrt2
+
+  det = diag(1)*diag(2) - Abs(offdiag)**2
+
+  CalcScale_from_Stops = Sqrt(det)
+
+ End Function CalcScale_from_Stops
+
  Subroutine GetParameters_at_Q(Q_out, g_i_Q, Y_l_Q, Y_d_Q, Y_u_Q,  Mi_Q, A_l_Q &
               & , A_d_Q, A_u_Q, M2_E_Q, M2_L_Q, M2_D_Q, M2_Q_Q, M2_U_Q, M2_H_Q &
               & , mu_Q, B_Q )

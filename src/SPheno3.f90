@@ -510,7 +510,12 @@ Contains
 
    converge = .False.
    If (.Not.UseFixedScale) Then
-    Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+    If (UseNewScale) Then ! note, that is actually the scale squared
+     Scale_Q = CalcScale_from_Stops(Real(M2_U(3,3),dp), Real(M2_Q(3,3),dp)   &
+               & , Y_u(3,3), A_u(3,3), vevSM, mu, gauge(2), gauge(1) )
+    Else
+     Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+    End If
     tz = SetRenormalizationScale(scale_Q)
     Scale_Q = Sqrt(Scale_Q)
    End If
@@ -603,7 +608,12 @@ Contains
     End If
 
     If (.Not.UseFixedScale) Then
-     Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+     If (UseNewScale) Then ! note, that is actually the scale squared
+      Scale_Q = CalcScale_from_Stops(Real(M2_U(3,3),dp), Real(M2_Q(3,3),dp)   &
+                & , Y_u(3,3), A_u(3,3), vevSM, mu, gauge(2), gauge(1) )
+     Else
+      Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+     End If
      tz = SetRenormalizationScale(scale_Q)
      Scale_Q = Sqrt(Scale_Q)
     End If
@@ -744,8 +754,8 @@ Contains
       M2L_s = M2_L_mZ
      End If
 
-     Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi, Al_s, Ad_s, Au_s   &
-      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_mZ, mP0_T(2)   &
+     Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi_mZ, Al_s, Ad_s, Au_s &
+      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_mZ, mP0_T(2)    &
       & , 0.1_dp*delta, GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
 
      uU_R = id3C
@@ -800,7 +810,12 @@ Contains
    tanb_mZ = tanb ! first gues, justified because tanb runs weakly
 
    If (.Not.UseFixedScale) Then
-    Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+    If (UseNewScale) Then ! note, that is actually the scale squared
+     Scale_Q = CalcScale_from_Stops(Real(M2_U(3,3),dp), Real(M2_Q(3,3),dp)   &
+               & , Y_u(3,3), A_u(3,3), vevSM, mu, gauge(2), gauge(1) )
+    Else
+     Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+    End If
     tz = SetRenormalizationScale(scale_Q)
     Scale_Q = Sqrt(Scale_Q)
    End If
@@ -940,7 +955,12 @@ Contains
     vevSM(2) = tanb_mZ * vevSM(1)
     
     If (.Not.UseFixedScale) Then
-     Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+     If (UseNewScale) Then ! note, that is actually the scale squared
+      Scale_Q = CalcScale_from_Stops(Real(M2_U(3,3),dp), Real(M2_Q(3,3),dp)   &
+                & , Y_u(3,3), A_u(3,3), vevSM, mu, gauge(2), gauge(1) )
+     Else
+      Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+     End If
      tz = SetRenormalizationScale(scale_Q)
      Scale_Q = Sqrt(Scale_Q)
     End If
@@ -1032,8 +1052,8 @@ Contains
       M2L_s = M2_L_mZ
      End If
 
-     Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi, Al_s, Ad_s, Au_s &
-      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_mZ, mP0_T(2) &
+     Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi_mZ, Al_s, Ad_s, Au_s &
+      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_mZ, mP0_T(2)    &
       & , 0.1_dp*delta, GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
 
      uU_R = id3C
@@ -1088,7 +1108,12 @@ Contains
    mP0(1) = mZ
    mP02(1) = mZ2
    If (.Not.UseFixedScale) Then
-    Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+    If (UseNewScale) Then ! note, that is actually the scale squared
+     Scale_Q = CalcScale_from_Stops(Real(M2_U(3,3),dp), Real(M2_Q(3,3),dp)   &
+               & , Y_u(3,3), A_u(3,3), vevSM, mu, gauge(2), gauge(1) )
+    Else
+     Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+    End If
     tz = SetRenormalizationScale(scale_Q)
     Scale_Q = Sqrt(Scale_Q)
    End If
@@ -1128,17 +1153,13 @@ Contains
                 & , A_l, M2_E, M2_L, .False. )
      End If
     Else ! .not. GenerationMixing
+     A_l = ZeroC
+     A_d = ZeroC
+     A_u = ZeroC
      Do i2=1,3
       If (.Not.l_Al) A_l(i2,i2) = AoY_l(i2,i2) * Y_l(i2,i2)
       If (.Not.l_Ad) A_d(i2,i2) = AoY_d(i2,i2) * Y_d(i2,i2)
       If (.Not.l_Au) A_u(i2,i2) = AoY_u(i2,i2) * Y_u(i2,i2)
-      Do i3=1,3
-       If (i3.Ne.i2) Then
-        A_l(i3,i2) = ZeroC
-        A_d(i3,i2) = ZeroC
-        A_u(i3,i2) = ZeroC
-       End If
-      End Do
      End Do
     End If
 
@@ -1228,14 +1249,19 @@ Contains
     vevSM(2) = tanb_mZ * vevSM(1)
  
     If (.Not.UseFixedScale) Then
-     Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+     If (UseNewScale) Then ! note, that is actually the scale squared
+      Scale_Q = CalcScale_from_Stops(Real(M2_U(3,3),dp), Real(M2_Q(3,3),dp)   &
+                & , Y_u(3,3), A_u(3,3), vevSM, mu, gauge(2), gauge(1) )
+     Else
+      Scale_Q = product_stop_masses(mSup, RSup, GenerationMixing)
+     End If
      tz = SetRenormalizationScale(scale_Q)
      Scale_Q = Sqrt(Scale_Q)
     End If
     !-----------------------------------
     ! mu and B parameters at tree-level
     !-----------------------------------
-    Abs_Mu2 = (M2_H_mZ(2) * tanb_mZ**2 - M2_H(1) ) / (1._dp - tanb_mZ**2) &
+    Abs_Mu2 = (M2_H_mZ(2) * tanb_mZ**2 - M2_H_mZ(1) ) / (1._dp - tanb_mZ**2) &
           & - 0.5_dp * mZ2_t
     If (Abs_Mu2.Le.0) Then
      kont = -12345
@@ -1318,8 +1344,8 @@ Contains
       M2L_s = M2_L_mZ
      End If
 
-     Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi, Al_s, Ad_s, Au_s &
-      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_mZ, mP0_T(2) &
+     Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi_mZ, Al_s, Ad_s, Au_s &
+      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_T, mP0_T(2)    &
       & , 0.1_dp*delta, GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
 
      uU_R = id3C
@@ -1333,6 +1359,7 @@ Contains
       & , mSlepton, mSlepton2, RSlepton, mSneut2, RSneut, uU_L, uU_R      &
       & , uD_L, uD_R , uL_L, uL_R, id3C, mGlu_T, PhaseGlu, mZ2_t, mW2_t   &
       & , delta, g1, kont)
+
     End If
 
     If (kont.Ne.0) Then

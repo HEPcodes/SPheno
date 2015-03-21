@@ -41,7 +41,7 @@ endif
  
 # NAG f95/2003
 ifeq (${F90},nagfor)
- comp = -c -O  -DONLYDOUBLE -mdir ${MDir} -I${InDir}   
+ comp = -c -O  -DONLYDOUBLE -mdir ${Mdir} -I${InDir}   
  LFlagsB = -O
 endif
  

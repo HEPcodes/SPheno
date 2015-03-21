@@ -2135,6 +2135,13 @@ Contains
        UseNewBoundaryEW = .True.
       End If
 
+      Case(10) ! use old version to calculate scale
+      If (Int(wert).Eq.1) Then
+       UseNewScale = .False.
+      Else
+       UseNewScale = .True.
+      End If
+
      Case(11)  ! whether to calculate  branching ratios or not
       If (Int(wert).Eq.1) L_BR = .True.
       If (Int(wert).Eq.0) L_BR = .False.

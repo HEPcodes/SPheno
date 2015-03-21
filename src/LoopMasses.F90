@@ -11404,7 +11404,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
   Complex(dp), Intent(out), Optional, Dimension(3,3,2) :: C_ddH, C_ddA  &
     & , C_llH, C_llA
 
-  Complex(dp) :: sigma(3,3)
+  Complex(dp) :: sigma(3,3), alphaM(3)
   Complex(dp), Dimension(3,3) :: WdR, WdL, WuL, WuR, WlL, WlR, SigDLR  &
      & , SigULR, SigLLR, DelU, DelDnoY, DelDY, DelLnoY, DelLY, SigU    &
      & , SigDnoY, SigDY, SigLnoY, SigLY, E_ij, Etil_ij
@@ -11450,11 +11450,11 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
     End Do
    End Do
   End Do
-  DelU = vevSM(2) * Tu - vevSM(1) * Conjg(mu) * Yu
-  DelDnoY = vevSM(1) * Td
-  DelDY = - vevSM(2) * Conjg(mu) * Yd
-  DelLnoY = vevSM(1) * Tl
-  DelLY = - vevSM(2) * Conjg(mu) * Yl
+  DelU = vevSM(2) * Conjg(Tu) - vevSM(1) * mu * Conjg(Yu)
+  DelDnoY = vevSM(1) * Conjg(Td)
+  DelDY = - vevSM(2) * mu * Conjg(Yd)
+  DelLnoY = vevSM(1) * Conjg(Tl)
+  DelLY = - vevSM(2) * mu * Conjg(Yl)
  !-----------------------------------------------------------
   ! the different parts of the self energies
   !-----------------------------------------------------------
@@ -11463,6 +11463,11 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
   SigLY = 0._dp
   SigLnoY = 0._dp
   SigU = 0._dp
+  !--------------------------------------
+  ! to avoid some unnessary calculations
+  !--------------------------------------
+  alphaM(1:2) = oo4pi * alpha(1:2) * mi(1:2)
+  alphaM(3) = oo3pi * alpha(3) * mi(3)
   !------------------------
   ! double sfermion loops
   !------------------------
@@ -11474,7 +11479,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
     m12 = Abs(mi(3))**2
     m22 = mSqL2(i1)
     m32 = mSdR2(i2)
-    C0m = 2._dp * alpha(3) * mi(3) * oo3pi * C0_3m(m12, m22, m32)
+    C0m = 2._dp * alphaM(3) * C0_3m(m12, m22, m32)
     Do i3=1,3
      Do i4=1,3
       Do i5=1,3
@@ -11488,7 +11493,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
      End Do
     End Do
     m32 = mSuR2(i2)
-    C0m = 2._dp * alpha(3) * mi(3) * oo3pi * C0_3m(m12, m22, m32)
+    C0m = 2._dp * alphaM(3) * C0_3m(m12, m22, m32)
     Do i3=1,3
      Do i4=1,3
       Do i5=1,3
@@ -11506,7 +11511,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
     m12 = Abs(mi(1))**2
     m22 = mSqL2(i1)
     m32 = mSdR2(i2)
-    C0m = - alpha(1) * mi(1) * oo4pi * C0_3m(m12, m22, m32) / 9._dp
+    C0m = - alphaM(1) * C0_3m(m12, m22, m32) / 9._dp
     Do i3=1,3
      Do i4=1,3
       Do i5=1,3
@@ -11520,7 +11525,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
      End Do
     End Do
     m32 = mSuR2(i2)
-    C0m = 2._dp * alpha(1) * mi(1) * oo4pi * C0_3m(m12, m22, m32) / 9._dp
+    C0m = 2._dp * alphaM(1) * C0_3m(m12, m22, m32) / 9._dp
     Do i3=1,3
      Do i4=1,3
       Do i5=1,3
@@ -11533,7 +11538,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
     End Do
     m22 = mSlL2(i1)
     m32 = mSlR2(i2)
-    C0m = alpha(1) * mi(1) * oo4pi * C0_3m(m12, m22, m32) 
+    C0m = alphaM(1) * C0_3m(m12, m22, m32) 
     Do i3=1,3
      Do i4=1,3
       Do i5=1,3
@@ -11553,8 +11558,8 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
     m12 = Abs(mu)**2
     m22 = mSqL2(i1)
     m32 = mSuR2(i2)
-    C0m = - Conjg(mu) * Yu(3,3) * Yd(3,3) * C0_3m(m12, m22, m32) * V0(3,3) &
-        &      * oo16pi2 * LamDLL(i1,3,3) * DelU(3,3) * LamuRR(i2,3,3)
+    C0m = - mu * Yu(3,3) * Yd(3,3) * C0_3m(m12, m22, m32) * V0(3,3) &
+        &      * oo16pi2 * LamDLL(i1,3,3) * Conjg(DelU(3,3)) * LamuRR(i2,3,3)
     Do i3=1,3
      SigDY(i3,3) = SigDY(i3,3) + Conjg(V0(3,i3)) * C0m
     End Do
@@ -11571,8 +11576,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    m12 = Abs(mi(2))**2
    m22 = Abs(mu)**2
    m32 = mSlL2(i1)
-   C0m = Conjg(mu) *  mi(2) * alpha(2) * oo4pi * C0_3m(m12, m22, m32) &
-        &      * vevSM(2) * 1.5_dp
+   C0m = mu * alphaM(2) * C0_3m(m12, m22, m32) * vevSM(2) * 1.5_dp
    Do i2=1,3
     Do i3=1,3
      SigLY(i2,i3) = SigLY(i2,i3) + LamLLL(i1,i2,i3) * Yl(i3,i3) * C0m
@@ -11585,8 +11589,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    m12 = Abs(mi(1))**2
    m22 = Abs(mu)**2
    m32 = mSlL2(i1)
-   C0m = - Conjg(mu) *  mi(1) * alpha(1) * oo4pi * C0_3m(m12, m22, m32) &
-        &      * vevSM(2) * 0.5_dp
+   C0m = - mu * alphaM(1) * C0_3m(m12, m22, m32) * vevSM(2) * 0.5_dp
    Do i2=1,3
     Do i3=1,3
      SigLY(i2,i3) = SigLY(i2,i3) + LamLLL(i1,i2,i3) * Yl(i3,i3) * C0m
@@ -11599,22 +11602,20 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    m12 = Abs(mi(1))**2
    m22 = Abs(mu)**2
    m32 = mSlR2(i1)
-   C0m = Conjg(mu) *  mi(1) * alpha(1) * oo4pi * C0_3m(m12, m22, m32) &
-        &      * vevSM(2) 
+   C0m = mu * alphaM(1) * C0_3m(m12, m22, m32) * vevSM(2) 
    Do i2=1,3
     Do i3=1,3
      SigLY(i2,i3) = SigLY(i2,i3) + LamLRR(i1,i2,i3) * Yl(i2,i2) * C0m
     End Do
    End Do
 
-   !-------------------------------------
+   !---------------------------------------------
    ! charged + neutral wino and left D/U-squark
-   !-------------------------------------
+   !---------------------------------------------
    m12 = Abs(mi(2))**2
    m22 = Abs(mu)**2
    m32 = mSqL2(i1)
-   C0m = Conjg(mu) * mi(2) * alpha(2) * oo4pi * C0_3m(m12, m22, m32) &
-        &      * vevSM(2) * 1.5_dp
+   C0m = mu * alphaM(2) * C0_3m(m12, m22, m32) * vevSM(2) * 1.5_dp
    Do i2=1,3
     Do i3=1,3
      SigDY(i2,i3) = SigDY(i2,i3) + LamDLL(i1,i2,i3) * Yd(i3,i3) * C0m
@@ -11626,8 +11627,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    m12 = Abs(mi(1))**2
    m22 = Abs(mu)**2
    m32 = mSqL2(i1)
-   C0m = Conjg(mu) *  mi(1) * alpha(1) * oo4pi * C0_3m(m12, m22, m32) &
-        &      * vevSM(2) / 6._dp
+   C0m = mu * alphaM(1) * C0_3m(m12, m22, m32) * vevSM(2) / 6._dp
    Do i2=1,3
     Do i3=1,3
      SigDY(i2,i3) = SigDY(i2,i3) + LamDLL(i1,i2,i3) * Yd(i3,i3) * C0m
@@ -11640,8 +11640,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    m12 = Abs(mi(1))**2
    m22 = Abs(mu)**2
    m32 = mSdR2(i1)
-   C0m = Conjg(mu) *  mi(1) * alpha(1) * oo4pi * C0_3m(m12, m22, m32) &
-        &      * vevSM(2) / 3._dp
+   C0m = mu * alphaM(1) * C0_3m(m12, m22, m32) * vevSM(2) / 3._dp
    Do i2=1,3
     Do i3=1,3
      SigDY(i2,i3) = SigDY(i2,i3) + LamDRR(i1,i2,i3) * Yd(i2,i2) * C0m
@@ -11664,9 +11663,9 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    !--------------------------
     m22 = mSqL2(i1)
     m32 = mSuR2(i2)
-    C0m = - Conjg(mu) * Yu(3,3) * Yd(3,3) * C0_3m(m12, m22, m32) &
+    C0m = - mu * Yu(3,3) * Yd(3,3) * C0_3m(m12, m22, m32) &
         &      * oo16pi2
-    epsd_FC = epsd_FC + LamdLL(i1,3,3) * DelU(3,3) * LamuRR(i2,3,3) * C0m
+    epsd_FC = epsd_FC + LamdLL(i1,3,3) * Conjg(DelU(3,3)) * LamuRR(i2,3,3) * C0m
    End Do
   End Do
   epsd_FC = epsd_FC /(Yd(3,3)*vevSM(1))

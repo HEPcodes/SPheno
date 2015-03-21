@@ -2990,11 +2990,11 @@ Contains
                  & , sb, cb, Q, muR, FB, FB_A)
 
   If(Atau/=0d0) Then
-    DMB = htau2*muR*Atau/(mStau2(2) - mStau2(1))/(sb*cb) * FA
+    DMB = htau2*muR*Atau/(mStau2(2) - mStau2(1))/(sb*cb) * FB
   Else
   !     the function FA has poles in A=0. 
   !     when necessary we consider the residues:
-    DMB = htau2*muR/(mStau2(2) - mStau2(1))/(sb*cb) * FA_A
+    DMB = htau2*muR/(mStau2(2) - mStau2(1))/(sb*cb) * FB_A
   Endif
   DMB = htau2 * DMB
 
@@ -3115,7 +3115,7 @@ Contains
   At = sb**2*Xt+cb**2*Yt
   ct2 = (1._dp+c2t)/2._dp
   st2 = (1._dp-c2t)/2._dp
-if (at.eq.0._dp) at=epsilon(at)
+
   tauFAc =  -(delt(mu2,t,T1)+2*t*mu2)/T1*phi(mu2,t,T1) &
     & + cb**2*Yt**2*(A0*c2t**2*(A0-2*(T1+T2))/2/(T1-T2)/T2 &
     &-s2t**2*(T1-T2)/4/T2)*phi(A0,T1,T2) +cb**2*(-A0*mt*Yt*(A0-4*T1) &

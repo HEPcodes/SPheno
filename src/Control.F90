@@ -51,7 +51,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  !------------------------------------
  ! version number
  !------------------------------------
- Character(len=8), Save :: version="v3.3.2"
+ Character(len=8), Save :: version="v3.3.3"
  !------------------------------------
  ! variables for spectrum calculation
  !------------------------------------
@@ -93,6 +93,12 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  ! use entry 9 in SPhenoInput to set value to 1 to use old version
  !-------------------------------------------------------------------
  Logical, save :: UseNewBoundaryEW = .True.
+ !-------------------------------------------------------------------
+ ! in case one still wants to check results using the on-shell stop
+ ! masses to get the renormalisation scale, 
+ ! use entry 10 in SPhenoInput to set value to 1 
+ !-------------------------------------------------------------------
+ Logical, save :: UseNewScale = .True.
  !------------------------------------------
  ! warning and error system
  !------------------------------------------
