@@ -1712,8 +1712,8 @@ Do a = 1, i_n
           & , gam )
 
        Sneut(i_run)%gi3(i_c)   = gam
-       Sneut(i_run)%id3(i_c,1) = Slept(i2)%id +1
-       Sneut(i_run)%id3(i_c,2) = id_l(i3)
+       Sneut(i_run)%id3(i_c,1) = Slept(i2)%id
+       Sneut(i_run)%id3(i_c,2) = id_l(i3) +1
        Sneut(i_run)%id3(i_c,3) = id_nu(i4)
        i_c = i_c + 1
       End Do

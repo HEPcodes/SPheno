@@ -303,7 +303,7 @@ Contains
   & , c_CLSn_L, c_CLSn_R, mf_l, Sdown, c_CUSd_L, c_CUSd_R, mf_u, Sup, c_CDSu_L &
   & , c_CDSu_R, mf_d, Chi0, mW, c_CNW_L, c_CNW_R, Spm, c_SmpCN_L, c_SmpCN_R    &
   & , mZ, c_CCZ_L, c_CCZ_R, P0, c_CCP0_L, c_CCP0_R, S0, c_CCS0_L, c_CCS0_R     &
-  & , m32, c_CGW, k_neut )
+  & , m32, c_CGW_L, c_CGW_R, k_neut )
  !-----------------------------------------------------------------------
  ! Calculates the 2-body decays of charginos:
  ! input:
@@ -353,14 +353,14 @@ Contains
   Integer, Intent(in) :: i_in, k_neut, n_nu, n_l, n_d, n_u, n_Z, n_W, n_snu  &
        & , n_sle, n_Sd, n_su, n_n, n_c, n_s0, n_p0, n_Spm, id_grav
   Integer, Intent(in) :: id_nu(:), id_l(:), id_d(:), id_u(:), id_Z(:), id_W(:)
-  Real(dp), Intent(in) ::  mf_l(:), mf_d(:), mf_u(:), mW(:), mZ(:), c_CGW, m32
+  Real(dp), Intent(in) ::  mf_l(:), mf_d(:), mf_u(:), mW(:), mZ(:), m32
   Complex(dp), Intent(in) :: c_CNuSl_L(:,:,:), c_CNuSl_R(:,:,:)     &
          & , c_CLSn_L(:,:,:), c_CLSn_R(:,:,:), c_CUSd_L(:,:,:)      &
          & , c_CUSd_R(:,:,:), c_CDSu_L(:,:,:), c_CDSu_R(:,:,:)      &
          & , c_CNW_L(:,:,:), c_CNW_R(:,:,:), c_SmpCN_L(:,:,:)       &
          & , c_SmpCN_R(:,:,:), c_CCZ_L(:,:,:), c_CCZ_R(:,:,:)       &
          & , c_CCP0_L(:,:,:), c_CCP0_R(:,:,:), c_CCS0_L(:,:,:)      &
-         & , c_CCS0_R(:,:,:)
+         & , c_CCS0_R(:,:,:), c_CGW_L(2), c_CGW_R(2)
   Type(particle2), Intent(in) :: Sdown(:), Spm(:), P0(:)
   Type(particle23), Intent(in) :: Sneut(:), Slept(:), Sup(:), Chi0(:), S0(:)
   Type(particle23), Intent(inout) :: ChiPm(:)
@@ -368,7 +368,7 @@ Contains
  
   Integer :: i1, i2, i_start, i_end, i_count, i3
   Real(dp) :: gam, m_in, mN(n_n), mSlepton(n_sle), mSneut(n_snu), mSdown(n_sd) &
-         & , mSup(n_su), mC(n_c), mS0(n_S0), mSpm(n_Spm), mP0(n_P0), x1, x2, sq1 
+         & , mSup(n_su), mC(n_c), mS0(n_S0), mSpm(n_Spm), mP0(n_P0), x1, x2, sq1
   !-----------------
   ! Initialization
   !-----------------
@@ -567,11 +567,18 @@ Contains
      x1 = m32/mC(i1)
      sq1 = Sqrt(x1)
      x2 = (mW(1)/mC(i1))**2
-     ChiPm(i1)%gi2(i_count) = oo16pi * c_CGW * Abs(mC(i1))**5                 &
+     ChiPm(i1)%gi2(i_count) = oo16pi * Abs(mC(i1))**5                         &
         &      * Sqrt(1._dp-2._dp*(x1+x2)+(x1-x2)**2)                         &
-        &      * ( (1._dp-x1)**2 * (1._dp + 3._dp*x1)                         &
-        &            - x2 * (3._dp + x1**2 - 12._dp * x1 * sq1                &
-        &                                  - x2 * (3._dp-x1-x2) ) )  
+        &      * ( (Abs(c_CGW_L(1))**2 + Abs(c_CGW_R(1))**2)                  &
+        &          * ( (1._dp-x1)**2 * (1._dp + 3._dp*x1)                     &
+        &                              - x2 * (3._dp + x1**2                  &
+        &                                  - 12._dp * x1 * sq1                &
+        &                                  - x2 * (3._dp-x1-x2) ) )           &
+        &         + (Abs(c_CGW_L(2))**2 + Abs(c_CGW_R(2))**2)                 &
+        &           * ( (1._dp-x1)**2 * (1._dp + sq1)**2                      &
+        &             - x2 * ( (1-sq1)**2 * (3._dp + 2._dp*sq1 - 9._dp*x1)    &
+        &                             - x2 * (3._dp-2._dp*sq1-9._dp*x1-x2) )) )
+
      ChiPm(i1)%id2(i_count,1) = id_grav
      ChiPm(i1)%id2(i_count,2) = id_W(1)
 
@@ -931,19 +938,20 @@ Contains
        & , n_sle, n_Sd, n_su, n_n, n_c, n_s0, n_p0, n_Spm, id_ph, id_grav
   Integer, Intent(in) :: id_nu(:), id_l(:), id_d(:), id_u(:), id_Z(:), id_W(:)
   Real(dp), Intent(in) ::  mf_l(3), mf_d(3), mf_u(3), mW(:), mZ(:), m32
-  Complex(dp), Intent(in) :: c_LNSl_L(:,:,:), c_LNSl_R(:,:,:)                  &
-     & , c_NuNSn_L(:,:,:), c_NuNSn_R(:,:,:), c_DNSd_L(:,:,:), c_DNSd_R(:,:,:)  &
-     & , c_UNSu_L(:,:,:), c_UNSu_R(:,:,:), c_CNW_L(:,:,:), c_CNW_R(:,:,:)      &
-     & , c_SmpCN_L(:,:,:), c_SmpCN_R(:,:,:), c_NNZ_L(:,:,:), c_NNZ_R(:,:,:)    &
-     & , c_NNP0_L(:,:,:), c_NNP0_R(:,:,:), c_NNS0_L(:,:,:), c_NNS0_R(:,:,:)    &
-     & , c_NGP, c_NGZ, c_NGH
+  Complex(dp), Intent(in) :: c_LNSl_L(:,:,:), c_LNSl_R(:,:,:)                 &
+     & , c_NuNSn_L(:,:,:), c_NuNSn_R(:,:,:), c_DNSd_L(:,:,:), c_DNSd_R(:,:,:) &
+     & , c_UNSu_L(:,:,:), c_UNSu_R(:,:,:), c_CNW_L(:,:,:), c_CNW_R(:,:,:)     &
+     & , c_SmpCN_L(:,:,:), c_SmpCN_R(:,:,:), c_NNZ_L(:,:,:), c_NNZ_R(:,:,:)   &
+     & , c_NNP0_L(:,:,:), c_NNP0_R(:,:,:), c_NNS0_L(:,:,:), c_NNS0_R(:,:,:)   &
+     & , c_NGP, c_NGZ(2), c_NGH
   Type(particle2), Intent(in) :: Sdown(:), Spm(:), P0(:)
   Type(particle23), Intent(in) :: Sneut(:), Slept(:), Sup(:), ChiPm(:), S0(:)
   Type(particle23), Intent(inout) :: Chi0(:)
 
   Integer :: i1, i2, i3, i_start, i_end, i_count
-  Real(dp) :: gam, m_in, mN(n_n), mSlepton(n_sle), mSneut(n_snu), mSdown(n_sd) &
-         & , mSup(n_su), mC(n_c), mS0(n_S0), mSpm(n_Spm), mP0(n_P0), x1, x2, sq1
+  Real(dp) :: gam, m_in, mN(n_n), mSlepton(n_sle), mSneut(n_snu)     &
+       & , mSdown(n_sd), mSup(n_su), mC(n_c), mS0(n_S0), mSpm(n_Spm) &
+       & , mP0(n_P0), x1, x2, sq1
   !-----------------
   ! Initialization
   !-----------------
@@ -1183,13 +1191,13 @@ Contains
      x2 = (mZ(1)/mN(i1))**2
      Chi0(i1)%gi2(i_count) = oo16pi * Abs(mN(i1))**5                          &
         &      * Sqrt(1._dp-2._dp*(x1+x2)+(x1-x2)**2)                         &
-        &      * ( Abs(c_NGZ)**2  * ( (1._dp-x1)**2 * (1._dp + 3._dp*x1)      &
+        &      * ( Abs(c_NGZ(1))**2  * ( (1._dp-x1)**2 * (1._dp + 3._dp*x1)   &
         &                           - x2 * (3._dp + x1**2                     &
         &                                  - 12._dp * x1 * sq1                &
         &                                  - x2 * (3._dp-x1-x2) ) )           &
-        &         + Abs(c_NGH)**2 * ( (1._dp-x1)**2 * (1._dp + sq1)**2        &
+        &         + Abs(c_NGZ(2))**2 * ( (1._dp-x1)**2 * (1._dp + sq1)**2     &
         &                      - x2 * ( (1-sq1)**2                            &
-        &                               * (3._dp + 2._dp*sq1 - 9._dp*x1)      & 
+        &                               * (3._dp + 2._dp*sq1 - 9._dp*x1)      &
         &                             - x2 * (3._dp-2._dp*sq1-9._dp*x1-x2) )) )
      Chi0(i1)%id2(i_count,1) = id_grav
      Chi0(i1)%id2(i_count,2) = id_Z(1)

@@ -1,11 +1,11 @@
 # SUSY Les Houches Accord 2 - MSSM spectrum + Decays
-# SPheno v3.3.4  
+# SPheno v3.3.5  
 # W. Porod, Comput. Phys. Commun. 153 (2003) 275-315, hep-ph/0301101
 # in case of problems send email to porod@physik.uni-wuerzburg.de
-# Created: 06.02.2015,  17:05
+# Created: 20.02.2015,  09:49
 Block SPINFO         # Program information
      1   SPheno      # spectrum calculator
-     2   v3.3.4      # version number
+     2   v3.3.5      # version number
 #
 Block SPhenoINFO     # SPheno specific information
     1      2         # using 2-loop RGEs
@@ -291,19 +291,19 @@ DECAY   2000015     8.62796664E-06   # ~tau^-_2
      2.28352210E-01    3     1000016         3        -4   # BR(~tau^-_2 -> ~nu_tau s c_bar)
 DECAY   1000012     1.53998741E-11   # ~nu_e
 #    BR                NDA      ID1      ID2       ID3
-     2.01257818E-01    3    -1000015        15        12   # BR(~nu_e -> ~tau^+_1 tau^- nu_e)
+     2.01257818E-01    3     1000015       -15        12   # BR(~nu_e -> ~tau^-_1 tau^+ nu_e)
      5.99098972E-01    3    -1000015        11        16   # BR(~nu_e -> ~tau^+_1 e^- nu_tau)
      1.99643191E-01    3    -1000015        15        12   # BR(~nu_e -> ~tau^+_1 tau^- nu_e)
 DECAY   1000014     1.53578955E-11   # ~nu_mu
 #    BR                NDA      ID1      ID2       ID3
-     2.01687658E-01    3    -1000015        15        14   # BR(~nu_mu -> ~tau^+_1 tau^- nu_mu)
+     2.01687658E-01    3     1000015       -15        14   # BR(~nu_mu -> ~tau^-_1 tau^+ nu_mu)
      5.98242679E-01    3    -1000015        13        16   # BR(~nu_mu -> ~tau^+_1 mu^- nu_tau)
      2.00069644E-01    3    -1000015        15        14   # BR(~nu_mu -> ~tau^+_1 tau^- nu_mu)
 DECAY   1000016     1.28525512E-09   # ~nu_tau
 #    BR                NDA      ID1      ID2       ID3
-     1.34713192E-01    3    -1000015        11        12   # BR(~nu_tau -> ~tau^+_1 e^- nu_e)
-     1.34307057E-01    3    -1000015        13        14   # BR(~nu_tau -> ~tau^+_1 mu^- nu_mu)
-     5.95292168E-02    3    -1000015        15        16   # BR(~nu_tau -> ~tau^+_1 tau^- nu_tau)
+     1.34713192E-01    3     1000015       -11        12   # BR(~nu_tau -> ~tau^-_1 e^+ nu_e)
+     1.34307057E-01    3     1000015       -13        14   # BR(~nu_tau -> ~tau^-_1 mu^+ nu_mu)
+     5.95292168E-02    3     1000015       -15        16   # BR(~nu_tau -> ~tau^-_1 tau^+ nu_tau)
      1.65399918E-03    3    -1000015        15        16   # BR(~nu_tau -> ~tau^+_1 tau^- nu_tau)
      4.04136201E-01    3     1000015        -2         1   # BR(~nu_tau -> ~tau^-_1 u_bar d)
      2.65660334E-01    3     1000015        -4         3   # BR(~nu_tau -> ~tau^-_1 c_bar s)

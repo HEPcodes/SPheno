@@ -179,27 +179,27 @@ Contains
   Complex(dp) :: c_CCP0_L(2,2,2), c_CCP0_R(2,2,2)    &
       & , c_CCS0_L(2,2,2), c_CCS0_R(2,2,2), c_CNW_L(2,4,1)        &
       & , c_CNW_R(2,4,1), c_SmpCN_L(2,2,4), c_SmpCN_R(2,2,4), c_NGP &
-      & , c_NGZ, c_NGH
+      & , c_NGZ(2), c_NGH, c_CGW_L(2), c_CGW_R(2)
   Complex(dp), Dimension(3,6) :: c_GraDSd_L, c_GraDSd_R, c_GraUSu_L &
       & , c_GraUSu_R, c_GraLSl_L, c_GraLSl_R
   Complex(dp), Dimension(3,3) :: c_GraNuSn_L, c_GraNuSn_R
 
   Real(dp) :: tanb, sinW2, cosW, M2_H(2), g_i(3), CosW2
-  Complex(dp) :: M2_E(3,3), M2_L(3,3), M2_D(3,3), M2_Q(3,3), M2_U(3,3), Mi(3), B &
-      & , Y_l_h(3,3), Y_d_h(3,3), Y_u_h(3,3), A_l_h(3,3), A_d_h(3,3), A_u_h(3,3) &
-      & , mu_h, cR
+  Complex(dp) :: M2_E(3,3), M2_L(3,3), M2_D(3,3), M2_Q(3,3), M2_U(3,3), Mi(3) &
+      & , B, Y_l_h(3,3), Y_d_h(3,3), Y_u_h(3,3), A_l_h(3,3), A_d_h(3,3)       &
+      & , A_u_h(3,3), mu_h, cR
   Integer :: kont
-  Complex(dp) :: coup, g_u(3), g_d(3), g_l(3), g_c(2), g_sl(6), g_sd(6), g_su(6) 
+  Complex(dp) :: coup, g_u(3), g_d(3), g_l(3), g_c(2), g_sl(6), g_sd(6), g_su(6)
   Complex(dp), Dimension(3,3) :: uD_L_h, uD_R_h, uL_L_h, uL_R_h, uU_L_h, uU_R_h
-  Real(dp) :: g_W, g_Hp, m_W(1), m_Z(1), F_eff, gam, mf(3), mf_d2_h(3) &
-      & , mf_u2_h(3), mf_l2_h(3), mGlu, mC(2), mC2(2), mN(4), mN2(4)            &
-              & , mSneut(3), mSneut2(3), mSlepton(6), mSlepton2(6), mSdown(6)   &
-              & , mSdown2(6), mSup(6), mSup2(6), mP0(2), mP02(2), RP0_h(2,2)    &
-              & , mS0(2), mS02(2), RS0_h(2,2), mSpm(2), mSpm2(2), sinb, cosb
+  Real(dp) :: g_W, g_Hp, m_W(1), m_Z(1), F_eff, gam, mf(3), mf_d2_h(3)   &
+      & , mf_u2_h(3), mf_l2_h(3), mGlu, mC(2), mC2(2), mN(4), mN2(4)     &
+      & , mSneut(3), mSneut2(3), mSlepton(6), mSlepton2(6), mSdown(6)    &
+      & , mSdown2(6), mSup(6), mSup2(6), mP0(2), mP02(2), RP0_h(2,2)     &
+      & , mS0(2), mS02(2), RS0_h(2,2), mSpm(2), mSpm2(2), sinb, cosb
   Complex(dp) :: U_h(2,2), V_h(2,2), N_h(4,4), Rsneut_h(3,3), RSlepton_h(6,6)  &
               & , RSdown_h(6,6), RSup_h(6,6), RSpm_h(2,2), PhiGlu, yuk, A      &
               & , Rsl(2,2) , Rsd(2,2) , Rsu(2,2) 
-  Real(dp) :: fakt, r_T, width, c_CGW
+  Real(dp) :: fakt, r_T, width
   Real(dp), Parameter :: mf_nu(3)=0._dp, e_d = -1._dp/3._dp, e_u = 2._dp/3._dp
   Complex(dp), Parameter :: g_sd0(6) = 0._dp, g_su0(6) = 0._dp &
       & , g_u0(3) = (1._dp,0._dp), g_d0(3)  = (1._dp,0._dp)
@@ -229,36 +229,35 @@ Contains
   SMp%m = SPm%m
   SMp%id = SPm%id + 1
 
-  Call AllCouplingsMSSM(gauge, Y_l, uL_L, uL_R, Y_d, uD_L, uD_R, Y_u, uU_L, uU_R   &
-    & , vevSM, RSpm, RP0, RS0, U, V, N, mu, PhaseGlu, RSlepton, A_l, Rsneut    &
-    & , RSup, A_u, RSdown, A_d                                                 &
-    & , c_SmpSlSn, c_SmpSdSu, c_SmpSnSl, c_SmpSuSd, c_SmpP03         &
-    & , c_SmpP0W, c_SmpS03, c_SmpS0W, c_SmpLNu_L, c_SmpLNu_R         &
-    & , c_SmpDU_L, c_SmpDU_R, c_SmpZ(:,:,1), c_DUW, c_LLZ_L, c_LLZ_R      &
-    & , c_DDZ_L, c_DDZ_R, c_UUZ_L, c_UUZ_R, c_NuNuZ_L, c_NuNuZ_R   &
-    & , c_CCZ_L(:,:,1), c_CCZ_R(:,:,1), c_NNZ_L(:,:,1), c_NNZ_R(:,:,1), c_NNS0_L, c_NNS0_R     &
-    & , c_NNP0_L, c_NNP0_R, c_GDSd_L, c_GDSd_R, c_DNSd_L             &
-    & , c_DNSd_R, c_GUSu_L, c_GUSu_R, c_UNSu_L, c_UNSu_R             &
-    & , c_LNSl_L, c_LNSl_R, c_NuNSn_L, c_NuNSn_R, c_DDP0_L           &
-    & , c_LLP0_L, c_UUP0_L, c_DDP0_R, c_LLP0_R, c_UUP0_R             &
-    & , c_DDS0_L, c_LLS0_L, c_UUS0_L, c_DDS0_R, c_LLS0_R             &
-    & , c_UUS0_R, c_CUSd_L, c_CUSd_R, c_CDSu_L, c_CDSu_R             &
-    & , c_CLSn_L, c_CLSn_R, c_CNuSl_L, c_CNuSl_R, c_GlGlS0           &
-    & , c_P0SdSd, c_P0SuSu, c_P0SlSl, c_P0SnSn, c_P0S0Z(:,:,1), c_P0S03   &
-    & , c_S0SdSd, c_S0SuSu, c_S0SlSl, c_S0SnSn, c_S03, c_S0WW(:,1)      &
-    & , c_S0ZZ(:,1), c_FFpW, c_LNuW, c_SdSuW(:,:,1), c_SuSdW(:,:,1), c_SlSnW(:,:,1)          &
-    & , c_SnSlW(:,:,1), c_SdSdZ(:,:,1), c_SlSlZ(:,:,1), c_SnSnZ(:,:,1) &
-    & , c_SuSuZ(:,:,1), c_CCP0_L      &
-    & , c_CCP0_R, c_CCS0_L, c_CCS0_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1) &
-    & , c_SmpCN_L, c_SmpCN_R, c_GraDSd_L, c_GraDSd_R, c_GraUSu_L, c_GraUSu_R &
+  Call AllCouplingsMSSM(gauge, Y_l, uL_L, uL_R, Y_d, uD_L, uD_R, Y_u           &
+    & , uU_L, uU_R, vevSM, RSpm, RP0, RS0, U, V, N, mu, PhaseGlu, RSlepton     &
+    & , A_l, Rsneut, RSup, A_u, RSdown, A_d                                    &
+    & , c_SmpSlSn, c_SmpSdSu, c_SmpSnSl, c_SmpSuSd, c_SmpP03, c_SmpP0W         &
+    & , c_SmpS03, c_SmpS0W, c_SmpLNu_L, c_SmpLNu_R, c_SmpDU_L, c_SmpDU_R       &
+    & , c_SmpZ(:,:,1), c_DUW, c_LLZ_L, c_LLZ_R, c_DDZ_L, c_DDZ_R               &
+    & , c_UUZ_L, c_UUZ_R, c_NuNuZ_L, c_NuNuZ_R, c_CCZ_L(:,:,1), c_CCZ_R(:,:,1) &
+    & , c_NNZ_L(:,:,1), c_NNZ_R(:,:,1), c_NNS0_L, c_NNS0_R                     &
+    & , c_NNP0_L, c_NNP0_R, c_GDSd_L, c_GDSd_R, c_DNSd_L                       &
+    & , c_DNSd_R, c_GUSu_L, c_GUSu_R, c_UNSu_L, c_UNSu_R                       &
+    & , c_LNSl_L, c_LNSl_R, c_NuNSn_L, c_NuNSn_R, c_DDP0_L                     &
+    & , c_LLP0_L, c_UUP0_L, c_DDP0_R, c_LLP0_R, c_UUP0_R                       &
+    & , c_DDS0_L, c_LLS0_L, c_UUS0_L, c_DDS0_R, c_LLS0_R                       &
+    & , c_UUS0_R, c_CUSd_L, c_CUSd_R, c_CDSu_L, c_CDSu_R                       &
+    & , c_CLSn_L, c_CLSn_R, c_CNuSl_L, c_CNuSl_R, c_GlGlS0                     &
+    & , c_P0SdSd, c_P0SuSu, c_P0SlSl, c_P0SnSn, c_P0S0Z(:,:,1), c_P0S03        &
+    & , c_S0SdSd, c_S0SuSu, c_S0SlSl, c_S0SnSn, c_S03, c_S0WW(:,1)             &
+    & , c_S0ZZ(:,1), c_FFpW, c_LNuW, c_SdSuW(:,:,1), c_SuSdW(:,:,1)            &
+    & , c_SlSnW(:,:,1), c_SnSlW(:,:,1), c_SdSdZ(:,:,1), c_SlSlZ(:,:,1)         &
+    & , c_SnSnZ(:,:,1), c_SuSuZ(:,:,1), c_CCP0_L, c_CCP0_R                     &
+    & , c_CCS0_L, c_CCS0_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)                     &
+    & , c_SmpCN_L, c_SmpCN_R, c_GraDSd_L, c_GraDSd_R, c_GraUSu_L, c_GraUSu_R   &
     & , c_GraLSl_L, c_GraLSl_R, c_GraNuSn_L, c_GraNuSn_R, GenerationMixing)
 
   tanb = vevSM(2) / vevSM(1)
   cosb = 1._dp / Sqrt(1._dp + tanb**2)
   sinb = cosb * tanb 
-  Call LoopCouplingsMSSM(GenerationMixing, Y_d(3,3), tanb, A_d(3,3), mu, Sdown%m &
-                  & , Sup%m2, RSup, P0%m2 &
-                  & , CKM, c_UNSu_R, c_GUSu_R)
+  Call LoopCouplingsMSSM(GenerationMixing, Y_d(3,3), tanb, A_d(3,3), mu &
+               & , Sdown%m, Sup%m2, RSup, P0%m2, CKM, c_UNSu_R, c_GUSu_R)
 
   If (grav_fac.Ne.0._dp) Then
    F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
@@ -607,8 +606,10 @@ Contains
       & , c_SmpP03, c_SmpP0W, S0, c_SmpS03, c_SmpS0W, 1)
 
   Do i1=1,2
-   c_CGW = Abs(U(i1,1))**2 + Abs(V(i1,1))**2 & 
-         + Abs(U(i1,2)*cosb)**2 + Abs(V(i1,2)*sinb)**2  
+   c_CGW_L(1) = U(i1,1) /F_eff 
+   c_CGW_R(1) = V(i1,1) /F_eff 
+   c_CGW_L(2) = oosqrt2 * U(i1,2) * cosb /F_eff 
+   c_CGW_R(2) = oosqrt2 *  V(i1,2) * sinb /F_eff 
    If (.Not.CTBD)  Then
     Call CharginoTwoBodyDecays(i1, n_nu, id_nu, n_l, id_l, n_d, id_d, n_u      &
        & , id_u, n_Z, id_Z, n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c      &
@@ -616,7 +617,7 @@ Contains
        & , Sneut, c_CLSn_L, c_CLSn_R, mf_l, Sdown, c_CUSd_L, c_CUSd_R, mf_u    &
        & , Sup, c_CDSu_L, c_CDSu_R, mf_d, Chi0, m_W, c_CNW_L, c_CNW_R, Spm     &
        & , c_SmpCN_L, c_SmpCN_R, m_Z, c_CCZ_L, c_CCZ_R, P0, c_CCP0_L, c_CCP0_R &
-       & , S0, c_CCS0_L, c_CCS0_R, m32, c_CGW, 1)
+       & , S0, c_CCS0_L, c_CCS0_R, m32, c_CGW_L, c_CGW_R, 1)
     k_neut =0
     If (ChiPm(i1)%g.Lt. fac3*Abs(ChiPm(i1)%m)) Then
      ChiPm(i1)%gi2 = 0._dp
@@ -698,9 +699,9 @@ Contains
     sinW = Sqrt(sinW2)
     cosW = Sqrt(1._dp - sinW2)    
     c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / F_eff
-    c_NGZ = ( (- N(i1,1)*sinW+ N(i1,2)*cosW)                                   &
-          & + 0.5_dp * (cosb * N(i1,3) - sinb * N(i1,4) ) ) / F_eff
-    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2)) / F_eff
+    c_NGZ(1) = (- N(i1,1)*sinW+ N(i1,2)*cosW) / F_eff
+    c_NGZ(2) = oosqrt2 * (cosb * N(i1,3) - sinb * N(i1,4) ) / F_eff
+    c_NGH =  oosqrt2 * (N(i1,3) * RS0(1,1) + N(i1,4)*RS0(1,2)) / F_eff
     Call NeutralinoTwoBodyDecays(i1, Chi0, n_nu, id_nu, n_l, id_l, n_d, id_d   &
       & , n_u, id_u, n_Z, id_Z, n_W, id_W , n_snu, n_sle, n_Sd, n_su, n_n, n_c &
       & , n_s0, n_p0, n_Spm, id_ph, id_grav, Slept, c_LNSl_L, c_LNSl_R, mf_l   &
@@ -711,61 +712,61 @@ Contains
 
     If (Chi0(i1)%g.Lt.fac3*Abs(Chi0(i1)%m)) Then
      Chi0(i1)%gi2 = 0._dp
-     Call NeutralinoThreeBodyDecays(i1, n_l, id_l, n_nu, id_nu, n_d, id_d, n_u  &
-       & , id_u, n_c, n_n, n_W, id_W, n_Z, id_Z, n_Sle, n_Snu, n_Sd, n_Su, n_S0 &
-       & , n_P0, n_Spm, id_ph, Chi0, mZ, gamZ, c_NuNuZ_L, c_NuNuZ_R, mf_l       &
-       & , c_LLZ_L, c_LLZ_R, mf_u, c_UUZ_L, c_UUZ_R, mf_d, c_DDZ_L, c_DDZ_R     &
-       & , c_NNZ_L(:,:,1), c_NNZ_R(:,:,1), ChiPm, mW, gamW, c_LNuW, c_DUW       &
-       & , c_CCZ_L(:,:,1), c_CCZ_R(:,:,1), c_CNW_L(:,:,1), c_CNW_R(:,:,1), Spm  &
-       & , c_SmpCN_L, c_SmpCN_R, c_SmpLNu_L, c_SmpLNu_R, c_SmpDU_L, c_SmpDU_R   &
-       & , S0, c_NNS0_L, c_NNS0_R, c_CCS0_L, c_CCS0_R, c_DDS0_L, c_DDS0_R       &
-       & , c_LLS0_L, c_LLS0_R, c_UUS0_L, c_UUS0_R, P0, c_NNP0_L, c_NNP0_R       &
-       & , c_CCP0_L, c_CCP0_R, c_DDP0_L, c_DDP0_R, c_LLP0_L, c_LLP0_R           &
-       & , c_UUP0_L, c_UUP0_R, Sup, c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R      &
-       & , Glu, c_GUSu_L, c_GUSu_R, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L         &
-       & , c_CUSd_R, c_GDSd_L, c_GDSd_R, Sneut, c_NuNSn_L, c_NuNSn_R, c_CLSn_L  &
-       & , c_CLSn_R, Slept, c_LNSl_L, c_LNSl_R, c_CNuSl_L, c_CNuSl_R, gauge(2)  &
-       & , sinW2, GenerationMixing, OnlySM, epsI, deltaM, .False., 0._dp, 200   &
-       & , 2500)
+     Call NeutralinoThreeBodyDecays(i1, n_l, id_l, n_nu, id_nu, n_d, id_d, n_u &
+      & , id_u, n_c, n_n, n_W, id_W, n_Z, id_Z, n_Sle, n_Snu, n_Sd, n_Su, n_S0 &
+      & , n_P0, n_Spm, id_ph, Chi0, mZ, gamZ, c_NuNuZ_L, c_NuNuZ_R, mf_l       &
+      & , c_LLZ_L, c_LLZ_R, mf_u, c_UUZ_L, c_UUZ_R, mf_d, c_DDZ_L, c_DDZ_R     &
+      & , c_NNZ_L(:,:,1), c_NNZ_R(:,:,1), ChiPm, mW, gamW, c_LNuW, c_DUW       &
+      & , c_CCZ_L(:,:,1), c_CCZ_R(:,:,1), c_CNW_L(:,:,1), c_CNW_R(:,:,1), Spm  &
+      & , c_SmpCN_L, c_SmpCN_R, c_SmpLNu_L, c_SmpLNu_R, c_SmpDU_L, c_SmpDU_R   &
+      & , S0, c_NNS0_L, c_NNS0_R, c_CCS0_L, c_CCS0_R, c_DDS0_L, c_DDS0_R       &
+      & , c_LLS0_L, c_LLS0_R, c_UUS0_L, c_UUS0_R, P0, c_NNP0_L, c_NNP0_R       &
+      & , c_CCP0_L, c_CCP0_R, c_DDP0_L, c_DDP0_R, c_LLP0_L, c_LLP0_R           &
+      & , c_UUP0_L, c_UUP0_R, Sup, c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R      &
+      & , Glu, c_GUSu_L, c_GUSu_R, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L         &
+      & , c_CUSd_R, c_GDSd_L, c_GDSd_R, Sneut, c_NuNSn_L, c_NuNSn_R, c_CLSn_L  &
+      & , c_CLSn_R, Slept, c_LNSl_L, c_LNSl_R, c_CNuSl_L, c_CNuSl_R, gauge(2)  &
+      & , sinW2, GenerationMixing, OnlySM, epsI, deltaM, .False., 0._dp, 200   &
+      & , 2500)
 
     Else ! calculate only 3-body via virtual particles
-     Call NeutralinoThreeBodyDecays(i1, n_l, id_l, n_nu, id_nu, n_d, id_d, n_u  &
-       & , id_u, n_c, n_n, n_W, id_W, n_Z, id_Z, n_Sle, n_Snu, n_Sd, n_Su, n_S0 &
-       & , n_P0, n_Spm, id_ph, Chi0, mZ, gamZ, c_NuNuZ_L, c_NuNuZ_R, mf_l       &
-       & , c_LLZ_L, c_LLZ_R, mf_u, c_UUZ_L, c_UUZ_R, mf_d, c_DDZ_L, c_DDZ_R     &
-       & , c_NNZ_L(:,:,1), c_NNZ_R(:,:,1), ChiPm, mW, gamW, c_LNuW, c_DUW       &
-       & , c_CCZ_L(:,:,1), c_CCZ_R(:,:,1), c_CNW_L(:,:,1), c_CNW_R(:,:,1), Spm  &
-       & , c_SmpCN_L, c_SmpCN_R, c_SmpLNu_L, c_SmpLNu_R, c_SmpDU_L, c_SmpDU_R   &
-       & , S0, c_NNS0_L, c_NNS0_R, c_CCS0_L, c_CCS0_R, c_DDS0_L, c_DDS0_R       &
-       & , c_LLS0_L, c_LLS0_R, c_UUS0_L, c_UUS0_R, P0, c_NNP0_L, c_NNP0_R       &
-       & , c_CCP0_L, c_CCP0_R, c_DDP0_L, c_DDP0_R, c_LLP0_L, c_LLP0_R           &
-       & , c_UUP0_L, c_UUP0_R, Sup, c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R      &
-       & , Glu, c_GUSu_L, c_GUSu_R, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L         &
-       & , c_CUSd_R, c_GDSd_L, c_GDSd_R, Sneut, c_NuNSn_L, c_NuNSn_R, c_CLSn_L  &
-       & , c_CLSn_R, Slept, c_LNSl_L, c_LNSl_R, c_CNuSl_L, c_CNuSl_R, gauge(2)  &
-       & , sinW2, GenerationMixing, OnlySM, epsI, deltaM, .True., 0._dp, 200    &
-       & , 2500)
+     Call NeutralinoThreeBodyDecays(i1, n_l, id_l, n_nu, id_nu, n_d, id_d, n_u &
+      & , id_u, n_c, n_n, n_W, id_W, n_Z, id_Z, n_Sle, n_Snu, n_Sd, n_Su, n_S0 &
+      & , n_P0, n_Spm, id_ph, Chi0, mZ, gamZ, c_NuNuZ_L, c_NuNuZ_R, mf_l       &
+      & , c_LLZ_L, c_LLZ_R, mf_u, c_UUZ_L, c_UUZ_R, mf_d, c_DDZ_L, c_DDZ_R     &
+      & , c_NNZ_L(:,:,1), c_NNZ_R(:,:,1), ChiPm, mW, gamW, c_LNuW, c_DUW       &
+      & , c_CCZ_L(:,:,1), c_CCZ_R(:,:,1), c_CNW_L(:,:,1), c_CNW_R(:,:,1), Spm  &
+      & , c_SmpCN_L, c_SmpCN_R, c_SmpLNu_L, c_SmpLNu_R, c_SmpDU_L, c_SmpDU_R   &
+      & , S0, c_NNS0_L, c_NNS0_R, c_CCS0_L, c_CCS0_R, c_DDS0_L, c_DDS0_R       &
+      & , c_LLS0_L, c_LLS0_R, c_UUS0_L, c_UUS0_R, P0, c_NNP0_L, c_NNP0_R       &
+      & , c_CCP0_L, c_CCP0_R, c_DDP0_L, c_DDP0_R, c_LLP0_L, c_LLP0_R           &
+      & , c_UUP0_L, c_UUP0_R, Sup, c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R      &
+      & , Glu, c_GUSu_L, c_GUSu_R, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L         &
+      & , c_CUSd_R, c_GDSd_L, c_GDSd_R, Sneut, c_NuNSn_L, c_NuNSn_R, c_CLSn_L  &
+      & , c_CLSn_R, Slept, c_LNSl_L, c_LNSl_R, c_CNuSl_L, c_CNuSl_R, gauge(2)  &
+      & , sinW2, GenerationMixing, OnlySM, epsI, deltaM, .True., 0._dp, 200    &
+      & , 2500)
 
     End If
 
    Else ! calculation of 3-body decay modes is enforced
 
-     Call NeutralinoThreeBodyDecays(i1, n_l, id_l, n_nu, id_nu, n_d, id_d, n_u  &
-       & , id_u, n_c, n_n, n_W, id_W, n_Z, id_Z, n_Sle, n_Snu, n_Sd, n_Su, n_S0 &
-       & , n_P0, n_Spm, id_ph, Chi0, mZ, gamZ, c_NuNuZ_L, c_NuNuZ_R, mf_l       &
-       & , c_LLZ_L, c_LLZ_R, mf_u, c_UUZ_L, c_UUZ_R, mf_d, c_DDZ_L, c_DDZ_R     &
-       & , c_NNZ_L(:,:,1), c_NNZ_R(:,:,1), ChiPm, mW, gamW, c_LNuW, c_DUW       &
-       & , c_CCZ_L(:,:,1), c_CCZ_R(:,:,1), c_CNW_L(:,:,1), c_CNW_R(:,:,1), Spm  &
-       & , c_SmpCN_L, c_SmpCN_R, c_SmpLNu_L, c_SmpLNu_R, c_SmpDU_L, c_SmpDU_R   &
-       & , S0, c_NNS0_L, c_NNS0_R, c_CCS0_L, c_CCS0_R, c_DDS0_L, c_DDS0_R       &
-       & , c_LLS0_L, c_LLS0_R, c_UUS0_L, c_UUS0_R, P0, c_NNP0_L, c_NNP0_R       &
-       & , c_CCP0_L, c_CCP0_R, c_DDP0_L, c_DDP0_R, c_LLP0_L, c_LLP0_R           &
-       & , c_UUP0_L, c_UUP0_R, Sup, c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R      &
-       & , Glu, c_GUSu_L, c_GUSu_R, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L         &
-       & , c_CUSd_R, c_GDSd_L, c_GDSd_R, Sneut, c_NuNSn_L, c_NuNSn_R, c_CLSn_L  &
-       & , c_CLSn_R, Slept, c_LNSl_L, c_LNSl_R, c_CNuSl_L, c_CNuSl_R, gauge(2)  &
-       & , sinW2, GenerationMixing, OnlySM, epsI, deltaM, .False., 0._dp, 200   &
-       & , 2500)
+     Call NeutralinoThreeBodyDecays(i1, n_l, id_l, n_nu, id_nu, n_d, id_d, n_u &
+      & , id_u, n_c, n_n, n_W, id_W, n_Z, id_Z, n_Sle, n_Snu, n_Sd, n_Su, n_S0 &
+      & , n_P0, n_Spm, id_ph, Chi0, mZ, gamZ, c_NuNuZ_L, c_NuNuZ_R, mf_l       &
+      & , c_LLZ_L, c_LLZ_R, mf_u, c_UUZ_L, c_UUZ_R, mf_d, c_DDZ_L, c_DDZ_R     &
+      & , c_NNZ_L(:,:,1), c_NNZ_R(:,:,1), ChiPm, mW, gamW, c_LNuW, c_DUW       &
+      & , c_CCZ_L(:,:,1), c_CCZ_R(:,:,1), c_CNW_L(:,:,1), c_CNW_R(:,:,1), Spm  &
+      & , c_SmpCN_L, c_SmpCN_R, c_SmpLNu_L, c_SmpLNu_R, c_SmpDU_L, c_SmpDU_R   &
+      & , S0, c_NNS0_L, c_NNS0_R, c_CCS0_L, c_CCS0_R, c_DDS0_L, c_DDS0_R       &
+      & , c_LLS0_L, c_LLS0_R, c_UUS0_L, c_UUS0_R, P0, c_NNP0_L, c_NNP0_R       &
+      & , c_CCP0_L, c_CCP0_R, c_DDP0_L, c_DDP0_R, c_LLP0_L, c_LLP0_R           &
+      & , c_UUP0_L, c_UUP0_R, Sup, c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R      &
+      & , Glu, c_GUSu_L, c_GUSu_R, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L         &
+      & , c_CUSd_R, c_GDSd_L, c_GDSd_R, Sneut, c_NuNSn_L, c_NuNSn_R, c_CLSn_L  &
+      & , c_CLSn_R, Slept, c_LNSl_L, c_LNSl_R, c_CNuSl_L, c_CNuSl_R, gauge(2)  &
+      & , sinW2, GenerationMixing, OnlySM, epsI, deltaM, .False., 0._dp, 200   &
+      & , 2500)
 
     End If ! CTBD
 
@@ -811,19 +812,19 @@ Contains
      Sup(5)%id2(i1,1) = Chi0(i1)%id
      Sup(5)%id2(i1,2) = id_u(2)
     End Do
-    Call StopDecays3(n_l, id_l, n_nu, id_nu, n_su, n_sd, n_sle, n_snu, n_d      &
-        & , id_d, id_W, n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R &
-        & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L          &
-        & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)        &
-        & , Slept, c_CNuSl_R, epsI, .False.)
+    Call StopDecays3(n_l, id_l, n_nu, id_nu, n_su, n_sd, n_sle, n_snu, n_d   &
+     & , id_d, id_W, n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R &
+     & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L          &
+     & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)        &
+     & , Slept, c_CNuSl_R, epsI, .False.)
 
    Else  ! calculation excluding widths
 
-    Call StopDecays3(n_l, id_l, n_nu, id_nu, n_su, n_sd, n_sle, n_snu, n_d      &
-        & , id_d, id_W, n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R &
-        & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L          &
-        & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)        &
-        & , Slept, c_CNuSl_R, epsI, .True.)
+    Call StopDecays3(n_l, id_l, n_nu, id_nu, n_su, n_sd, n_sle, n_snu, n_d   &
+     & , id_d, id_W, n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R &
+     & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L          &
+     & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)        &
+     & , Slept, c_CNuSl_R, epsI, .True.)
 
    End If
   End If ! generation mixing
@@ -1053,9 +1054,9 @@ Contains
   Complex(dp) :: c_CCP0_L(2,2,3), c_CCP0_R(2,2,3)                     &
       & , c_CCS0_L(2,2,3), c_CCS0_R(2,2,3), c_CNW_L(2,5,1)            &
       & , c_CNW_R(2,5,1), c_SmpCN_L(2,2,5), c_SmpCN_R(2,2,5), c_NGP &
-      & , c_NGZ, c_NGH
+      & , c_NGZ(2), c_NGH, c_CGW_L(2), c_CGW_R(2)
 
-  Real(dp) :: tanb, sinW2, cosW, m_W(1), m_Z(1), F_eff, gam, c_CGW
+  Real(dp) :: tanb, sinW2, cosW, m_W(1), m_Z(1), F_eff, gam
   Real(dp), Parameter :: mf_nu(3)=0._dp
   Logical :: OnlySM
 
@@ -1273,8 +1274,10 @@ Contains
       & , c_SmpP0W, S0, c_SmpS03, c_SmpS0W, 1)
 
   Do i1=1,2
-   c_CGW = Abs(U(i1,1))**2 + Abs(V(i1,1))**2 & 
-         + Abs(U(i1,2)*cosb)**2 + Abs(V(i1,2)*sinb)**2  
+   c_CGW_L(1) = U(i1,1) /F_eff 
+   c_CGW_R(1) = V(i1,1) /F_eff 
+   c_CGW_L(2) = oosqrt2 * U(i1,2) * cosb /F_eff 
+   c_CGW_R(2) = oosqrt2 * V(i1,2) * sinb /F_eff 
    If (.Not.CTBD)  Then
     Call CharginoTwoBodyDecays(i1, n_nu, id_nu, n_l, id_l, n_d, id_d, n_u      &
        & , id_u, n_Z, id_Z, n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c      &
@@ -1282,7 +1285,7 @@ Contains
        & , Sneut, c_CLSn_L, c_CLSn_R, mf_l, Sdown, c_CUSd_L, c_CUSd_R, mf_u    &
        & , Sup, c_CDSu_L, c_CDSu_R, mf_d, Chi0, m_W, c_CNW_L, c_CNW_R, Spm     &
        & , c_SmpCN_L, c_SmpCN_R, m_Z, c_CCZ_L, c_CCZ_R, P0, c_CCP0_L, c_CCP0_R &
-       & , S0, c_CCS0_L, c_CCS0_R, m32, c_CGW, 1)
+       & , S0, c_CCS0_L, c_CCS0_R, m32, c_CGW_L, c_CGW_R, 1)
     k_neut =0
     
     If (ChiPm(i1)%g.Lt. fac3*Abs(ChiPm(i1)%m)) Then
@@ -1350,9 +1353,9 @@ Contains
     sinW = Sqrt(sinW2)
     cosW = Sqrt(1._dp - sinW2)    
     c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / F_eff
-    c_NGZ = ( (- N(i1,1)*sinW+ N(i1,2)*cosW)                                   &
-          & + 0.5_dp * (cosb * N(i1,3) - sinb * N(i1,4) ) ) / F_eff
-    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2) + N(i1,5)*RS0(1,3) )        &
+    c_NGZ(1) = (- N(i1,1)*sinW+ N(i1,2)*cosW) / F_eff
+    c_NGZ(2) = oosqrt2 * (cosb * N(i1,3) - sinb * N(i1,4) ) / F_eff
+    c_NGH = oosqrt2 * (N(i1,3) * RS0(1,1) + N(i1,4)*RS0(1,2) + N(i1,5)*RS0(1,3) )  &
           & / F_eff
     Call NeutralinoTwoBodyDecays(i1, Chi0, n_nu, id_nu, n_l, id_l, n_d, id_d   &
       & , n_u, id_u, n_Z, id_Z, n_W, id_W , n_snu, n_sle, n_Sd, n_su, n_n, n_c &
@@ -1621,9 +1624,9 @@ Contains
   Real(dp) :: c_P0S03(5,5,5)
   Complex(dp) :: c_S0SdSd(5,6,6), c_S0SuSu(5,6,6)
   Real(dp) :: c_S03(5,5,5), c_S0WW(5,1), c_S0ZZ(5,1), c_S0WWvirt(5,1) &
-      & , c_S0ZZvirt(5,1), c_CGW
-  Complex(dp) :: c_SdSuW(6,6,1), c_SuSdW(6,6,1) &
-      & , c_SdSdZ(6,6,1), c_SuSuZ(6,6,1), c_NGP, c_NGZ, c_NGH
+      & , c_S0ZZvirt(5,1)
+  Complex(dp) :: c_SdSuW(6,6,1), c_SuSdW(6,6,1), c_SdSdZ(6,6,1) &
+      & , c_SuSuZ(6,6,1), c_NGP, c_NGZ(2), c_NGH, c_CGW_L(2), c_CGW_R(2)
   Complex(dp) :: c_CCP0_L(5,5,5), c_CCP0_R(5,5,5)    &
       & , c_CCS0_L(5,5,5), c_CCS0_R(5,5,5), c_CNW_L(5,7,1)        &
       & , c_CNW_R(5,7,1), c_SmpCN_L(8,5,7), c_SmpCN_R(8,5,7)
@@ -1631,7 +1634,7 @@ Contains
   Complex(dp), Dimension(3,6) :: c_GraDSd_L, c_GraDSd_R, c_GraUSu_L &
       & , c_GraUSu_R
 
-  Real(dp) :: tanb, sinW, cosW, vev, m_Z(1), m_W(1), F_eff
+  Real(dp) :: tanb, sinW, cosW, vev, m_Z(1), m_W(1), F_eff, sinb, cosb
   Complex(dp) :: bi(4)
   Real(dp), Parameter :: mf_nu(3)=0._dp
   Logical :: OnlySM
@@ -1659,6 +1662,8 @@ Contains
   SMp%id = SPm%id + 1
 
   tanb = vevSM(2) / vevSM(1)
+  cosb = 1._dp / Sqrt(1._dp + tanb**2)
+  sinb = cosb * tanb 
    
   If (grav_fac.Ne.0._dp) Then
    F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
@@ -1813,8 +1818,10 @@ c_GraUSu_R = 0
   End Do
 
   Do i1=4,5
-   c_CGW = Abs(U(i1,4))**2 + Abs(V(i1,4))**2 & 
-         + (Abs(U(i1,5))**2 + Abs(V(i1,5)*tanb)**2) / (tanb**2 + 1._dp)  
+   c_CGW_L(1) = U(i1,1) /F_eff 
+   c_CGW_R(1) = V(i1,1) /F_eff 
+   c_CGW_L(2) = oosqrt2 * U(i1,2) * cosb / F_eff
+   c_CGW_R(2) = oosqrt2 * V(i1,2) * sinb / F_eff
    If (.Not.CTBD)  Then
     Call CharginoTwoBodyDecays(i1, n_nu, id_nu, n_l, id_l, n_d, id_d, n_u      &
        & , id_u, n_Z, id_Z, n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c      &
@@ -1822,7 +1829,7 @@ c_GraUSu_R = 0
        & , Sneut, c_CLSn_L, c_CLSn_R, mf_l, Sdown, c_CUSd_L, c_CUSd_R, mf_u    &
        & , Sup, c_CDSu_L, c_CDSu_R, mf_d, Chi0, m_W, c_CNW_L, c_CNW_R, Spm     &
        & , c_SmpCN_L, c_SmpCN_R, m_Z, c_CCZ_L, c_CCZ_R, P0, c_CCP0_L, c_CCP0_R &
-       & , S0, c_CCS0_L, c_CCS0_R, m32, c_CGW, 1)
+       & , S0, c_CCS0_L, c_CCS0_R, m32, c_CGW_L, c_CGW_R, 1)
     k_neut =0
     Call check_charge(ChiPm(i1)%id,ChiPm(i1)%id2)
 
@@ -1892,8 +1899,9 @@ c_GraUSu_R = 0
     sinW = Sqrt(sinW2)
     cosW = Sqrt(1._dp - sinW2)    
     c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / F_eff
-    c_NGZ = (- N(i1,1)*sinW+ N(i1,2)*cosW) / F_eff
-    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2)) / F_eff
+    c_NGZ(1) = (- N(i1,1)*sinW+ N(i1,2)*cosW) / F_eff
+    c_NGZ(2) = oosqrt2 * (cosb * N(i1,3) - sinb * N(i1,4) ) / F_eff
+    c_NGH =  oosqrt2 * (N(i1,3) * RS0(1,1) + N(i1,4)*RS0(1,2)) / F_eff
     Call NeutralinoTwoBodyDecays(i1, Chi0, n_nu, id_nu, n_l, id_l, n_d, id_d   &
       & , n_u, id_u, n_Z, id_Z, n_W, id_W , n_snu, n_sle, n_Sd, n_su, n_n, n_c &
       & , n_s0, n_p0, n_Spm, id_ph, id_grav, Slept, c_LNSl_L, c_LNSl_R, mf_l   &
@@ -2162,12 +2170,12 @@ c_GraUSu_R = 0
       & , c_CDSu_L(5,3,6), c_CDSu_R(5,3,6)
   Complex(dp) :: c_GlGlP0(5), c_GGP0(5), c_GlGlS0(5), c_GGS0(5)
   Complex(dp) :: c_P0SdSd(5,6,6), c_P0SuSu(5,6,6), c_P0S0Z(5,5,1) 
-  Real(dp) :: c_P0S03(5,5,5), c_CGW
+  Real(dp) :: c_P0S03(5,5,5)
   Complex(dp) :: c_S0SdSd(5,6,6), c_S0SuSu(5,6,6)
   Real(dp) :: c_S03(5,5,5), c_S0WW(5,1), c_S0ZZ(5,1), c_S0WWvirt(5,1) &
       & , c_S0ZZvirt(5,1)
-  Complex(dp) :: c_SdSuW(6,6,1), c_SuSdW(6,6,1) &
-      & , c_SdSdZ(6,6,1), c_SuSuZ(6,6,1), c_NGP, c_NGZ, c_NGH
+  Complex(dp) :: c_SdSuW(6,6,1), c_SuSdW(6,6,1), c_SdSdZ(6,6,1) &
+      & , c_SuSuZ(6,6,1), c_NGP, c_NGZ(2), c_NGH, c_CGW_L(2), c_CGW_R(2)
   Complex(dp) :: c_CCP0_L(5,5,5), c_CCP0_R(5,5,5)    &
       & , c_CCS0_L(5,5,5), c_CCS0_R(5,5,5), c_CNW_L(5,7,1)        &
       & , c_CNW_R(5,7,1), c_SmpCN_L(8,5,7), c_SmpCN_R(8,5,7)
@@ -2175,7 +2183,7 @@ c_GraUSu_R = 0
   Complex(dp), Dimension(3,6) :: c_GraDSd_L, c_GraDSd_R, c_GraUSu_L &
       & , c_GraUSu_R
 
-  Real(dp) :: tanb, sinW, cosW, vev, m_Z(1), m_W(1), F_eff
+  Real(dp) :: tanb, sinW, cosW, vev, m_Z(1), m_W(1), F_eff, sinb, cosb
   Complex(dp) :: bi(4)
   Real(dp), Parameter :: mf_nu(3)=0._dp
   Logical :: OnlySM
@@ -2203,6 +2211,8 @@ c_GraUSu_R = 0
   SMp%id = SPm%id + 1
 
   tanb = vevSM(2) / vevSM(1)
+  cosb = 1._dp / Sqrt(1._dp + tanb**2)
+  sinb = cosb * tanb 
    
   If (grav_fac.Ne.0._dp) Then
    F_eff = grav_fac*Fgmsb ! effective SUSY breaking scale in case of GSMB
@@ -2356,8 +2366,10 @@ c_GraUSu_R = 0
   End Do
 
   Do i1=4,5
-   c_CGW = Abs(U(i1,4))**2 + Abs(V(i1,4))**2 & 
-         + (Abs(U(i1,5))**2 + Abs(V(i1,5)*tanb)**2) / (tanb**2 + 1._dp)  
+   c_CGW_L(1) = U(i1,1) /F_eff 
+   c_CGW_R(1) = V(i1,1) /F_eff 
+   c_CGW_L(2) = oosqrt2 * U(i1,2) * cosb / F_eff
+   c_CGW_R(2) = oosqrt2 * V(i1,2) * sinb / F_eff
    If (.Not.CTBD)  Then
     Call CharginoTwoBodyDecays(i1, n_nu, id_nu, n_l, id_l, n_d, id_d, n_u      &
        & , id_u, n_Z, id_Z, n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c      &
@@ -2365,14 +2377,8 @@ c_GraUSu_R = 0
        & , Sneut, c_CLSn_L, c_CLSn_R, mf_l, Sdown, c_CUSd_L, c_CUSd_R, mf_u    &
        & , Sup, c_CDSu_L, c_CDSu_R, mf_d, Chi0, m_W, c_CNW_L, c_CNW_R, Spm     &
        & , c_SmpCN_L, c_SmpCN_R, m_Z, c_CCZ_L, c_CCZ_R, P0, c_CCP0_L, c_CCP0_R &
-       & , S0, c_CCS0_L, c_CCS0_R, m32, c_CGW, 1)
-!    Call CharginoTwoBodyDecays(i1, n_nu, id_nu, n_l, id_l, n_d, id_d, n_u      &
-!       & , id_u, n_Z, id_Z, n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c      &
-!       & , n_s0, n_p0, n_Spm, ChiPm, Slept, c_CNuSl_L, c_CNuSl_R, Sneut        &
-!       & , c_CLSn_L, c_CLSn_R, mf_l, Sdown, c_CUSd_L, c_CUSd_R, mf_u, Sup      &
-!       & , c_CDSu_L, c_CDSu_R, mf_d, Chi0, m_W, c_CNW_L, c_CNW_R, Spm          &
-!       & , c_SmpCN_L, c_SmpCN_R, m_Z, c_CCZ_L, c_CCZ_R, P0, c_CCP0_L, c_CCP0_R &
-!       & , S0, c_CCS0_L, c_CCS0_R, c_CGW, 1)
+       & , S0, c_CCS0_L, c_CCS0_R, m32, c_CGW_L, c_CGW_R, 1)
+
     k_neut =0
     Call check_charge(ChiPm(i1)%id,ChiPm(i1)%id2)
 
@@ -2442,8 +2448,9 @@ c_GraUSu_R = 0
     sinW = Sqrt(sinW2)
     cosW = Sqrt(1._dp - sinW2)    
     c_NGP = (N(i1,1)*cosW+N(i1,2)*sinW) / F_eff
-    c_NGZ = (- N(i1,1)*sinW+ N(i1,2)*cosW) / F_eff
-    c_NGH = (N(i1,3) * RS0(1,1) - N(i1,4)*RS0(1,2)) / F_eff
+    c_NGZ(1) = (- N(i1,1)*sinW+ N(i1,2)*cosW) / F_eff
+    c_NGZ(2) = oosqrt2 * (cosb * N(i1,3) - sinb * N(i1,4) ) / F_eff
+    c_NGH =  oosqrt2 * (N(i1,3) * RS0(1,1) + N(i1,4)*RS0(1,2)) / F_eff
     Call NeutralinoTwoBodyDecays(i1, Chi0, n_nu, id_nu, n_l, id_l, n_d, id_d   &
       & , n_u, id_u, n_Z, id_Z, n_W, id_W , n_snu, n_sle, n_Sd, n_su, n_n, n_c &
       & , n_s0, n_p0, n_Spm, id_ph, id_grav, Slept, c_LNSl_L, c_LNSl_R, mf_l   &
