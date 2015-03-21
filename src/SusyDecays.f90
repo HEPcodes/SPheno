@@ -298,12 +298,12 @@ Contains
 
 
  Subroutine CharginoTwoBodyDecays(i_in, n_nu, id_nu, n_l, id_l, n_d, id_d, n_u &
-   & , id_u, n_Z, id_Z, n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c, n_s0    &
-   & , n_p0, n_Spm, ChiPm, Slept, c_CNuSl_L, c_CNuSl_R, Sneut, c_CLSn_L        &
-   & , c_CLSn_R, mf_l, Sdown, c_CUSd_L, c_CUSd_R, mf_u, Sup, c_CDSu_L          &
-   & , c_CDSu_R, mf_d, Chi0, mW, c_CNW_L, c_CNW_R, Spm, c_SmpCN_L, c_SmpCN_R   &
-   & , mZ, c_CCZ_L, c_CCZ_R, P0, c_CCP0_L, c_CCP0_R, S0, c_CCS0_L, c_CCS0_R    &
-   & , k_neut )
+  & , id_u, n_Z, id_Z, n_W, id_W, n_snu, n_sle, n_Sd, n_su, n_n, n_c, n_s0     &
+  & , n_p0, n_Spm, id_grav, ChiPm, Slept, c_CNuSl_L, c_CNuSl_R, Sneut          &
+  & , c_CLSn_L, c_CLSn_R, mf_l, Sdown, c_CUSd_L, c_CUSd_R, mf_u, Sup, c_CDSu_L &
+  & , c_CDSu_R, mf_d, Chi0, mW, c_CNW_L, c_CNW_R, Spm, c_SmpCN_L, c_SmpCN_R    &
+  & , mZ, c_CCZ_L, c_CCZ_R, P0, c_CCP0_L, c_CCP0_R, S0, c_CCS0_L, c_CCS0_R     &
+  & , m32, c_CGW, k_neut )
  !-----------------------------------------------------------------------
  ! Calculates the 2-body decays of charginos:
  ! input:
@@ -351,9 +351,9 @@ Contains
  Implicit None
 
   Integer, Intent(in) :: i_in, k_neut, n_nu, n_l, n_d, n_u, n_Z, n_W, n_snu  &
-       & , n_sle, n_Sd, n_su, n_n, n_c, n_s0, n_p0, n_Spm
+       & , n_sle, n_Sd, n_su, n_n, n_c, n_s0, n_p0, n_Spm, id_grav
   Integer, Intent(in) :: id_nu(:), id_l(:), id_d(:), id_u(:), id_Z(:), id_W(:)
-  Real(dp), Intent(in) ::  mf_l(:), mf_d(:), mf_u(:), mW(:), mZ(:)
+  Real(dp), Intent(in) ::  mf_l(:), mf_d(:), mf_u(:), mW(:), mZ(:), c_CGW, m32
   Complex(dp), Intent(in) :: c_CNuSl_L(:,:,:), c_CNuSl_R(:,:,:)     &
          & , c_CLSn_L(:,:,:), c_CLSn_R(:,:,:), c_CUSd_L(:,:,:)      &
          & , c_CUSd_R(:,:,:), c_CDSu_L(:,:,:), c_CDSu_R(:,:,:)      &
@@ -368,7 +368,7 @@ Contains
  
   Integer :: i1, i2, i_start, i_end, i_count, i3
   Real(dp) :: gam, m_in, mN(n_n), mSlepton(n_sle), mSneut(n_snu), mSdown(n_sd) &
-         & , mSup(n_su), mC(n_c), mS0(n_S0), mSpm(n_Spm), mP0(n_P0) 
+         & , mSup(n_su), mC(n_c), mS0(n_S0), mSpm(n_Spm), mP0(n_P0), x1, x2, sq1 
   !-----------------
   ! Initialization
   !-----------------
@@ -425,7 +425,7 @@ Contains
    !--------------------------------------------------------
    Do i2 = 1,n_sle
     Do i3 = 1, n_nu
-     If ((Abs(c_CNuSl_L(i1,i3,i2))+Abs(c_CNuSl_R(i1,i3,i2))).gt.0._dp) then
+     If ((Abs(c_CNuSl_L(i1,i3,i2))+Abs(c_CNuSl_R(i1,i3,i2))).Gt.0._dp) Then
       Call FermionToFermionScalar(m_in, 0._dp, mSlepton(i2) &
              & , c_CNuSl_L(i1,i3,i2), c_CNuSl_R(i1,i3,i2), gam)
       If (k_neut.Eq.1) Then
@@ -447,7 +447,7 @@ Contains
    !-----------------------------------------------------------
    Do i2 = 1,n_snu
     Do i3 = 1,n_l
-     If ((Abs(c_CLSn_L(i1,i3,i2))+Abs(c_CLSn_R(i1,i3,i2))).gt.0._dp) then
+     If ((Abs(c_CLSn_L(i1,i3,i2))+Abs(c_CLSn_R(i1,i3,i2))).Gt.0._dp) Then
       Call FermionToFermionScalar(m_in, mf_l(i3), mSneut(i2) &
              & , c_CLSn_L(i1,i3,i2), c_CLSn_R(i1,i3,i2), gam)
       ChiPm(i1)%gi2(i_count) = gam
@@ -462,7 +462,7 @@ Contains
    !----------------------------------------------------
    Do i2 = 1,n_su
     Do i3 = 1,n_u
-     If ((Abs(c_CDSu_L(i1,i3,i2))+Abs(c_CDSu_R(i1,i3,i2))).gt.0._dp) then
+     If ((Abs(c_CDSu_L(i1,i3,i2))+Abs(c_CDSu_R(i1,i3,i2))).Gt.0._dp) Then
       Call FermionToFermionScalar(m_in, mf_d(i3), mSup(i2) &
              & , c_CDSu_L(i1,i3,i2), c_CDSu_R(i1,i3,i2), gam)
 
@@ -478,7 +478,7 @@ Contains
    !----------------------------------------------------
    Do i2 = 1,n_Sd
     Do i3 = 1,n_d
-     If ((Abs(c_CUSd_L(i1,i3,i2))+Abs(c_CUSd_R(i1,i3,i2))).gt.0._dp) then
+     If ((Abs(c_CUSd_L(i1,i3,i2))+Abs(c_CUSd_R(i1,i3,i2))).Gt.0._dp) Then
       Call FermionToFermionScalar(m_in, mf_u(i3), mSdown(i2) &
              & , c_CUSd_L(i1,i3,i2), c_CUSd_R(i1,i3,i2), gam)
 
@@ -560,6 +560,23 @@ Contains
      i_count = i_count + 1
     End Do
    End Do
+   !-----------------------------------------
+   ! gravitino W
+   !-----------------------------------------
+   If (Abs(mC(i1)).Gt.(m32+mW(1))) Then ! to be changed
+     x1 = m32/mC(i1)
+     sq1 = Sqrt(x1)
+     x2 = (mW(1)/mC(i1))**2
+     ChiPm(i1)%gi2(i_count) = oo16pi * c_CGW * Abs(mC(i1))**5                 &
+        &      * Sqrt(1._dp-2._dp*(x1+x2)+(x1-x2)**2)                         &
+        &      * ( (1._dp-x1)**2 * (1._dp + 3._dp*x1)                         &
+        &            - x2 * (3._dp + x1**2 - 12._dp * x1 * sq1                &
+        &                                  - x2 * (3._dp-x1-x2) ) )  
+     ChiPm(i1)%id2(i_count,1) = id_grav
+     ChiPm(i1)%id2(i_count,2) = id_W(1)
+
+     i_count = i_count + 1
+   End If
 
    ChiPm(i1)%g = Sum(ChiPm(i1)%gi2)
    If (ChiPm(i1)%g.Gt.0._dp) ChiPm(i1)%bi2 = ChiPm(i1)%gi2 / ChiPm(i1)%g

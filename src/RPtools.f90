@@ -85,7 +85,8 @@ Contains
     & , mP0(5), mP02(5), mS0(5), mS02(5), mSpm(8), mSpm2(8) &
     & , mN(7), mN1L(7), mN2(7), mN1L2(7)
   Complex(dp) :: PhaseGlu, RSdown(6,6), RSup(6,6), N(7,7), N1L(7,7), lam(3), epst(3)
-  Logical, Save :: WriteOut = .False.
+!  Logical, Save :: WriteOut = .False.
+  Logical, Save :: WriteOut = .True.
 
   !------------------------------------------
   ! check if neutrino data are consistent
@@ -212,7 +213,7 @@ Contains
    m2_atm_rp = mN1L2(3)-mN1L2(1)
    If (WriteOut) Then
     Write(Errcan,*) "m^2_atm,m^2_sol",m2_atm_rp,m2_sol_rp
-    Write(Errcan,*) "               ",mN2(3)-mN2(1),mN2(2)-mN2(1)
+    Write(Errcan,*) "           tree",mN2(3)-mN2(1),mN2(2)-mN2(1)
     Write(errcan,*) m2_atm_min,m2_atm_max
     Write(Errcan,*) (m2_atm_rp.Lt.m2_atm_min),(m2_atm_rp.Gt.m2_atm_max) &
                 &   ,(m2_sol_rp.Lt.m2_sol_min),(m2_sol_rp.Gt.m2_sol_max)
@@ -1238,8 +1239,8 @@ Contains
     End If
 
     kont = 0
-    Call LoopMassesMSSM_2(delta, tanb, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d &
-       & , A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu                          &
+    Call LoopMassesMSSM_2(delta, tanb_mZ, tanb, gauge, Y_l, Y_d, Y_u, Mi  &
+       & , A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu                &
        & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP02, RP0           &
        & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2        &
        & , RSup, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2           &

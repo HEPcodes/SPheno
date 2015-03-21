@@ -11281,7 +11281,7 @@ Contains
 
   ! local variables
   Integer :: kont, i1, id_su(6), id_sd(6), id_sle(6), id_snu(3)
-  Real(dp) :: g2(214), gQ(3), M2_H_Q(2), tanb_Q, tz, dt, old_scale
+  Real(dp) :: g2(214), gQ(3), M2_H_Q(2), tanb_Q, tz, dt, old_scale, tanb_Ql
   Complex(dp) :: Mi_Q(3), B, mu
   Complex(dp), Dimension(3,3) :: Y_l_Q, Y_d_Q, Y_u_Q, A_l_Q, A_d_Q, A_u_Q  &
     & , M2_E_Q, M2_L_Q, M2_D_Q, M2_Q_Q, M2_U_Q, Ad_sckm, Au_sckm, M2D_sckm &
@@ -11290,8 +11290,11 @@ Contains
      & , mP0(2), mP02(2), RP0(2,2), mSpm(2), mSpm2(2), mSdown(6)          &
      & , mSdown2(6), mSup(6), mSup2(6), mSlepton(6), mSlepton2(6) &
      & , mSneut(3), mSneut2(3), mGlu, Yd_Q(3), Yu_Q(3), Yl_Q(3)
-  Complex(dp) :: U(2,2), V(2,2), N(4,4), RSpm(2,2), RUsquark(6,6) &
-     & , RDsquark(6,6), RSlepton(6,6), RSneutrino(3,3), phase_glu, CKM_Q(3,3)
+  Complex(dp) :: U(2,2), V(2,2), N(4,4), RSpm(2,2), RSneutrino(3,3) &
+     & , phase_glu, CKM_Q(3,3), RSn_pmns(3,3), nr(4,4)
+  Complex(dp), Dimension(6,6) ::  RDsq_ckm,  RUsq_ckm, RUsquark, RDsquark &
+     & , RSlepton, RSl_pmns
+  Integer, Parameter :: n_n=4, n_c=2
 
   Iname = Iname + 1
   NameOfUnit(Iname) = "WriteParametersAtQ"
@@ -11331,21 +11334,31 @@ Contains
    old_scale = SetRenormalizationScale(Qout**2)
 
    tanb_in_at_Q = .True.
-   Call LoopMassesMSSM(0.1_dp*delta, tanb_Q, gQ, Y_l_Q, Y_d_Q, Y_u_Q, Mi_Q, A_l_Q &
-     & , A_d_Q, A_u_Q, M2_E_Q, M2_L_Q, M2_D_Q, M2_Q_Q, M2_U_Q, M2_H_Q, phase_mu  &
-     & , mu, B, 2, uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                            &
-     & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0, mSpm  &
-     & , mSpm2, RSpm, mSdown, mSdown2, RDsquark, mSup, mSup2  &
-     & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2 &
-     & , RSneutrino, mGlu, phase_glu, kont)
+   Call LoopMassesMSSM(0.1_dp*delta, tanb_Ql, tanb_Q, gQ, Y_l_Q, Y_d_Q, Y_u_Q &
+     & , Mi_Q, A_l_Q, A_d_Q, A_u_Q, M2_E_Q, M2_L_Q, M2_D_Q, M2_Q_Q, M2_U_Q    &
+     & , M2_H_Q, phase_mu, mu, B, 2, uU_L, uU_R, uD_L, uD_R, uL_L, uL_R       &
+     & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0, mSpm      &
+     & , mSpm2, RSpm, mSdown, mSdown2, RDsquark, mSup, mSup2, RUsquark        &
+     & , mSlepton, mSlepton2, RSlepton, mSneut, mSneut2, RSneutrino           &
+     & , mGlu, phase_glu, kont)
+    Do i1=1,4
+     If (Sum(Abs(Real(N(i1,:)))).Eq.0._dp) Then
+      nr(i1,1:4) = Aimag(n(i1,:))
+     Else   
+      nr(i1,1:4) = n(i1,:)
+     End If
+    End Do
+    mN = Abs(mN)
+
   End If
 
   If (GenerationMixing) Then
     Call Switch_to_superCKM(Y_d_Q, Y_u_Q, A_d_Q, A_u_Q, M2_D_Q, M2_Q_Q, M2_U_Q &
               & , Ad_sckm, Au_sckm, M2D_sckm, M2Q_sckm, M2U_sckm, .False. &
-              & , CKM_out=CKM_Q, Yd=Yd_Q, Yu=Yu_Q )
+              & , RDSquark, RUSquark, Rdsq_ckm, RUsq_ckm, CKM_Q, Yd_Q, Yu_Q )
     Call Switch_to_superPMNS(Y_l_Q, id3C, A_l_Q, M2_E_Q, M2_L_Q, Al_pmns  &
-        & , M2E_pmns, M2L_pmns, .False., PMNS_out=PMNS_Q, Yl=Yl_Q)
+        & , M2E_pmns, M2L_pmns, .False., RSlepton, RSneutrino, RSl_pmns   &
+        & , RSn_pmns, PMNS_Q, Yl_Q)
   Else ! .non.GenerationMixing
 
     Do i1=1,3
@@ -11361,6 +11374,10 @@ Contains
     M2Q_SCKM = M2_Q_Q
     M2E_pmns = M2_E_Q
     M2L_pmns = M2_L_Q
+    RDsq_ckm = RDSquark
+    RUsq_ckm = RUSquark
+    RSl_pmns = RSlepton
+    RSn_pmns = RSneutrino
 
   End If
 
@@ -11523,15 +11540,15 @@ Contains
   End If
   ! extends the standard
 
-!   Write(io_L,103) "Block Hmix Q=",Qout, "# Higgs mixing parameters"
-!   Write(io_L,104) 1,Real(mu,dp),"# mu"
-!   Write(io_L,104) 2,tanb_Q,"# tan[beta](Q)"
-!   Write(io_L,104) 3,vev_Q,"# v(Q)"
-!   Write(io_L,104) 4,mA2_Q,"# m^2_A(Q)"
-!   If (Aimag(mu).Ne.0._dp) Then
-!    Write(io_L,103) "Block IMHmix Q=",Qout, "# Higgs mixing parameters"
-!    Write(io_L,104) 1,Aimag(mu),"# Im(mu)"
-!   End If
+   Write(io_L,103) "Block Hmix Q=",Qout, "# Higgs mixing parameters"
+   Write(io_L,104) 1,Real(mu,dp),"# mu"
+   Write(io_L,104) 2,tanb_Q,"# tan[beta](Q)"
+   Write(io_L,104) 3,vev_Q,"# v(Q)"
+   Write(io_L,104) 4,mA2_Q,"# m^2_A(Q)"
+   If (Aimag(mu).Ne.0._dp) Then
+    Write(io_L,103) "Block IMHmix Q=",Qout, "# Higgs mixing parameters"
+    Write(io_L,104) 1,Aimag(mu),"# Im(mu)"
+   End If
 
    Write(io_L,100) "Block MASS  # Mass spectrum"
    Write(io_L,100) "#   PDG code      mass          particle"
@@ -11641,6 +11658,60 @@ Contains
   Write(io_L,102) 1000035,mN(4),"# ~chi_40" 
   Write(io_L,102) 1000024,mC(1),"# ~chi_1+" 
   Write(io_L,102) 1000037,mC(2),"# ~chi_2+"
+
+  If (generationmixing) Then
+   Call WriteMatrixBlockC2(io_L, 6, RUsq_ckm, "USQmix" &
+                         &, "u-sqark mixing matrix", "R_Su(")
+
+   Call WriteMatrixBlockC2(io_L, 6, RDsq_ckm, "DSQmix" &
+                         &, "d-sqark mixing matrix", "R_Sd(")
+
+!   If (HighScaleModel.Ne."RPexplicit") Then
+
+    Call WriteMatrixBlockC2(io_L, 6, RSl_pmns, "SELmix" &
+                         &, "slepton mixing matrix", "R_Sl(")
+
+    Call WriteMatrixBlockC2(io_L, 3, RSn_pmns, "SNUmix" &
+                         &, "sneutrino mixing matrix", "R_Sn(")
+
+!   End If
+
+  Else ! .not.GenerationMixing
+
+   Call WriteMatrixBlockC2(io_L, 2, RUsq_ckm(5:6,5:6), "stopmix" &
+                         &, "stop mixing matrix", "R_st(")
+
+   Call WriteMatrixBlockC2(io_L, 2, RDsq_ckm(5:6,5:6), "sbotmix" &
+                         &, "sbottom mixing matrix", "R_sb(")
+
+!   If (HighScaleModel.Ne."RPexplicit") & 
+   Call WriteMatrixBlockC2(io_L, 2, RSl_pmns(5:6,5:6), "staumix" &
+                            &, "stau mixing matrix", "R_sta(")
+  End If
+
+!  If ((HighScaleModel.Eq."RPexplicit").And.(.Not.l_RP_Pythia)) Then
+!   Call WriteMatrixBlockC2(io_L, n_n, nr(1:n_n,1:n_n) &
+!                         &, "RVNmix", "/neutrino/neutralino mixing matrix", "N(")
+!   Call WriteMatrixBlockC2(io_L, 5, U5, "RVUmix" &
+!                         &, "lepton/chargino mixing matrix", "U(")
+!   Call WriteMatrixBlockC2(io_L, 5, V5, "RVVmix" &
+!                         &, "lepton/chargino mixing matrix", "V(")
+!  Else If (HighScaleModel.Eq."RPexplicit")  Then
+!   Call WriteMatrixBlockC2(io_L, 4, nr(1:4,1:4), "Nmix" &
+!                         &, "neutralino mixing matrix", "N(")
+!   Call WriteMatrixBlockC2(io_L, 2, U, "Umix" &
+!                         &, "chargino mixing matrix", "U(")
+!   Call WriteMatrixBlockC2(io_L, 2, V, "Vmix" &
+!                         &, "chargino mixing matrix", "V(")
+!  Else   
+   Call WriteMatrixBlockC2(io_L, n_n, nr(1:n_n,1:n_n), "Nmix" &
+                         &, "neutralino mixing matrix", "N(")
+   Call WriteMatrixBlockC2(io_L, n_c, U, "Umix" &
+                         &, "chargino mixing matrix", "U(")
+   Call WriteMatrixBlockC2(io_L, n_c, V, "Vmix" &
+                         &, "chargino mixing matrix", "V(")
+!  End If
+
 
   If (Calc_Mass) old_scale = SetRenormalizationScale(old_scale)
 

@@ -1344,9 +1344,13 @@ Contains
     epsD = 0._dp
     epsL = 0._dp
     If (Resum) Then
-      Call Sigma_SM_chirally_enhanced(gauge, vevSM, mu, V0ckm, Y_l, Y_d, Y_u &
+     Call Sigma_SM_chirally_enhanced(gauge, vevSM, mu, V0ckm, Y_l, Y_d, Y_u &
        & , Mi, T_l, T_d, T_u, M2_E, M2_L, M2_D, M2_Q, M2_U &
-       & , epsD, epsL, epsD_FC )
+       & , epsD, epsL, epsD_FC, kont )
+     If (kont.ne.0) then
+      Iname = Iname - 1
+      return
+     End If 
     End If
 
     !---------------------------------------------------------
@@ -1588,7 +1592,11 @@ Contains
    If (Resum) Then
     Call Sigma_SM_chirally_enhanced(gauge, vevSM, mu, V0ckm, Y_l, Y_d, Y_u &
        & , Mi, T_l, T_d, T_u, M2_E, M2_L, M2_D, M2_Q, M2_U &
-       & , epsD, epsL, epsD_FC )
+       & , epsD, epsL, epsD_FC, kont )
+    If (kont.ne.0) then
+     Iname = Iname - 1
+     return
+    End If 
    End If
 
    Do i1=1,3
@@ -8509,6 +8517,7 @@ Contains
 
      Call odeint(g58, 58, 0._dp, tz,  0.1_dp * delta , dt, 0._dp, rge58, kont)
      tanbQ = Exp( g58(58) )
+     tanb_Q = tanbQ
     End If
 
     tz = Log(mudim/mZ)
@@ -8580,11 +8589,11 @@ Contains
    If (Sum(in_extpar(26,:)).Gt.0) Then
     mp0(2) = P0(2)%m
     mp02(2) = P0(2)%m2
-    Call LoopMassesMSSM_2(0.1_dp*delta, tanbQ, gauge, Y_l, Y_d, Y_u, Mi     &
-       & , A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu                  &
-       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP02, RP0, mSpm       &
-       & , mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2  &
-       & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2 &
+    Call LoopMassesMSSM_2(0.1_dp*delta, tanb_mZ, tanbQ, gauge, Y_l, Y_d, Y_u &
+       & , Mi, A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu               &
+       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP02, RP0, mSpm        &
+       & , mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2   &
+       & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2  &
        & , RSneutrino, mGlu, phase_glu, M2_H, B, kont)
 
     mu_loop = mu
@@ -8593,8 +8602,8 @@ Contains
     If (WriteComment) Write(*,*) "LoopMassesMSSM_2",t2-t1
 
    Else If (Sum(in_extpar(24,:)).Gt.0) Then
-    Call LoopMassesMSSM_3(tanbQ, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u    &
-       & , M2_E, M2_L, M2_D, M2_Q, M2_U, mu, B, 0.1_dp*delta                &
+    Call LoopMassesMSSM_3(tanb_mZ, tanbQ, gauge, Y_l, Y_d, Y_u, Mi, A_l     &
+       & , A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu, B, 0.1_dp*delta      &
        & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0, mSpm  &
        & , mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2  &
        & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2 &
@@ -8605,13 +8614,15 @@ Contains
     If (WriteComment) Write(*,*) "LoopMassesMSSM_3",t2-t1
 
    Else
-    Call LoopMassesMSSM(0.1_dp*delta, tanb, gauge, Y_l, Y_d, Y_u, Mi, A_l &
-     & , A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, phase_mu, mu, B, j &
-     & , uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                               &
+    Call LoopMassesMSSM(0.1_dp*delta, tanb_mZ, tanb, gauge, Y_l, Y_d, Y_u &
+     & , Mi, A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, phase_mu  &
+     & , mu, B, j, uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                     &
      & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0, mSpm  &
      & , mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2  &
      & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2 &
      & , RSneutrino, mGlu, phase_glu, kont)
+    tanb_Q = tanb
+
     g0(210) = Real(mu,dp)
     g0(211) = Aimag(mu)
     g0(212) = Real(B,dp)
@@ -8694,21 +8705,22 @@ Contains
     !-----------------------------------------------------------------
     Call odeint(g0, 213, 0._dp, tz, 0.1_dp * delta, dt, 0._dp, rge213, kont)
 
-    Call GToParameters(g0, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
-                  & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B)
-    Y_u = Transpose(Y_u)
-    Y_d = Transpose(Y_d)
-    Y_l = Transpose(Y_l)
-    A_u = Transpose(A_u)
-    A_d = Transpose(A_d)
-    A_l = Transpose(A_l)
-    gauge(1) = Sqrt(3._dp / 5._dp ) * gauge(1)
+    Call GToParameters(g0, gauge_mZ, Y_l_mZ, Y_d_mZ, Y_u_mZ, Mi_mZ, A_l_mZ &
+           & , A_d_mZ, A_u_mZ, M2_E_mZ, M2_L_mZ, M2_D_mZ, M2_Q_mZ, M2_U_mZ &
+           & , M2_H_mZ, mu_mZ, B_mZ)
+    Y_u_mZ = Transpose(Y_u_mZ)
+    Y_d_mZ = Transpose(Y_d_mZ)
+    Y_l_mZ = Transpose(Y_l_mZ)
+    A_u_mZ = Transpose(A_u_mZ)
+    A_d_mZ = Transpose(A_d_mZ)
+    A_l_mZ = Transpose(A_l_mZ)
+    gauge_mZ(1) = Sqrt(3._dp / 5._dp ) * gauge_mZ(1)
 
-    vev = 2._dp * mW / gauge(2)
+    vev = 2._dp * mW / gauge_mZ(2)
     vevSM(1) = vev / Sqrt(1._dp + tanb_mZ**2)
     vevSM(2) = tanb_mZ * vevSM(1)
 
-    Abs_Mu2 = (M2_H(2) * tanb_MZ**2 - M2_H(1) ) / (1._dp - tanb_MZ**2) &
+    Abs_Mu2 = (M2_H_mZ(2) * tanb_MZ**2 - M2_H_mZ(1) ) / (1._dp - tanb_MZ**2) &
           & - 0.5_dp * mZ2
     If (Abs_Mu2.Lt.0._dp) Then
      Write (ErrCan,*) 'Warning from subroutine Sugra, |mu|^2 < 0 at m_Z'
@@ -8721,17 +8733,17 @@ Contains
     End If
     Abs_Mu = Sqrt( Abs_Mu2 )
     mu_T = Abs_mu * phase_mu
-    B_T = (M2_H(1) + M2_H(2) + 2._dp *  Abs_Mu2) * tanb_MZ / (1+tanb_MZ**2)
+    B_T = (M2_H_mZ(1) + M2_H_mZ(2) + 2._dp *  Abs_Mu2) * tanb_MZ / (1+tanb_MZ**2)
 
-    Call TreeMassesMSSM2(gauge(1), gauge(2), vevSM, Mi(1), Mi(2), Mi(3)       &
-     & , mu_T, B_T, tanb_mZ, M2_E, M2_L, A_l, Y_l, M2_D, M2_U, M2_Q, A_d, A_u &
-     & , Y_d, Y_u, uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                         &
-     & , mGlu_T, Phase_Glu_T, mC_T, mC2_T, U_T, V_T, mN_T, mN2_T, N_T         &
-     & , mSneutrino_T, mSneutrino2_T, Rsneutrino_T, mSlepton_T, mSlepton2_T   &
-     & , RSlepton_T, mDSquark_T, mDSquark2_T, RDSquark_T, mUSquark_T          &
-     & , mUSquark2_T, RUSquark_T, mP0_T, mP02_T, RP0_T, mS0_T, mS02_T, RS0_T  &
-     & , mSpm_T, mSpm2_T, RSpm_T, mZ2_run, mW2_run, GenerationMixing, kont    &
-     & , .False., .False.)
+    Call TreeMassesMSSM2(gauge_mZ(1), gauge_mZ(2), vevSM, Mi_mZ(1), Mi_mZ(2)   &
+     & , Mi_mZ(3), mu_T, B_T, tanb_mZ, M2_E_mZ, M2_L_mZ, A_l_mZ, Y_l_mZ        &
+     & , M2_D_mZ, M2_U_mZ, M2_Q_mZ, A_d_mZ, A_u_mZ, Y_d_mZ, Y_u_mZ, uU_L, uU_R &
+     & , uD_L, uD_R, uL_L, uL_R, mGlu_T, Phase_Glu_T, mC_T, mC2_T, U_T, V_T    &
+     & , mN_T, mN2_T, N_T, mSneutrino_T, mSneutrino2_T, Rsneutrino_T           &
+     & , mSlepton_T, mSlepton2_T, RSlepton_T, mDSquark_T, mDSquark2_T          &
+     & , RDSquark_T, mUSquark_T, mUSquark2_T, RUSquark_T, mP0_T, mP02_T, RP0_T &
+     & , mS0_T, mS02_T, RS0_T, mSpm_T, mSpm2_T, RSpm_T, mZ2_run, mW2_run       &
+     & , GenerationMixing, kont, .False., .False.)
 
     If (kont.Ne.0) Then
      Iname = Iname - 1

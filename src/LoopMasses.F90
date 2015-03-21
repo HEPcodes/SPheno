@@ -50,9 +50,9 @@ Logical :: test_write
 Contains
 
 
- Subroutine LoopMassesMSSM(delta0, tanb, g, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u  &
-    & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, phase_mu, mu, B, ic               &
-    & , uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                                    &
+ Subroutine LoopMassesMSSM(delta0, tanb_mZ, tanb_Q, g, Y_l, Y_d, Y_u, Mi      &
+    & , A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, phase_mu, mu, B    &
+    & , ic, uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                                &
     & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0             &
     & , mSpm, mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2 &
     & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2      &
@@ -79,7 +79,8 @@ Contains
   Complex(dp), Intent(in) :: Y_l(3,3), Y_d(3,3), Y_u(3,3), Mi(3), A_l(3,3)   &
     & , A_d(3,3), A_u(3,3), M2_E(3,3), M2_L(3,3), M2_D(3,3), M2_Q(3,3)       &
     & , M2_U(3,3), phase_mu
-  Real(dp), Intent(in) :: delta0, tanb, g(3), M2_H(2)
+  Real(dp), Intent(in) :: delta0, g(3), M2_H(2)
+  Real(dp), Intent(inout) :: tanb_mZ, tanb_Q
 
   Real(dp), Intent(out) :: mC(2), mN(4), mS0(2), mP0(2), mSpm(2)   &
     & , mUsquark(6), mDsquark(6), mSlepton(6), mSneutrino(3)       &
@@ -130,8 +131,7 @@ Contains
   If (tanb_in_at_Q) Then
    Q = Sqrt(mudim)
    Q2 = mudim
-   tanbQ = tanb
-   tanb_Q = tanb
+   tanbQ = tanb_Q
    Call CouplingsToG(g,Y_l,Y_d,Y_u,g58(1:57))
    g58(1) = Sqrt(5._dp / 3._dp ) * g58(1)  ! rescaling
    g58(58) = Log(tanb_Q)
@@ -157,7 +157,7 @@ Contains
    ! and now back to Q including Tan(beta)
    !---------------------------------------
    g58(1:57) = g57
-   g58(58) = Log( tanb )
+   g58(58) = Log( tanb_mZ )
    tz = Log(Q/mZ)
    dt = tz / 50._dp
 
@@ -165,11 +165,9 @@ Contains
 
    tanbQ = Exp( g58(58) )
    tanb_Q = tanbQ
-   tanb_mZ = tanb
   Else
-   tanbQ = tanb
+   tanbQ = tanb_mZ
    tanb_Q = tanbQ
-   tanb_mZ = tanb
    Q2 = mZ2
   End If
 
@@ -987,7 +985,7 @@ Contains
  ! resetting RP0 and RSpm
  !---------------------------
  If (mudim.Ne.mZ2) Then
-   cosb2 = 1._dp / (1._dp + tanb**2)
+   cosb2 = 1._dp / (1._dp + tanbQ**2)
    sinb2 = 1._dp - cosb2
    RP0(1,1) = - Sqrt(cosb2)
    RP0(1,2) = Sqrt(sinb2)
@@ -1018,8 +1016,8 @@ Contains
  End Subroutine LoopMassesMSSM
 
 
- Subroutine LoopMassesMSSM_2(delta, tanb, g, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
-   & , M2_E, M2_L, M2_D, M2_Q, M2_U, mu                                       &
+ Subroutine LoopMassesMSSM_2(delta, tanb_mZ, tanb_Q, g, Y_l, Y_d, Y_u, Mi     &
+   & , A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu                        &
    & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP02, RP0                   &
    & , mSpm, mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2  &
    & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2       &
@@ -1048,7 +1046,8 @@ Contains
   Complex(dp), Intent(in) :: Y_l(3,3), Y_d(3,3), Y_u(3,3), A_l(3,3)   &
       , A_d(3,3), A_u(3,3), M2_E(3,3), M2_L(3,3), M2_D(3,3), M2_Q(3,3)       &
       , M2_U(3,3), mu, Mi(3)
-  Real(dp), Intent(in) :: delta, tanb, g(3), mP02(2)
+  Real(dp), Intent(in) :: delta, g(3), mP02(2) 
+  Real(dp), Intent(inout) :: tanb_mZ, tanb_Q
 
   Real(dp), Intent(out) :: mC(2), mN(4), mS0(2), mSpm(2), mglu   &
     , mUsquark(6), mDsquark(6), mSlepton(6), mSneutrino(3)       &
@@ -1106,14 +1105,13 @@ Contains
    Q2 = mudim
    Call CouplingsToG(g,Y_l,Y_d,Y_u,g58(1:57))
    g58(1) = Sqrt(5._dp / 3._dp ) * g58(1)  ! rescaling
-   g58(58) = Log(tanb)
+   g58(58) = Log(tanb_Q)
    tz = Log(Q/mZ)
    dt = - tz / 50._dp
    Call odeint(g58, 58, tz, 0._dp, delta1, dt, 0._dp, rge58, kont)
 
    tanb_mZ = Exp(g58(58))
-   tanbQ = tanb
-   tanb_Q = tanb
+   tanbQ = tanb_Q
   Else If (mudim.Ne.mZ2) Then
    Q = Sqrt(mudim)
    Q2 = mudim
@@ -1131,7 +1129,7 @@ Contains
    ! and now back to Q including Tan(beta)
    !---------------------------------------
    g58(1:57) = g57
-   g58(58) = Log( tanb )
+   g58(58) = Log( tanb_mZ )
    tz = Log(Q/mZ)
    dt = tz / 50._dp
 
@@ -1139,11 +1137,9 @@ Contains
 
    tanbQ = Exp( g58(58) )
    tanb_Q = tanbQ
-   tanb_mZ = tanb
   Else
-   tanbQ = tanb
+   tanbQ = tanb_mZ
    tanb_Q = tanbQ
-   tanb_mZ = tanb
    Q2 = mZ2
   End If
 
@@ -1808,7 +1804,7 @@ Contains
 ! resetting RP0 and RSpm
 !---------------------------
  If (mudim.Ne.mZ2) Then
-   cosb2 = 1._dp / (1._dp + tanb**2)
+   cosb2 = 1._dp / (1._dp + tanbQ**2)
    sinb2 = 1._dp - cosb2
    RP0(1,1) = - Sqrt(cosb2)
    RP0(1,2) = Sqrt(sinb2)
@@ -1831,8 +1827,8 @@ Contains
  End Subroutine LoopMassesMSSM_2
 
 
- Subroutine LoopMassesMSSM_3(tanb, g, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u       &
-   & , M2_E, M2_L, M2_D, M2_Q, M2_U, mu, B, delta                            &
+ Subroutine LoopMassesMSSM_3(tanb_mZ, tanb_Q, g, Y_l, Y_d, Y_u, Mi           &
+   & , A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu, B, delta             &
    & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0             &
    & , mSpm, mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2 &
    & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2      &
@@ -1861,7 +1857,8 @@ Contains
   Complex(dp), Intent(in) :: Y_l(3,3), Y_d(3,3), Y_u(3,3), A_l(3,3)   &
       , A_d(3,3), A_u(3,3), M2_E(3,3), M2_L(3,3), M2_D(3,3), M2_Q(3,3)       &
       , M2_U(3,3), mu, B, Mi(3)
-  Real(dp), Intent(in) :: tanb, g(3), delta
+  Real(dp), Intent(in) :: g(3), delta
+  Real(dp), Intent(inout) :: tanb_mZ, tanb_Q
 
   Real(dp), Intent(out) :: mC(2), mN(4), mS0(2), mSpm(2), mP0(2), mP02(2)   &
     , mUsquark(6), mDsquark(6), mSlepton(6), mSneutrino(3)       &
@@ -1874,7 +1871,7 @@ Contains
   Real(dp) :: vevSM(2), tanbQ, cosb2, cos2b, sinb2, Q, vev2, sinW2_DR    &
     & , mZ2_mZ, vevs_DR(2), tadpoles_1L(2), p2, b_A, mW2_mW, mA2_mA      &
     & , eq, T3, Q2, Pi2A0, tadpoles_2L(2), mW2_run, mglu_sign    &
-    & , M2_H_1L(2), comp2(2), wert
+    & , M2_H_1L(2), comp2(2), wert, g57(57), g58(58), tz, dt
   Real(dp) :: M2Ein, M2Lin, M2Din, M2Qin, M2Uin, delta1, Abs_mu, Abs_mu2
   Complex(dp) :: dmZ2, PiA0, dmW2, PiSpm, M1, M2, dmglu, mu_T, B_T
   Complex(dp), Dimension(3,3) :: uL_L, uL_R, uD_L, uD_R, uU_L, uU_R, CKM_Q
@@ -1907,8 +1904,52 @@ Contains
 
   M1 = Mi(1)
   M2 = Mi(2)
-  tanbQ = tanb
-  tanb_Q = tanbQ
+  delta1 = delta
+  !---------------------------
+  ! running of Tan(beta)
+  !---------------------------
+  If (tanb_in_at_Q) Then
+   Q = Sqrt(mudim)
+   Q2 = mudim
+   tanbQ = tanb_Q
+   Call CouplingsToG(g,Y_l,Y_d,Y_u,g58(1:57))
+   g58(1) = Sqrt(5._dp / 3._dp ) * g58(1)  ! rescaling
+   g58(58) = Log(tanb_Q)
+   tz = Log(Q/mZ)
+   dt = - tz / 50._dp
+   Call odeint(g58, 58, tz, 0._dp, delta1, dt, 0._dp, rge58, kont)
+
+   tanb_mZ = Exp(g58(58))
+  Else If (mudim.Ne.mZ2) Then
+   Q = Sqrt(mudim)
+   Q2 = mudim
+   Call CouplingsToG(g,Y_l,Y_d,Y_u,g57)
+   g57(1) = Sqrt(5._dp / 3._dp ) * g57(1)  ! rescaling
+
+   !------------------------------------
+   ! calculate first the couplings at mZ
+   !------------------------------------
+   tz = Log(Q/mZ)
+   dt = - tz / 50._dp
+   
+   Call odeint(g57, 57, tz, 0._dp,  delta1, dt, 0._dp, rge57, kont)
+   !---------------------------------------
+   ! and now back to Q including Tan(beta)
+   !---------------------------------------
+   g58(1:57) = g57
+   g58(58) = Log( tanb_mZ )
+   tz = Log(Q/mZ)
+   dt = tz / 50._dp
+
+   Call odeint(g58, 58, 0._dp, tz,  delta1 , dt, 0._dp, rge58, kont)
+
+   tanbQ = Exp( g58(58) )
+   tanb_Q = tanbQ
+  Else
+   tanbQ = tanb_mZ
+   tanb_Q = tanbQ
+   Q2 = mZ2
+  End If
 
   cosb2 = 1._dp / (1._dp + tanbQ**2)
   sinb2 = 1._dp - cosb2
@@ -1922,7 +1963,6 @@ Contains
   ! require internally a factor 10 smaller delta to be sure, except of smaller
   ! than 100*Epsilon(1._dp) to avoid numerical problems
   !----------------------------------------------------------------------------
-  delta1 = delta
   If (delta1.Gt.Epsilon(1._dp)*100._dp) delta1 = 0.1_dp * delta1
   !------------------------------------------------
   ! replacing fermion pole masses by running masses
@@ -2623,7 +2663,7 @@ Contains
     & , tadpoles_1L(2), p2, b_A, mA2_mA, Pi2A0, tadpoles_2L(2), mW2_run         &
     & , mP0_T(2), mP02_T(2), mglu_sign, M2_H_1L(2), RP0_T(2,2)
   Real(dp) :: M2Ein, M2Lin, M2Din, M2Qin, M2Uin, delta1
-  Complex(dp) :: dmZ2, PiA0, M1, M2
+  Complex(dp) :: dmZ2, PiA0
   Complex(dp), Dimension(3,3) :: uL_L, uL_R, uD_L, uD_R, uU_L, uU_R, CKM_Q
   Integer :: i1, i_loop
  
@@ -2649,9 +2689,6 @@ Contains
   uD_R = id3C
   uU_L = id3C
   uU_R = id3C
-
-  M1 = Mi(1)
-  M2 = Mi(2)
   !----------------------------------------------------------------------------
   ! require internally a factor 10 smaller delta to be sure, except of smaller
   ! than 100*Epsilon(1._dp) to avoid numerical problems
@@ -11387,13 +11424,14 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
 
  Subroutine Sigma_SM_chirally_enhanced(gi, vevS, mu, V0, Yl, Yd, Yu    &
       & , Mi, Tl, Td, Tu, M2E, M2L, M2D, M2Q, M2U, epsD, epsL, epsD_FC &
-      & , RS0, RP0, m_d, C_ddH, C_ddA, m_l, C_llH, C_llA )
+      & , kont, RS0, RP0, m_d, C_ddH, C_ddA, m_l, C_llH, C_llA )
  !--------------------------------------------------------------------
  ! chirally enhanced terms of the d-quark selfenergies, based on
  ! A. Crivellin et al., hep-ph/1103.4272
  ! written by Werner Porod, 20.03.2014
  !--------------------------------------------------------------------
  Implicit None
+  Integer, Intent(inout) :: kont
   Real(dp), Intent(in) :: gi(3), vevS(2)
   Complex(dp), Intent(in) :: Mi(3), mu
   Complex(dp), Intent(in), Dimension(3,3) :: V0, Yl, Yd, Yu, Tl, Td, Tu  &
@@ -11414,12 +11452,16 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
   Real(dp) :: mSdR2(3), mSqL2(3), mSuR2(3), mSlL2(3), mSlR2(3), test(2) &
      & , m12, m22, m32, alpha(3), C0m, vevSM(2), tanb
 
+  Iname = Iname + 1
+  NameOfUnit(Iname) = "Sigma_SM_chirally_enhanced"
   !------------------------------------
   ! some initialisaitons
   !------------------------------------
   alpha = oo4pi * gi**2
 
   vevSM = oosqrt2 * vevS ! they use a different normalisation
+
+  kont = 0
   !------------------------------------
   ! diagonalisation of LL and RR parts
   !------------------------------------
@@ -11435,6 +11477,16 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
   Call EigenSystem(M2L,mSlL2,WlL,ierr, test)
   Call Adjungate(WlL)
 
+  !-----------------------------------
+  ! checking for negative mass squares
+  !-----------------------------------
+  If ( (mSdR2(1).Lt.0._dp).Or.(mSqL2(1).Lt.0._dp).Or.(mSuR2(1).Lt.0._dp) &
+     & .Or.(mSlR2(1).Lt.0._dp).Or.(mSlL2(1).Lt.0._dp)) Then
+   kont = -525
+   Call AddError(525)
+   Iname = Iname -1
+   Return
+  End If
   !-----------------------------------------------------------
   ! initialisation of basic quantities
   !-----------------------------------------------------------
@@ -11777,6 +11829,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    End If
   End If
 
+  Iname = Iname - 1
 
  End Subroutine Sigma_SM_chirally_enhanced
 

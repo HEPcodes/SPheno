@@ -425,7 +425,7 @@ Contains
    Else If ( xp .Gt. xalogm ) Then
     B0 = Cmplx( Log(xp) - 2._dp, -pi, dp )
    Else
-    B0 = 0._dp
+    B0 = Huge(1._dp)
     Call WriteLFerror(2)
    End If
 

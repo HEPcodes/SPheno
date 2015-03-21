@@ -1032,6 +1032,16 @@ Contains
    Return
   End If
 
+  If (Is_NaN(Real(Matrix,dp)).or.Is_NaN(Aimag(Matrix))) Then !  
+   Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
+   Write(ErrCan,*) 'matrix contains NaN'
+   If (ErrorLevel.Ge.-1) Call TerminateProgram
+   kont = -31
+   Call AddError(31)
+   Iname = Iname - 1
+   Return 
+  End If
+
   Allocate(AR(N1,N1)) 
   Allocate(AI(N1,N1))
   Allocate(Ctest(N1,N1))
@@ -3154,6 +3164,16 @@ Subroutine odeintB2(ystart, len, x1, x2, eps, h1, hmin, derivs,checks, xout, kon
    If (ErrorLevel.Ge.-1) Call TerminateProgram
    kont = -15
    Call AddError(15)
+   Iname = Iname - 1
+   Return 
+  End If
+  
+  If (Is_NaN(Matrix)) then !  
+   Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
+   Write(ErrCan,*) 'matrix contains NaN'
+   If (ErrorLevel.Ge.-1) Call TerminateProgram
+   kont = -30
+   Call AddError(30)
    Iname = Iname - 1
    Return 
   End If

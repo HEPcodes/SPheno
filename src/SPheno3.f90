@@ -114,7 +114,6 @@ Use InputOutput
  BR_Z_mu_tau = 0._dp
  rho_parameter = 0._dp
  mf_nu = 0
-
  !--------------------------------------------------------------------------
  ! This routine call routines to
  !   - initializ the error system
@@ -134,6 +133,7 @@ Use InputOutput
  ! must exist.
  !--------------------------------------------------------------------------
  Call ReadingData(kont)
+
  !---------------------------------------------
  ! parameters for branching ratio calculations
  !---------------------------------------------
@@ -338,6 +338,7 @@ Contains
     & , M2U_s
   Integer :: i1, i2, i3, ierr
   Logical :: Converge, UseFixedScale
+
   !------------------------------------------------------------------
   ! Performing a first, very rough calculation of the parameters
   ! using 1-loop RGEs and tree-level boundary conditions for gauge and
@@ -547,12 +548,8 @@ Contains
      If (.Not.l_Ad) A_d = AoY_d * Y_d
      If (.Not.l_Au) A_u = AoY_u * Y_u
 
-    
-!     Call QuarkMasses_and_PhaseShifts(Y_d, Y_u, vevSM, mf_t, uD_L, uD_R &
-!                                     & , mf_ta, uU_L, uU_R)
      Call FermionMass(Y_u, sqrt2, mf3, uU_L, uU_R, ierr)
      Call FermionMass(Y_d, sqrt2, mf3, uD_L, uD_R, ierr)
-!     CKM_Q =  Matmul(uU_L, Transpose(Conjg(ud_L)) )
 
      M2_D = Matmul( Matmul( Transpose(Conjg(uD_R)), M2D_sckm), uD_R)
      M2_U = Matmul( Matmul( Transpose(Conjg(uU_R)), M2U_sckm), uU_R)
@@ -574,8 +571,8 @@ Contains
      End Do
     End If
 
-    Call LoopMassesMSSM_3(tanb_Q, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
-       & , M2_E, M2_L, M2_D, M2_Q, M2_U, mu, B, 0.1_dp*delta              &
+    Call LoopMassesMSSM_3(tanb_mZ, tanb_Q, gauge, Y_l, Y_d, Y_u, Mi, A_l  &
+       & , A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu, B, 0.1_dp*delta    &
        & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0      &
        & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2        &
        & , RSup, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2           &
@@ -871,12 +868,12 @@ Contains
      End Do
     End If
 
-    Call LoopMassesMSSM(delta, tanb_Q, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d &
-       & , A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, phase_mu, mu, B, i1   &
-       & , uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                             &
-       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0      &
-       & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2        &
-       & , RSup, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2           &
+    Call LoopMassesMSSM(delta, tanb_mZ, tanb_Q, gauge, Y_l, Y_d, Y_u, Mi   &
+       & , A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, phase_mu, mu &
+       & , B, i1, uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                       &
+       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0       &
+       & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2         &
+       & , RSup, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2            &
        & , RSneut, mGlu, PhaseGlu, kont)
 
     If (kont.Ne.0) Then
@@ -1083,9 +1080,7 @@ Contains
    End If
 
   Else If (HighScaleModel.Eq."pMSSM") Then
-
    ! calculate first gauge and Yukawa in DR-scheme at m_Z
-!   If (
 
    If (UseNewBoundaryEW) Then
     Call BoundaryEW(1, mZ, tanb, Mi, Al_pmns, Ad_sckm, Au_sckm, M2E_pmns &
@@ -1164,12 +1159,11 @@ Contains
     End If
 
     kont = 0
-
-    Call LoopMassesMSSM_2(delta, tanb_Q, gauge, Y_l, Y_d, Y_u, Mi  &
-       & , A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu         &
-       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP02, RP0    &
-       & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2 &
-       & , RSup, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2    &
+    Call LoopMassesMSSM_2(delta, tanb_mZ, tanb_Q, gauge, Y_l, Y_d, Y_u &
+       & , Mi, A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu         &
+       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP02, RP0        &
+       & , mSpm, mSpm2, RSpm, mSdown, mSdown2, RSdown, mSup, mSup2     &
+       & , RSup, mSlepton, mSlepton2, RSlepton, mSneut, mSneut2        &
        & , RSneut, mGlu, PhaseGlu, M2_H, B, kont)
 
     If (kont.Ne.0) Then
@@ -1195,6 +1189,7 @@ Contains
      Exit
     Else
      mass_old = mass_new
+
     End If
 
     If (i1.Eq.101) Then
@@ -1226,7 +1221,6 @@ Contains
 
     Else
      Call odeint(g2, 213, tz, 0._dp, 0.1_dp*delta, dt, 0._dp, rge213, kont)
-
     End If
 
     Call GToParameters(g2, gauge_mZ, Y_l_mZ, Y_d_mZ, Y_u_mZ, Mi_mZ, A_l_mZ &
@@ -1243,6 +1237,7 @@ Contains
     ! use consistently running parameters
     !-----------------------------------------
     g2(1) = Sqrt(3._dp/5._dp) * g2(1)
+    gauge_MZ(1) = Sqrt(3._dp/5._dp) * gauge_MZ(1)
     sinW2 = g2(1)**2 / (g2(1)**2 +g2(2)**2)
     vev =  2._dp * Sqrt(mZ2_t / (g2(1)**2 +g2(2)**2))
     vevSM(1) = vev / Sqrt(1._dp + tanb_mZ**2)
@@ -1278,7 +1273,6 @@ Contains
       & , mSlepton_T, mSlepton2_T, RSlepton_T, mSdown_T, mSdown2_T, RSdown_T  &
       & , mSup_T, mSup2_T, RSup_T, mP0_T, mP02_T, RP0_T, mS0_T, mS02_T, RS0_T &
       & , mSpm_T, mSpm2_T, RSpm_T, GenerationMixing, kont, .False.)
-
     If (kont.Ne.0) Then
      Iname = Iname - 1
      Return
@@ -1345,7 +1339,8 @@ Contains
      End If
 
      Call BoundaryEW(i1+1, mZ, tanb_mZ, Mi_mZ, Al_s, Ad_s, Au_s &
-      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_T, mP0_T(2)    &
+!      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu_T, mP0_T(2)    &
+      & , M2E_s, M2L_s, M2D_s, M2Q_s, M2U_s, mu, mP0(2)    &
       & , 0.1_dp*delta, GenerationMixing, .True., mZ2_t, mW2_t, g1, kont)
 
      uU_R = id3C
@@ -1418,7 +1413,6 @@ Contains
      & , gauge, uL_L, uL_R, uD_L, uD_R, uU_L, uU_R, Y_l     &
      & , Y_d, Y_u, Mi, A_l, A_d, A_u, M2_E, M2_L, M2_D      &
      & , M2_Q, M2_U, M2_H, mu, B, m_GUT, kont, WriteOut, n_run)
-!     & , M2_Q, M2_U, M2_H, mu, B, m_GUT, kont, .true., n_run)
   End If
 
   !--------------------------------------------------------------

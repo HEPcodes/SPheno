@@ -27,7 +27,7 @@ Module Control
 !-------------------------------------------------------------------
 
  Interface Is_NaN
-  Module Procedure IsNaN_r, IsNaN_v
+  Module Procedure IsNaN_r, IsNaN_v, IsNaN_m
  End Interface
 
  Interface FindPosition
@@ -51,7 +51,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  !------------------------------------
  ! version number
  !------------------------------------
- Character(len=8), Save :: version="v3.3.3"
+ Character(len=8), Save :: version="v3.3.4"
  !------------------------------------
  ! variables for spectrum calculation
  !------------------------------------
@@ -109,7 +109,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  !-------------------------
  ! for the error system 
  !-------------------------
- Character(len=60) :: Math_Error(29) =                                &
+ Character(len=60) :: Math_Error(31) =                                &
   & (/ "Routine OdeInt, stepsize smaller than minimum:              " &
   &  , "Routine OdeInt, maximal value > 10^36:                      " &
   &  , "Routine OdeInt, too many steps:                             " &
@@ -139,6 +139,8 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
   &  , "Routine bsstep, stepsize underflow:                         " &
   &  , "Routine pzextr: probable misuse, too much extrapolation     " &
   &  , "Routine rzextr: probable misuse, too much extrapolation     " &
+  &  , "Routine RealEigenSystem, matrix contains NaN                " &
+  &  , "Routine ComplexEigenSystem, matrix contains NaN             " &
   & /)
  Character(len=60) :: MathQP_Error(10) =                              &
   & (/ "Routine ComplexEigenSystemDP, array dimensions do not match:" &
@@ -230,7 +232,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
   & ,  "Routine RunRGE_2: entering non-perturbative regime at M_GUT "    &
   & ,  "Routine RunRGE_2: entering non-perturbative regime at M_H3  "    &
   & /)
- Character(len=60) :: LoopMass_Error(24) =                               &
+ Character(len=60) :: LoopMass_Error(25) =                               &
   & (/ "SleptonMass_1L: encountered a negative mass squared         "    &
   & ,  "SleptonMass_1L: p^2 iteration did not converge              "    &
   & ,  "SneutrinoMass_1L: encountered a negative mass squared       "    &
@@ -255,6 +257,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
   & ,  "LoopMassesMSSM3: |mu|^2 > 10^20 in the 1-loop calculation   "    &
   & ,  "LoopMassesMSSM3: |mu|^2 < 0 in the 1-loop calculation       "    &
   & ,  "LoopMassesMSSM3: mZ^2(mZ) < 0                               "    &
+  & ,  "Sigma_SM_chirally_enhanced: negative mass squared           "    &
   & /)
  Character(len=60) :: TwoLoopHiggs_Error(9) =                            &
   & (/ "PiPseudoScalar2: encountered negative stop mass squared     "    &
@@ -528,7 +531,7 @@ Contains
  !---------------------------------------------------------------------
  ! tests if x is NaN. Comparison of NaN with any number gives FALSE
  !---------------------------------------------------------------------
- implicit none
+ Implicit None
   Real(dp), Intent(in) :: x
 
   IsNaN_r = .Not. ((x.Gt.0._dp).Or.(x.Lt.0._dp).Or.(x.Eq.0._dp))
@@ -551,10 +554,33 @@ Contains
  
  Do i1=1,l1
   IsNaN_v = .Not. ((x(i1).Gt.0._dp).Or.(x(i1).Lt.0._dp).Or.(x(i1).Eq.0._dp))
-  if (IsNaN_v) exit
- end do
+  If (IsNaN_v) Exit
+ End Do
 
  End Function IsNaN_v
+
+ Logical Function IsNaN_m(x)
+ !---------------------------------------------------------------------
+ ! tests if at least one element of x is NaN. 
+ ! Comparison of NaN with any number gives FALSE
+ !---------------------------------------------------------------------
+ Real(dp), Intent(in) :: x(:,:)
+
+ Integer :: l1, i1, i2, l2
+
+ l1 = Size(x,dim=1)
+ l2 = Size(x,dim=2)
+
+ IsNaN_m = .False.
+ 
+ Do i1=1,l1
+  Do i2=1,l2
+   IsNaN_m = .Not. ((x(i1,i2).Gt.0._dp).Or.(x(i1,i2).Lt.0._dp).Or.(x(i1,i2).Eq.0._dp))
+   If (IsNaN_m) Exit
+  End Do
+ End Do
+
+ End Function IsNaN_m
 
  Subroutine ModelNotIncluded(i1,i2,i3,i4)
  !-------------------------------------------------------------------
