@@ -199,7 +199,7 @@ Contains
   Complex(dp) :: U_h(2,2), V_h(2,2), N_h(4,4), Rsneut_h(3,3), RSlepton_h(6,6)  &
               & , RSdown_h(6,6), RSup_h(6,6), RSpm_h(2,2), PhiGlu, yuk, A      &
               & , Rsl(2,2) , Rsd(2,2) , Rsu(2,2) 
-  Real(dp) :: fakt, r_T, width
+  Real(dp) :: fakt, r_T, width, width1
   Real(dp), Parameter :: mf_nu(3)=0._dp, e_d = -1._dp/3._dp, e_u = 2._dp/3._dp
   Complex(dp), Parameter :: g_sd0(6) = 0._dp, g_su0(6) = 0._dp &
       & , g_u0(3) = (1._dp,0._dp), g_d0(3)  = (1._dp,0._dp)
@@ -679,15 +679,15 @@ Contains
    If (i1.Eq.1) Then ! then calculate decay into pion and check this
                      ! partial width with respect to the total width
     Call  FermionToFermionPi(ChiPm(1)%m,Chi0(1)%m,m_pip,f_pi, G_F &
-           & , c_CNW_L(1,1,1),c_CNW_R(1,1,1), width)
+           & , c_CNW_L(1,1,1)/gauge(2),c_CNW_R(1,1,1)/gauge(2), width)
 
-    If (width.Gt.ChiPm(1)%g) Then ! PDG 111 pi0, 211 pi+
+    If (width.Gt.sum(ChiPm(1)%gi3(1:9)) ) Then ! PDG 111 pi0, 211 pi+
      ChiPm(1)%gi2(1) = width
      ChiPm(1)%id2(1,1) = Chi0(1)%id
      ChiPm(1)%id2(1,2) = id_piP
      ChiPm(1)%gi3(1:9) = 0._dp
      ChiPm(1)%g = Sum(ChiPm(1)%gi2) + Sum(ChiPm(1)%gi3)
-     ChiPm(1)%bi2(1) = width / ChiPm(1)%g
+     ChiPm(1)%bi2 = ChiPm(1)%gi2 / ChiPm(1)%g
      ChiPm(1)%bi3 = ChiPm(1)%gi3 / ChiPm(1)%g
     End If 
    End If
@@ -774,15 +774,24 @@ Contains
    If (i1.Eq.2) Then ! then calculate decay into pion and check this
                      ! partial width with respect to the total width
     Call  FermionToFermionPi(Chi0(i1)%m,Chi0(1)%m,m_pi0,f_pi, G_F/cosW2 &
-           & , c_NNZ_L(i1,1,1),c_NNZ_R(i1,1,1), width)
+           & , c_NNZ_L(i1,1,1)/gauge(2),c_NNZ_R(i1,1,1)/gauge(2), width)
+    Call  FermionToFermionPi(Chi0(2)%m,ChiPm(1)%m,m_pip,f_pi, G_F &
+           & , c_CNW_L(1,2,1)/gauge(2),c_CNW_R(1,2,1)/gauge(2), width1)
 
-    If (width.Gt.Chi0(2)%g) Then ! PDG 111 pi0, 211 pi+
+    If ((width+width1).Gt.Sum(Chi0(2)%gi3(1:18)) ) Then ! PDG 111 pi0, 211 pi+
      Chi0(2)%gi2(1) = width
      Chi0(2)%id2(1,1) = Chi0(1)%id
      Chi0(2)%id2(1,2) = id_pi0
+     Chi0(2)%gi2(2) = width1
+     Chi0(2)%id2(2,1) = Chipm(1)%id
+     Chi0(2)%id2(2,2) = id_piP + 1
+     Chi0(2)%gi2(3) = width1
+     Chi0(2)%id2(3,1) = Chipm(1)%id + 1
+     Chi0(2)%id2(3,2) = id_piP
      Chi0(2)%gi3(1:18) = 0._dp
+     Chi0(2)%gi3(29:45) = 0._dp
      Chi0(2)%g = Sum(Chi0(2)%gi2) + Sum(Chi0(2)%gi3)
-     Chi0(2)%bi2(1) = width / Chi0(2)%g
+     Chi0(2)%bi2 = Chi0(2)%gi2 / Chi0(2)%g
      Chi0(2)%bi3 = Chi0(2)%gi3 / Chi0(2)%g
     End If 
    End If

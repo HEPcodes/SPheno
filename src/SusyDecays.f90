@@ -564,8 +564,8 @@ Contains
    ! gravitino W
    !-----------------------------------------
    If (Abs(mC(i1)).Gt.(m32+mW(1))) Then ! to be changed
-     x1 = m32/mC(i1)
-     sq1 = Sqrt(x1)
+     sq1 = m32/mC(i1)
+     x1 = sq1**2
      x2 = (mW(1)/mC(i1))**2
      ChiPm(i1)%gi2(i_count) = oo16pi * Abs(mC(i1))**5                         &
         &      * Sqrt(1._dp-2._dp*(x1+x2)+(x1-x2)**2)                         &
