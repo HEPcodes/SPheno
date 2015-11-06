@@ -249,9 +249,10 @@ Contains
       int1 = int1 + int1a(1:7:2) + Ic * int1a(2:8:2)
      Enddo
      Call DgaussInt(F3BDgaugeSscalarSkernel1,8,sG(Imax),smax,int1a,eps)
-     int1 = int1 + int1a(1:7:2) + Ic * int1a(2:8:2)         
+     int1 = int1 + int1a(1:7:2) + Ic * int1a(2:8:2)
     Endif
    Endif
+
   Endif
 
   sumI(1) = (coup(2) * coup(3) + coup(1) * coup(4)) &
@@ -873,6 +874,7 @@ Contains
     Endif
 
    Endif
+
   Endif
 
   erg = Sum(sumI * int1)
@@ -1509,13 +1511,13 @@ Contains
     Elseif (Imin.Eq.Imax) Then
      Call DgaussInt(F3BDgaugeSSkernel1,4,smin,sG(Imin),int1,eps)
      Call DgaussInt(F3BDgaugeSSkernel1,4,sG(Imin),smax,int1a,eps)
-     int1 = int1 + int1a
+     int1 = int1 + int1a 
     Else
      Call DgaussInt(F3BDgaugeSSkernel1,4,smin,sG(1),int1,eps)
      Call DgaussInt(F3BDgaugeSSkernel1,4,sG(1),sG(2),int1a,eps)
-     int1 = int1 + int1a
+     int1 = int1 + int1a 
      Call DgaussInt(F3BDgaugeSSkernel1,4,sG(2),smax,int1a,eps)
-     int1 = int1 + int1a
+     int1 = int1 + int1a 
     Endif
 
    Elseif ((mf(2).Eq.0._dp).And.(mf(3).Eq.0._dp).And.(mf(4).Eq.0._dp)) Then
@@ -1529,14 +1531,14 @@ Contains
     Elseif (Imin.Eq.Imax) Then
      sminG = sG(Imin)
      int1(1) = dgauss(F3BDgaugeSSkernel2,smin,sminG,eps) &
-           & + dgauss(F3BDgaugeSSkernel2,sminG,smax,eps)
+           & + dgauss(F3BDgaugeSSkernel2,sminG,smax,eps)  
     Else
      sminG = sG(1)
      sminG = sG(1)
      smaxG = sG(2)
      int1(1) = dgauss(F3BDgaugeSSkernel2,smin,sminG,eps)  &
            & + dgauss(F3BDgaugeSSkernel2,sminG,smaxG,eps) &
-           & + dgauss(F3BDgaugeSSkernel2,smaxG,smax,eps)
+           & + dgauss(F3BDgaugeSSkernel2,smaxG,smax,eps) 
     Endif
 
    Elseif ((mf(2).Eq.0._dp).And.(mf(4).Eq.0._dp)) Then
@@ -1545,14 +1547,14 @@ Contains
     Elseif (Imin.Eq.Imax) Then
      sminG = sG(Imin)
      int1(1) = dgauss(F3BDgaugeSSkernel3,smin,sminG,eps) &
-           & + dgauss(F3BDgaugeSSkernel3,sminG,smax,eps)
+           & + dgauss(F3BDgaugeSSkernel3,sminG,smax,eps) 
     Else
      sminG = sG(1)
      sminG = sG(1)
      smaxG = sG(2)
      int1(1) = dgauss(F3BDgaugeSSkernel3,smin,sminG,eps)  &
            & + dgauss(F3BDgaugeSSkernel3,sminG,smaxG,eps) &
-           & + dgauss(F3BDgaugeSSkernel3,smaxG,smax,eps)
+           & + dgauss(F3BDgaugeSSkernel3,smaxG,smax,eps) 
     Endif
 
    Elseif ((mf(3).Eq.0._dp).And.(mf(4).Eq.0._dp)) Then
@@ -1565,18 +1567,18 @@ Contains
      int1(1) = int1b(1)
      int1(2) = int1b(2)
      Call DgaussInt(F3BDgaugeSSkernel4,2,sG(Imin),smax,int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(2) = int1(2) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(2) = int1(2) + int1b(2) 
     Else
      Call DgaussInt(F3BDgaugeSSkernel4,2,smin,sG(1),int1b,eps)
      int1(1) = int1b(1)
      int1(2) = int1b(2)
      Call DgaussInt(F3BDgaugeSSkernel4,2,sG(1),sG(2),int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(2) = int1(2) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(2) = int1(2) + int1b(2) 
      Call DgaussInt(F3BDgaugeSSkernel4,2,sG(2),smax,int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(2) = int1(2) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(2) = int1(2) + int1b(2) 
     Endif
 
    Elseif (mf(4).Eq.0._dp) Then
@@ -1589,18 +1591,18 @@ Contains
      int1(1) = int1b(1)
      int1(2) = int1b(2)
      Call DgaussInt(F3BDgaugeSSkernel5,2,sG(Imin),smax,int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(2) = int1(2) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(2) = int1(2) + int1b(2) 
     Else
      Call DgaussInt(F3BDgaugeSSkernel5,2,smin,sG(1),int1b,eps)
-     int1(1) = int1b(1)
-     int1(2) = int1b(2)
+     int1(1) = int1b(1) 
+     int1(2) = int1b(2) 
      Call DgaussInt(F3BDgaugeSSkernel5,2,sG(1),sG(2),int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(2) = int1(2) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(2) = int1(2) + int1b(2) 
      Call DgaussInt(F3BDgaugeSSkernel5,2,sG(2),smax,int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(2) = int1(2) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(2) = int1(2) + int1b(2) 
     Endif
 
    Elseif (mf(3).Eq.0._dp) Then
@@ -1613,18 +1615,18 @@ Contains
      int1(1) = int1b(1)
      int1(2) = int1b(2)
      Call DgaussInt(F3BDgaugeSSkernel6,2,sG(Imin),smax,int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(2) = int1(2) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(2) = int1(2) + int1b(2) 
     Else
      Call DgaussInt(F3BDgaugeSSkernel6,2,smin,sG(1),int1b,eps)
      int1(1) = int1b(1)
      int1(2) = int1b(2)
      Call DgaussInt(F3BDgaugeSSkernel6,2,sG(1),sG(2),int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(2) = int1(2) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(2) = int1(2) + int1b(2) 
      Call DgaussInt(F3BDgaugeSSkernel6,2,sG(2),smax,int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(2) = int1(2) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(2) = int1(2) + int1b(2) 
     Endif
 
    Elseif (mf(2).Eq.0._dp) Then
@@ -1637,22 +1639,23 @@ Contains
      int1(1) = int1b(1)
      int1(3) = int1b(2)
      Call DgaussInt(F3BDgaugeSSkernel7,2,sG(Imin),smax,int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(3) = int1(3) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(3) = int1(3) + int1b(2) 
     Else
      Call DgaussInt(F3BDgaugeSSkernel7,2,smin,sG(1),int1b,eps)
      int1(1) = int1b(1)
      int1(3) = int1b(2)
      Call DgaussInt(F3BDgaugeSSkernel7,2,sG(1),sG(2),int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(3) = int1(3) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(3) = int1(3) + int1b(2) 
      Call DgaussInt(F3BDgaugeSSkernel7,2,sG(2),smax,int1b,eps)
-     int1(1) = int1(1) + int1b(1)
-     int1(3) = int1(3) + int1b(2)
+     int1(1) = int1(1) + int1b(1) 
+     int1(3) = int1(3) + int1b(2) 
     Endif
    Endif
  
   Endif
+
 
   If ((mf(2).Eq.0._dp).And.(mf(3).Eq.0._dp).And.(mf(4).Eq.0._dp)) Then
    erg = 2._dp * ( coup2(1) + coup2(2) ) * ( coup2(3) + coup2(4) ) * int1(1)
@@ -2251,6 +2254,7 @@ Contains
     Endif
 
    Endif
+ 
   Endif
 
   erg = Sum(sumI * int1)
@@ -2943,6 +2947,7 @@ Contains
     smax = mf2(1)
     smin = (Abs(mf(3)) + Abs(mf(4)))**2
 
+
     int1(1) = 0._dp
     int1(2) = 0._dp
     int1(3) = 0._dp
@@ -2950,6 +2955,7 @@ Contains
      If (smin.Lt.sG(len1-i1)) Imin = len1 - i1
      If (smax.Gt.sG(i1)) Imax = i1
     Enddo
+
     If ((Imin.Eq.len1).Or.(Imax.Eq.0).Or.((Imin-1).Eq.Imax)) Then
      Call DgaussInt(F3BDscalarS1S2kernel4,2,smin,smax,int1c,eps)
      int1(4) = int1c(1) + Ic * int1c(2)
@@ -2968,6 +2974,7 @@ Contains
      Call DgaussInt(F3BDscalarS1S2kernel4,2,sG(Imax),smax,int1c,eps)
      int1(4) = int1(4) + int1c(1) + Ic * int1c(2)
     Endif
+
    Endif
    erg = coupC(1) * coupC(3) * int1(4)
 
@@ -2989,6 +2996,7 @@ Contains
     smin = (Abs(mf(3)) + Abs(mf(4)))**2
     int1(1) = 0._dp
     int1(3) = 0._dp
+
     Do i1=1,len1-1
      If (smin.Lt.sG(len1-i1)) Imin = len1 - i1
      If (smax.Gt.sG(i1)) Imax = i1
@@ -3017,6 +3025,7 @@ Contains
      int1(2) = int1(2) + int1b(1) + Ic * int1b(2)
      int1(4) = int1(4) + int1b(3) + Ic * int1b(4)
     Endif
+
    Endif
    erg = coupC(1) * coupC(3) * int1(4)      &
      & + 2._dp * coupC(2) * coupC(3) * mf(1) * mf(2) * int1(2)
@@ -3043,6 +3052,7 @@ Contains
      If (smin.Lt.sG(len1-i1)) Imin = len1 - i1
      If (smax.Gt.sG(i1)) Imax = i1
     Enddo
+
     If ((Imin.Eq.len1).Or.(Imax.Eq.0).Or.((Imin-1).Eq.Imax)) Then
      Call DgaussInt(F3BDscalarS1S2kernel2,4,smin,smax,int1b,eps)
      int1(3) = int1b(1) + Ic * int1b(2)
@@ -3093,6 +3103,7 @@ Contains
      If (smin.Lt.sG(len1-i1)) Imin = len1 - i1
      If (smax.Gt.sG(i1)) Imax = i1
     Enddo
+   
     If ((Imin.Eq.len1).Or.(Imax.Eq.0).Or.((Imin-1).Eq.Imax)) Then
      Call DgaussInt(F3BDscalarS1S2kernel1,8,smin,smax,int1a,eps)
      int1 = int1a(1:7:2) + Ic * int1a(2:8:2)
@@ -3111,7 +3122,9 @@ Contains
      Call DgaussInt(F3BDscalarS1S2kernel1,8,sG(Imax),smax,int1a,eps)
      int1 = int1 + int1a(1:7:2) + Ic * int1a(2:8:2)
     Endif
+
    Endif
+
    erg = coupC(1) * coupC(3) * int1(4)                             &
      & + 2._dp * ( coupC(1) * coupC(4) * mf(3) * mf(4) * int1(3)    &
      &          + coupC(2) * coupC(3) * mf(1) * mf(2) * int1(2) )  &
@@ -3354,7 +3367,7 @@ Contains
 
 
  Complex(dp) Function F3BDscalarS1S2kernel6(mi2, mgS)
- implicit none
+ Implicit None
   Real(dp), Intent(in) :: mi2, mgS(4)
 
   Real(dp) :: ratio, mS12, mS22, eps, Log1, mGS1, mGS2, Atan1, Atan2, Log2
@@ -3364,9 +3377,9 @@ Contains
 
   mS12 = mgS(1)**2
   mS22 = mgS(3)**2
-  if ((mgS(2).eq.0._dp).and.(mgS(4).eq.0._dp)) then ! 0 widths
+  If ((mgS(2).Eq.0._dp).And.(mgS(4).Eq.0._dp)) Then ! 0 widths
    ratio = mS12 / mS22
-   If (Abs(ratio-1._dp).Lt.1.e-6_dp) then
+   If (Abs(ratio-1._dp).Lt.1.e-6_dp) Then
     eps = mS22 - mS12
     Log1 = Log(1._dp - mi2/mS12) 
     F3BDscalarS1S2kernel6 = mi2 * (3._dp * mS12 - 2.5_dp * mi2)     &
@@ -3380,14 +3393,14 @@ Contains
       & - mi2**4 * eps**3 / (12._dp ** mS12**3 * (mi2-mS12)**2 )    &
       & + mi2**4 * (3._dp * mi2 - 5._dp * mS12) * eps**4            &
       &    / (60._dp * mS12**4 * (mi2-mS12)**3 ) 
-   else
+   Else
     F3BDscalarS1S2kernel6 = mi2 * (mS12 + mS22 - 1.5_dp * mi2)     &
          &  + ( mS12 * (mi2 - mS12)**2 * Log( 1._dp - mi2 / mS12)  &
          &    - mS22 * (mi2 - mS22)**2 * Log( 1._dp - mi2 / mS22)  &
          &    ) / (mS12-mS22)
-   end if
+   End If
  
-  else ! including decay widths
+  Else ! including decay widths
     mGS1 = mgS(1) * mgS(2)
     mGS2 = mgS(3) * mgS(4)
 
@@ -3415,9 +3428,9 @@ Contains
        &    - (nenI * sum2R + nenR * sum2I) * Atan2
     F3BDscalarS1S2kernel6 = re + ic * im
 
-  end if
+  End If
 
- end Function F3BDscalarS1S2kernel6
+ End Function F3BDscalarS1S2kernel6
 
 
  Real(dp) Function F3BDscalarSSa4(s)
@@ -3492,6 +3505,7 @@ Contains
 
    If (Integrate) Then
     int1 = 0._dp
+
     If ((mf(3).Eq.0._dp).And.(mf(4).Eq.0._dp)) Then
      mR = mf(1)
      Call IntScalarSS1(scalar,mR,resR)
@@ -3503,6 +3517,7 @@ Contains
      smin = (Abs(mf(3)) + Abs(mf(4)))**2
      sminG = (scalar(1)-5._dp*scalar(2))**2
      smaxG = (scalar(1)+5._dp*scalar(2))**2
+
      If ((smin.Gt.mS2).Or.(smax.Lt.mS2)) Then
       int1(4) = dgauss(F3BDscalarSSa4,smin,smax,eps)
      Elseif ((smin.Lt.sminG).And.(smax.Gt.smaxG)) Then
@@ -3515,7 +3530,7 @@ Contains
      Else
       int1(4) = dgauss(F3BDscalarSSa4,smin,smaxG,eps)  &
             & + dgauss(F3BDscalarSSa4,smaxG,smax,eps)
-     Endif 
+     Endif
     Endif
    Endif
    erg = coupC(1) * coupC(3) * int1(4)
@@ -3531,6 +3546,7 @@ Contains
     smaxG = (scalar(1)+5._dp*scalar(2))**2
     int1(1) = 0._dp
     int1(3) = 0._dp
+
     If ((smin.Gt.mS2).Or.(smax.Lt.mS2)) Then ! resonance is outside
      Call DgaussInt(F3BDscalarSSkernel3,2,smin,smax,int2a,eps)
      int1(2) = int2a(1)
@@ -3556,6 +3572,7 @@ Contains
      int1(2) = int2a(1)
      int1(4) = int2a(2)
     Endif 
+
    Endif
    erg = coupC(1) * coupC(3) * int1(4)  &
      & + 4._dp * coupC(2) * coupC(3) * mf(1) * mf(2) * int1(2)
@@ -3572,6 +3589,7 @@ Contains
     smaxG = (scalar(1)+5._dp*scalar(2))**2
     int1(1) = 0._dp
     int1(2) = 0._dp
+    
     If ((smin.Gt.mS2).Or.(smax.Lt.mS2)) Then
      Call DgaussInt(F3BDscalarSSkernel2,2,smin,smax,int2a,eps)
      int1(3) = int2a(1)
@@ -3612,6 +3630,7 @@ Contains
     smin = (Abs(mf(3)) + Abs(mf(4)))**2
     sminG = (scalar(1)-5._dp*scalar(2))**2
     smaxG = (scalar(1)+5._dp*scalar(2))**2
+    
     If ((smin.Gt.mS2).Or.(smax.Lt.mS2)) Then
      Do int_v=1,4     
       int1(int_v) = Dgauss(F3BDscalarSSkernel1a,smin,smax,eps)
@@ -3636,7 +3655,8 @@ Contains
      Do int_v=1,4     
       int1(int_v) = Dgauss(F3BDscalarSSkernel1a,smin,smax,eps)
      End Do
-    Endif 
+    Endif
+ 
    Endif
    erg = coupC(1) * coupC(3) * int1(4)                               &
      & + 4._dp * ( coupC(1) * coupC(4) * mf(3) * mf(4) * int1(3)      &
@@ -3672,6 +3692,7 @@ Contains
                        &  * (mf2(1) + mf2(2) - s)  * (s - mf2(3) - mf2(4))   &
                        &  / (s * ( (s-mS2)**2 + mSG2 ) )
   End If
+
  End Function F3BDscalarSSkernel1a
 
 
@@ -4088,6 +4109,7 @@ Contains
     Endif
 
    Endif
+
   Endif
 
   erg = Sum(sumI * int1)
@@ -4938,9 +4960,10 @@ Contains
   Do i1=1,n_IR4
    If ( (Abs(IntegralsR4(i1,2)-mass(2)).Lt.deltaM).And. &
       & (Abs(IntegralsR4(i1,3)-mass(3)).Lt.deltaM).And. &
-      & (Abs(IntegralsR4(i1,4)-mass(4)).Lt.deltaM) ) Then
+      & (Abs(IntegralsR4(i1,4)-mass(4)).Lt.deltaM).And. &
+      & (Abs(IntegralsR4(i1,5)-Gauge(1)).Lt.deltaM)        ) Then
 
-    intR4 = IntegralsR4(i1,5:8)
+    intR4 = IntegralsR4(i1,6:9)
     Integrate = .False.
     Call F3BDgaugeSSint(Gauge,mass,coup1,epsI,Integrate,intR4,resR)
     Iname = Iname - 1
@@ -4953,7 +4976,9 @@ Contains
   If (Integrate) Then
    n_IR4 = N_IR4 + 1
    IntegralsR4(n_IR4,1:4) = mass
-   IntegralsR4(n_IR4,5:8) = intR4
+   IntegralsR4(n_IR4,5) = Gauge(1)
+   IntegralsR4(n_IR4,6:9) = intR4
+
   Endif
 
   Iname = Iname - 1

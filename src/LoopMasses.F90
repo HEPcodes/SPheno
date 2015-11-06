@@ -1185,7 +1185,17 @@ Contains
         , mP0_T, mP02_T, RP0_T, mS0, mS02, RS0, mSpm, mSpm2, RSpm, mZ2, mW2   &
         , GenerationMixing, kont, .True., .False.)
 
-  kont = 0
+   If (kont.Ne.0) Then
+    Iname = Iname - 1
+    mf_d = mf_d_save
+    mf_l = mf_l_save
+    mf_u = mf_u_save
+    mf_d2 = mf_d**2
+    mf_l2 = mf_l**2
+    mf_u2 = mf_u**2
+    Return
+   End If
+
   sinW2_DR = g(1)**2 / (g(1)**2+g(2)**2)
 
 !----------------------
@@ -1285,6 +1295,16 @@ Contains
         , mDSquark, mDSquark2, RDSquark, mUSquark, mUSquark2, RUSquark       &
         , mP0_T, mP02_T, RP0_T, mS0, mS02, RS0, mSpm, mSpm2, RSpm, mZ2, mW2  &
         , GenerationMixing, kont, .True., .False.)
+   If (kont.Ne.0) Then
+    Iname = Iname - 1
+    mf_d = mf_d_save
+    mf_l = mf_l_save
+    mf_u = mf_u_save
+    mf_d2 = mf_d**2
+    mf_l2 = mf_l**2
+    mf_u2 = mf_u**2
+    Return
+   End If
    RP0 = RP0_T
    !---------------------------
    ! tadpoles at 1-loop
@@ -1996,6 +2016,17 @@ Contains
       & , mDSquark, mDSquark2, RDSquark, mUSquark, mUSquark2, RUSquark        &
       & , mP0, mP02, RP0, mS0, mS02, RS0, mSpm, mSpm2, RSpm, mZ2, mW2         &
       & , GenerationMixing, kont, .True., .False.)
+
+   If (kont.Ne.0) Then
+    Iname = Iname - 1
+    mf_d = mf_d_save
+    mf_l = mf_l_save
+    mf_u = mf_u_save
+    mf_d2 = mf_d**2
+    mf_l2 = mf_l**2
+    mf_u2 = mf_u**2
+    Return
+   End If
   kont = 0
   sinW2_DR = g(1)**2 / (g(1)**2+g(2)**2)
 
@@ -2082,6 +2113,18 @@ Contains
       & , mDSquark, mDSquark2, RDSquark, mUSquark, mUSquark2, RUSquark       &
       & , mP0, mP02, RP0, mS0, mS02, RS0, mSpm, mSpm2, RSpm, mZ2, mW2        &
       & , GenerationMixing, kont, .True., .False.)
+
+   If (kont.Ne.0) Then
+    Iname = Iname - 1
+    mf_d = mf_d_save
+    mf_l = mf_l_save
+    mf_u = mf_u_save
+    mf_d2 = mf_d**2
+    mf_l2 = mf_l**2
+    mf_u2 = mf_u**2
+    Return
+   End If
+
    !---------------------------
    ! tadpoles at 1-loop
    !---------------------------

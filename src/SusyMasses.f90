@@ -618,7 +618,6 @@ Contains
       Write (ErrCan,*) '  '
      End If
      mSpm(i1) = 0._dp
-     mSpm2(i1) = 0._dp
      If (ErrorLevel.Eq.2) Call TerminateProgram
      kont = -202
     Call AddError(202)

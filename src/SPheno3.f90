@@ -424,6 +424,10 @@ Contains
 
   If (HighScaleModel.Eq."MSSMtree") Then 
    If (GenerationMixing) Then
+    If (At_save.Ne.ZeroC) Au_sckm(3,3) = At_save * Y_u(3,3)
+    If (Ab_save.Ne.ZeroC) Ad_sckm(3,3) = Ab_save * Y_d(3,3)
+    If (Atau_save.Ne.ZeroC) Al_pmns(3,3) = Atau_save * Y_l(3,3)
+    
     Call Switch_from_superCKM(Y_d, Y_u, Ad_sckm, Au_sckm, M2D_sckm, M2Q_sckm &
               & , M2U_sckm, A_d, A_u, M2_D, M2_Q, M2_U, .False. )
     If (Maxval(Abs(MatNu)).Gt.0._dp) Then
@@ -1411,6 +1415,7 @@ Contains
      & , RSlepton, mSneut, mSneut2, RSneut, mGlu, PhaseGlu  &
      & , gauge, uL_L, uL_R, uD_L, uD_R, uU_L, uU_R, Y_l     &
      & , Y_d, Y_u, Mi, A_l, A_d, A_u, M2_E, M2_L, M2_D      &
+!     & , M2_Q, M2_U, M2_H, mu, B, m_GUT, kont, .True., n_run)
      & , M2_Q, M2_U, M2_H, mu, B, m_GUT, kont, WriteOut, n_run)
   End If
 

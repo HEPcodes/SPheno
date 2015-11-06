@@ -4183,7 +4183,6 @@ end if
   Call ParametersToG(gi, y_l_160, y_d_160, y_u_160, Mi_160, T_l_160, T_d_160 &
         & , T_u_160, M2_E_160, M2_L_160, M2_D_160, M2_Q_160, M2_U_160        &
         & , M2_H_160, mu_160, B_160, g2(1:213))
-
   g2(214) = Log(tanb_Q)
 
   tz = Log(160._dp/Qin)
@@ -4248,7 +4247,17 @@ end if
 
   abs_mu2= (M2_H_160(2) * tanb_160**2 - M2_H_160(1) ) / (1._dp-tanb_160**2) &
          & - 0.5_dp * mZ2_run
-  mu_160 = phase_mu * Sqrt(abs_mu2)
+  If (abs_mu2.lt.0._dp) then ! the above approximation is too crude in this
+                             ! case because otherwise we would not have reached
+                             ! this routine at all -> instable region
+   Iname = Iname - 1
+   kont = -700
+!   Call AddError(700)
+   Return
+   
+  Else
+   mu_160 = phase_mu * Sqrt(abs_mu2)
+  end if
   B_160 = (M2_H_160(1) + M2_H_160(2) + 2._dp * Abs_Mu2) * tanb_160 &
       & / (1+tanb_160**2)
 
@@ -4265,7 +4274,7 @@ end if
   If (kont.Ne.0) Then ! there is a problem with the running masses
    Iname = Iname - 1
    kont = -700
-   Call AddError(700)
+!   Call AddError(700)
    Return
   End If 
 

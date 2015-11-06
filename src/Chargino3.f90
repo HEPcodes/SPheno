@@ -117,9 +117,9 @@ Contains
   Iname = Iname + 1
   NameOfUnit(Iname) = 'CharginoThreeBodyDecays'
 
-  Allocate( IntegralsZ4(200,8) )
+  Allocate( IntegralsZ4(200,9) )
   Allocate( IntegralsZ8(200,12) )
-  Allocate( IntegralsW4(200,8) )
+  Allocate( IntegralsW4(200,9) )
   Allocate( IntegralsW8(200,12) )
   Allocate( IntegralsZW8(200,12) )
   Allocate( IntegralsS04(5000,10) )
@@ -1525,7 +1525,7 @@ Contains
      If (gCff(i1,i2).Lt.0._dp) Then
       p_test = Abs(gCff(i1,i2)) / Maxval(Abs(gCffSum(i1,i2,1:Isum)))
       gCff(i1,i2) = 0._dp
-      If (p_test.le.prec) cycle ! this is a numerical zero
+      If (p_test.Gt.0.01_dp*epsI) Cycle ! this is a numerical zero
       Write (ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write (ErrCan,*) &
       & 'Gamma(Chi^-_'//Bu(i_in)//' -> Chi^-_'//Bu(i_out)//' nu nu) < 0 :' &
@@ -1543,7 +1543,7 @@ Contains
     If (gCff(i1,i1).Lt.0._dp) Then
      p_test = Abs(gCff(i1,i1)) / Maxval(Abs(gCffSum(i1,i1,1:Isum)))
      gCff(i1,i1) = 0._dp
-     If (p_test.le.prec) cycle ! this is a numerical zero
+     If (p_test.Gt.0.01_dp*epsI) cycle ! this is a numerical zero
      Write (ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write (ErrCan,*) &
       & 'Gamma(Chi^-_'//Bu(i_in)//' -> Chi^-_'//Bu(i_out)//' nu nu) < 0 :' &
@@ -2455,7 +2455,7 @@ Contains
      If (gNffp(i1,i2).Lt.0._dp) Then
       p_test = Abs(gNffp(i1,i2)) / Maxval(Abs(gNffpSum(i1,i2,1:Isum)))
       gNffp(i1,i2) = 0._dp
-      If (p_test.le.prec) cycle ! this is a numerical zero
+      If (p_test.Gt.0.01_dp*epsI) Cycle ! this is a numerical zero
       Write (ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write (ErrCan,*) &
       & 'Gamma(Chi_^-'//Bu(i_in)//' -> Chi_'//Bu(i_out)//') < 0 :' &
@@ -2473,7 +2473,7 @@ Contains
     If (gNffp(i1,i1).Lt.0._dp) Then
      p_test = Abs(gNffp(i1,i1)) / Maxval(Abs(gNffpSum(i1,i1,1:Isum)))
      gNffp(i1,i1) = 0._dp
-     If (p_test.le.prec) cycle ! this is a numerical zero
+     If (p_test.Gt.0.01_dp*epsI) cycle ! this is a numerical zero
      Write (ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write (ErrCan,*) &
       & 'Gamma(Chi^-_'//Bu(i_in)//' -> Chi_'//Bu(i_out)//') < 0 :' &
@@ -3703,7 +3703,7 @@ Contains
      If (gGffp(i1,i2).Lt.0._dp) Then
       p_test = Abs(gGffp(i1,i2)) / Maxval(Abs(gGffpSum(i1,i2,1:Isum)))
       gGffp(i1,i2) = 0._dp
-      If (p_test.le.prec) cycle ! this is a numerical zero
+      If (p_test.Gt.0.01_dp*epsI) cycle ! this is a numerical zero
       Write (ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write (ErrCan,*) &
       & 'Gamma(Chi_^-'//Bu(i_in)//' -> Gluino) < 0 :' &
@@ -3721,7 +3721,7 @@ Contains
     If (gGffp(i1,i1).Lt.0._dp) Then
      p_test = Abs(gGffp(i1,i1)) / Maxval(Abs(gGffpSum(i1,i1,1:Isum)))
      gGffp(i1,i1) = 0._dp
-     If (p_test.le.prec) cycle ! this is a numerical zero
+     If (p_test.Gt.0.01_dp*epsI) cycle ! this is a numerical zero
      Write (ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
      Write (ErrCan,*) &
       & 'Gamma(Chi^-_'//Bu(i_in)//' -> Gluino) < 0 :' &

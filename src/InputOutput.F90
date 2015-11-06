@@ -3789,6 +3789,7 @@ Contains
     
     Else
      Write(io_L,100) "Block MODSEL  # Model selection"
+     Write(io_L,100) "    1    0    # general MSSM"
      Write(io_L,100) "    4    1    # MSSM with explicit R-parity violation"
      Write(io_L,100) "Block MINPAR  # Input parameters"
      If (tanb_mZ.Ne.0._dp) Write(io_L,101) 3,tanb_mZ,"# tanb at m_Z    "
@@ -3797,9 +3798,13 @@ Contains
 
    Else
     non_minimal = .True.
-    Write(io_L,100) "# Either the general MSSM or a model has been used"
-    Write(io_L,100) &
-      & "# which has not yet been implemented in the LesHouches standard"
+!    Write(io_L,100) "# Either the general MSSM or a model has been used"
+!    Write(io_L,100) &
+!      & "# which has not yet been implemented in the LesHouches standard"
+    Write(io_L,100) "Block MODSEL  # Model selection"
+    Write(io_L,100) "    1    0    # general MSSM"
+    If (GenerationMixing) Write(io_L,100) &
+      &             "    6    3    # switching on flavour violation"
     Write(io_L,100) "Block MINPAR  # Input parameters"
     Write(io_L,101) 3,tanb_mZ,"# tanb at m_Z    "
     Write(io_L,101) 4, Real(phase_mu,dp),"# Sign(mu)"

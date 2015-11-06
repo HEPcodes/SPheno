@@ -75,18 +75,18 @@ Contains
   Real(dp) :: g0(213), mudim, tz, dt, gauge_mZ(3), M2H_mZ(3)
   Complex(dp), Dimension(3,3) :: y_l_mZ,  y_d_mZ, y_u_mZ , Al_mZ, Ad_mZ &
            &, Au_mZ,M2E_mZ, M2L_mZ, M2D_mZ, M2Q_mZ, M2U_mZ
-  Complex(dp) :: Mi_mZ(3), B_mZ, B_4(4), bi(4)
+  Complex(dp) :: Mi_mZ(3), B_mZ, B_4(4), bi(4), mu_mZ
  ! neutrino constraints
   Real(dp) :: Lam_Sq, m_sq, m2_atm_rp, m2_sol_rp, tan2_sol, tan2_atm &
    & , Ue32, tan2_sol_opt, tan2_atm_opt, epsT12, epsT22, Ue3_opt
   Logical :: check
  ! RP-masses + mixing
   Real(dp) :: mGlu, mC(5), mC2(5), mSdown(6), mSdown2(6), mSup(6), mSup2(6)   &
-    & , mP0(5), mP02(5), mS0(5), mS02(5), mSpm(8), mSpm2(8) &
-    & , mN(7), mN1L(7), mN2(7), mN1L2(7)
+    & , mP0(5), mP02(5), mS0(5), mS02(5), mSpm(8), mSpm2(8), mZ2_t &
+    & , mN(7), mN1L(7), mN2(7), mN1L2(7), AbsLam, AbsEps, abs_mu, tb, sb2,cb2,c2b
   Complex(dp) :: PhaseGlu, RSdown(6,6), RSup(6,6), N(7,7), N1L(7,7), lam(3), epst(3)
-!  Logical, Save :: WriteOut = .False.
-  Logical, Save :: WriteOut = .True.
+  Logical, Save :: WriteOut = .False.
+!  Logical, Save :: WriteOut = .True.
 
   !------------------------------------------
   ! check if neutrino data are consistent
@@ -131,11 +131,31 @@ Contains
   tan2_atm_opt = 0.5_dp * (tan2_atm_min + tan2_atm_max)
   tan2_sol_opt = 0.5_dp * (tan2_sol_min + tan2_sol_max)
 
+  tb = vevsm(2)/vevsm(1)
+  cb2 = 1._dp/(1._dp+tb**2)
+  sb2 = cb2 * tb**2
+  c2b = cb2-sb2
+  !--------------------------------------------------
+  ! recalculating mu and B for the tree-level vacuum
+  !--------------------------------------------------
+  mZ2_t = 0.25_dp * (g0(1)**2+g0(2)**2)*(vevSM(1)**2+vevsm(2)**2)
+  Abs_Mu = (M2H_mZ(2) * sb2 - M2H_mZ(1) * cb2) / c2b  - 0.5_dp * mZ2_t
+  If (abs_mu.lt.0._dp) then
+   kont = -211
+   Iname = Iname -1
+   return
+  End If
+  mu_mZ = Sqrt(abs_mu)* phase_mu 
+  B_mZ = (M2H_mZ(1) + M2H_mZ(2) + 2._dp *  Abs_Mu) * tb / (1+tb**2)
+
+  !--------------------------
+  ! a very first guess
+  !--------------------------
   eps = 1.e-4_dp * Abs(mu_mZ)
   eps(2) = -eps(2)
-
   bi(1) = mu_mZ
   bi(2:4) = eps
+
   b_4 = B_mZ
 
   Lam_sq = 4._dp * Sqrt(m2_atm)                                               &
@@ -159,6 +179,7 @@ Contains
                     &, mSdown, mSdown2, RSdown, mSup, mSup2, RSup             &
                     &, mP0, mP02, RP0, mS0, mS02, RS0, mSpm, mSpm2, RSpm      &
                     &, GenerationMixing, kont)
+
   !----------------------------
   ! approx. squared solar mass
   !-----------------------------
@@ -177,7 +198,14 @@ Contains
    m_Sq = m_Sq**2
 
    If (m_Sq.Lt.m2_sol_min) eps = (m2_sol/m_sq)**0.25_dp * eps
-   If (m_Sq.Gt.m2_sol_max) eps = (m2_sol/m_sq)**0.25_dp * eps
+   If (m_Sq.Gt.m2_sol_max) eps = (m_sq/m2_sol)**0.25_dp * eps
+   !-----------------------------------------------------
+   ! check if tree-level versus loop level is fullfilled
+   !-----------------------------------------------------
+   AbsLam = Sqrt(Abs(lambda(1))**2+Abs(lambda(2))**2+Abs(lambda(3))**2)
+   AbsEps = Dot_product(eps,eps)
+
+   If (0.1_dp*AbsLam.Lt.AbsEps) eps = Sqrt(0.1_dp * AbsLam/AbsEps) * eps
 
    bi(2:4) = eps
    vevL = (Lambda - eps*vevSM(1)) / mu_mZ 
@@ -196,9 +224,17 @@ Contains
                     &, mSdown, mSdown2, RSdown, mSup, mSup2, RSup              &
                     &, mP0, mP02, RP0, mS0, mS02, RS0, mSpm, mSpm2, RSpm       &
                     &, GenerationMixing, kont)
+
   !-----------------------------------------------------
   ! the iteration to get a consistent set of parameters
   !-----------------------------------------------------
+  If (WriteOut) then
+   Write(ErrCan,*) "initial paramters"
+   Write(ErrCan,*) "eps",real(eps)
+   Write(ErrCan,*) "vevL",vevL
+   Write(ErrCan,*) "Lambda",real(lambda)
+   Write(ErrCan,*) "B_i",real(B_4(2:4))
+  End If 
   isol=100
   Do count = 0,isol
    If (WriteOut) Write(Errcan,*) " "
@@ -237,6 +273,13 @@ Contains
    If (.Not.check) Then
     vevL = (Lambda - eps*vevSM(1)) / mu_mZ 
     Call Calculate_Bi(mu_mZ, eps, vevL, vevSM, g0(1), g0(2), M2L_mZ, B_4(2:4))
+    If (WriteOut) then
+     Write(ErrCan,*) "recalculated paramters"
+     Write(ErrCan,*) "eps",real(eps)
+     Write(ErrCan,*) "vevL",vevL
+     Write(ErrCan,*) "Lambda",real(lambda)
+     Write(ErrCan,*) "B_i",real(B_4(2:4))
+    End If 
     Call TreeMassesEps3(g0(1), g0(2), vevSM, vevL, Mi_mZ(1), Mi_mZ(2), Mi_mZ(3) &
                      &, bi, B_4, M2E_mZ, M2L_mZ, Al_mZ, Y_l_mZ                  &
                      &, M2D_mZ, M2U_mZ, M2Q_mZ, Ad_mZ, Au_mZ, Y_d_mZ, Y_u_mZ    &
@@ -284,6 +327,13 @@ Contains
    If (.Not.check) Then
     vevL = (Lambda - eps*vevSM(1)) / mu_mZ 
     Call Calculate_Bi(mu_mZ, eps, vevL, vevSM, g0(1), g0(2), M2L_mZ, B_4(2:4))
+    If (WriteOut) then
+     Write(ErrCan,*) "recalculated paramters"
+     Write(ErrCan,*) "eps",real(eps)
+     Write(ErrCan,*) "vevL",vevL
+     Write(ErrCan,*) "Lambda",real(lambda)
+     Write(ErrCan,*) "B_i",real(B_4(2:4))
+    End If 
     Call TreeMassesEps3(g0(1), g0(2), vevSM, vevL, Mi_mZ(1), Mi_mZ(2), Mi_mZ(3) &
                      &, bi, B_4, M2E_mZ, M2L_mZ, Al_mZ, Y_l_mZ                  &
                      &, M2D_mZ, M2U_mZ, M2Q_mZ, Ad_mZ, Au_mZ, Y_d_mZ, Y_u_mZ    &
@@ -1455,7 +1505,7 @@ Contains
         &, A_u, Y_d, Y_u, Glu%m, PhaseGlu, ChiPm%m, ChiPm%m2, U, V, Chi0%m &
         &, Chi0%m2, N, Sneut%m, Sneut%m2, Rsneut, Slepton%m, Slepton%m2    &
         &, RSlepton, Sdown%m, Sdown%m2, RSdown, Sup%m, Sup%m2, RSup        &
-        &, mP0_T, mP02_T, RP0, S0%m, S0%m2, RS0, Spm%m, Spm%m2, RSpm       &
+        &, P0%m, P0%m2, RP0, S0%m, S0%m2, RS0, Spm%m, Spm%m2, RSpm       &
         &, GenerationMixing, kont, .False.) ! tree-level Higgs mass
     If (kont.Ne.0) then
      Iname = Iname - 1

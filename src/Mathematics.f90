@@ -1441,8 +1441,10 @@ Contains
    End Do ! while ( 1._dp+Abs(CONST*C2) .NE. 1._dp) 
     
    erg = erg + S16
+
   End Do ! while (BB.NE.B)
 
+ 
   Deallocate(work,s8,s16)
 
  End Subroutine DgaussInt
