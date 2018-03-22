@@ -32,16 +32,10 @@ Real(dp) :: L_edm_contri(5,2)
 ! private variables
 
 Real(dp), Parameter, Private :: e_u = 2._dp/3._dp, e_d=-1._dp/3._dp
-Logical, Private :: WriteLLpGamma=.False.
 ! private variables
 ! Wilson coefficients at different scales
  Integer, Parameter, Private :: n_i=2
  Real(dp), Private, Save :: Q_out(n_i)
- Complex(dp), Private, Save :: C7_out(n_i,2) = ZeroC, C7p_out(n_i,2) = ZeroC  &
-   & , C8_out(n_i,2) = ZeroC, C8p_out(n_i,2) = ZeroC, C9_out(n_i,3,2) = ZeroC &
-   & , C9p_out(n_i,3,2) = ZeroC, C10_out(n_i,3,2) = ZeroC                     &
-   & , C10p_out(n_i,3,2) = ZeroC, C11_out(n_i,3,2) = ZeroC                    &
-   & , C11p_out(n_i,3,2) = ZeroC
  Complex(dp), Private, Save :: &
    &   WC_c7(n_i,3,2,2) = ZeroC, WC_c7p(n_i,3,2,2) = ZeroC           &
    & , WC_c8(n_i,3,2,2) = ZeroC, WC_c8p(n_i,3,2,2) = ZeroC           &
@@ -928,9 +922,7 @@ Contains
   Integer :: i_t
   Real(dp) :: NNLO_SM
   Complex(dp) :: r7, r7p, r8, r8p, epsq, epsqC
-  Complex(dp) :: delta_C7_0, delta_C7p_0, delta_C8_0, delta_C8p_0, delta_C7_1 &
-               & , delta_C7p_1, delta_C8_1, delta_C8p_1
-  Real(dp), Parameter :: T3=-0.5_dp, ed = -1._dp / 3._dp
+  Complex(dp) :: delta_C7_0, delta_C7p_0, delta_C8_0, delta_C8p_0
   Real(dp), Dimension(5), Parameter ::                                         &
     &   a = (/  7.8221_dp, 6.9120_dp, 8.1819_dp, 7.1714_dp, 7.9699_dp /)       &
     & , a_77 = (/ 0.8161_dp, 0.8161_dp, 0.8283_dp, 0.8283_dp, 0.9338_dp /)     &
@@ -991,10 +983,6 @@ Contains
    delta_C7p_0 = C7p(1)
    delta_C8_0 = C8(1) - C8(2) ! Sum(C8(3:7))
    delta_C8p_0 = C8p(1)
-   delta_C7_1 = 0._dp
-   delta_C7p_1 = 0._dp
-   delta_C8_1 = 0._dp
-   delta_C8p_1 = 0._dp
    If (Present(NNLO_SM_in)) Then
     NNLO_SM = NNLO_SM_in
    Else
@@ -2920,12 +2908,11 @@ Contains
   Complex(dp), Intent(out) ::  B_VLL, B_VRR, B_LR1, B_LR2, B_SLL1, B_SLL2   &
      & , B_SRR1, B_SRR2
 
-  Real(dp) :: D0m2, D2m2, mq2(3), mq(3), mqij, mSf2(6), mSf2p(6)    &
-     & , mf(3), mg2
+  Real(dp) :: D0m2, D2m2, mq2(3), mq(3), mqij, mSf2(6), mSf2p(6), mg2
   complex(dp) :: c_Hqqp_L(2,3,3), c_Hqqp_R(2,3,3), c_CQSq_L(Size(mC),3,6)   &
      & , c_CQSq_R(Size(mC),3,6), c_QGSq_L(3,6), c_QGSq_R(3,6)               &
      & , c_QNSq_L(3,Size(mN),6), c_QNSq_R(3,Size(mN),6)
-  Integer :: i1, i2, i3, i4, n_c, n_n, n_sp
+  Integer :: i1, i2, i3, i4, n_c, n_n
 
   B_VLL = 0._dp
   B_VRR = 0._dp
@@ -2939,7 +2926,6 @@ Contains
   If (T3.Lt.0._dp) Then
    mq = mf_u
    mq2 = mq**2
-   mf = mf_d
    mSf2 = mSdown2
    mSf2p = mSup2
    c_Hqqp_L = Conjg(c_Hqqp_Rin)
@@ -2947,7 +2933,6 @@ Contains
   Else ! T3 >0
    mq = mf_d
    mq2 = mq**2
-   mf = mf_u
    mSf2p = mSdown2
    mSf2 = mSup2
    c_Hqqp_L = c_Hqqp_Lin
@@ -3341,7 +3326,7 @@ Contains
  End Function DeltaRho
 
 
- Subroutine epsilon_K(m_d, m_s, mf_u, mW2, CKM, K_VLL, K_VRR, K_LR1, K_LR2 &
+ Subroutine epsilon_K(m_d, m_s, mf_u, CKM, K_VLL, K_VRR, K_LR1, K_LR2 &
       & , K_SLL1, K_SLL2, K_SRR1, K_SRR2, res, res_SM, Delta_MK )
  !---------------------------------------------------------------------------
  ! Input: mf_u, mC, mN, mGlu, mS0, mP0, mSpm
@@ -3354,7 +3339,7 @@ Contains
  ! for QCD corrections, see Buras, 
  !---------------------------------------------------------------------------
  Implicit None
-  Real(dp), Intent(in) :: mf_u(3), m_s, m_d, mW2
+  Real(dp), Intent(in) :: mf_u(3), m_s, m_d
   Complex(dp), Intent(in) :: CKM(3,3), K_VLL, K_VRR, K_LR1, K_LR2, K_SLL1 &
       & , K_SLL2, K_SRR1, K_SRR2
   Real(dp), Intent(out) :: res
@@ -3947,7 +3932,7 @@ end if
    & , BRbtosgamma, Bs_ll, Bd_ll, BrBToSLL, BtoSNuNu, BR_Bu_TauNu, R_Bu_TauNu &
    & , epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu, a_e, a_mu, a_tau, d_e, d_mu   &
    & , d_tau, BrMutoEGamma, BrTautoEGamma, BrTautoMuGamma, BrMu3e, BrTau3e    &
-   & , BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau)
+   & , BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau, EDMs_N)
 
  Implicit None
   !---------------------------------
@@ -3966,7 +3951,7 @@ end if
    & , a_tau, d_e, d_mu, d_tau, BrMutoEGamma, BrTautoEGamma, BrTautoMuGamma    &
    & , BrMu3e, BrTau3e, BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau, BtoSNuNu &
    & , Bs_ll(3), Bd_ll(3), rho_parameter, epsK, K0toPi0NuNu, KptoPipNuNu       &
-   & , R_Bu_TauNu, DeltaMK
+   & , R_Bu_TauNu, DeltaMK, EDMs_N(2)
   Complex(dp), Intent(out) :: DeltaMBd, DeltaMBs
 
   !------------------
@@ -3975,11 +3960,11 @@ end if
   ! 160 scale GeV for the calculation of the hadronic observables
   !---------------------------------------------------------------
   Real(dp) :: gi_160(3), M2_H_160(2), tanb_160
-  Complex(dp) ::  Y_l_160(3,3), Y_d_160(3,3), Y_u_160(3,3), Mi_160(3)    &
-      & , T_l_160(3,3), T_d_160(3,3), T_u_160(3,3), M2_E_160(3,3)        &
-      & , M2_L_160(3,3), M2_D_160(3,3), M2_Q_160(3,3), M2_U_160(3,3)     &
-      & , mu_160, B_160, T_l_s(3,3), T_d_s(3,3), T_u_s(3,3), M2_E_s(3,3) &
-      & , M2_L_s(3,3), M2_D_s(3,3), M2_Q_s(3,3), M2_U_s(3,3), Y_d_s(3,3) &
+  Complex(dp) ::  Y_l_160(3,3), Y_d_160(3,3), Y_u_160(3,3), Mi_160(3) &
+      & , T_l_160(3,3), T_d_160(3,3), T_u_160(3,3), M2_E_160(3,3)     &
+      & , M2_L_160(3,3), M2_D_160(3,3), M2_Q_160(3,3), M2_U_160(3,3)  &
+      & , mu_160, B_160, T_l_s(3,3), T_d_s(3,3), T_u_s(3,3)           &
+      & , M2_D_s(3,3), M2_Q_s(3,3), M2_U_s(3,3), Y_d_s(3,3)           &
       & , Y_u_s(3,3), Y_l_s(3,3), CKM_160(3,3)
   !----------------------------------------------------------
   ! at m_Z
@@ -4010,9 +3995,11 @@ end if
     & , cpl_CCP0_L(2,2,2), cpl_CCP0_R(2,2,2), cpl_CCS0_L(2,2,2)                &
     & , cpl_CCS0_R(2,2,2), cpl_NNP0_L(4,4,2), cpl_NNP0_R(4,4,2)                &
     & , cpl_NNS0_L(4,4,2), cpl_NNS0_R(4,4,2), cpl_P0SdSd(2,6,6)                &
-    & , cpl_P0SuSu(2,6,6), cpl_S0SdSd(2,6,6), cpl_S0SuSu(2,6,6), cpl_dWu(3,3)  &
+    & , cpl_P0SuSu(2,6,6), cpl_S0SdSd(2,6,6), cpl_S0SuSu(2,6,6)                &
     & , cpl_UUS0_L(3,3,2), cpl_UUS0_R(3,3,2), cpl_UUP0_L(3,3,2)                &
-    & , cpl_UUP0_R(3,3,2), cpl_CsP0W(2,2), cpl_CsS0W(2,2), cpl_CsCsS0(2,2,2)
+    & , cpl_UUP0_R(3,3,2), cpl_CsP0W(2,2), cpl_CsS0W(2,2), cpl_CsCsS0(2,2,2)   &
+    & , cpl_CUSd_L(2,3,6), cpl_CUSd_R(2,3,6), cpl_GUSu_L(3,6), cpl_GUSu_R(3,6) &
+    & , cpl_UNSu_L(3,4,6), cpl_UNSU_R(3,4,6) !& 
   Real(dp) :: cpl_S0WW(2)
 
   Real(dp), Parameter :: T3_d=-0.5_dp, T3_u=0.5_dp
@@ -4032,7 +4019,8 @@ end if
      & , cosW, sinW2, mf_u_in(3), abs_mu2, mf_d_in(3)
 
   Real(dp) :: mf_u_Q(3), s12, s13, s23, c12, c23, c13, phase
-  Complex(dp) :: epsD(3), epsL(3), epsD_FC
+  Complex(dp) :: epsD(3), epsL(3), epsD_FC, WC_gs
+  Real(dp) :: R_D, R_Dstar
   Logical :: GenMix_save
 ! should be shifted to input/output
   Real(dp) :: epsK_SM
@@ -4660,6 +4648,19 @@ end if
               &           , uD_R , Y_l_160, vevSM)
   R_Bu_TauNu = Bm_to_l_nu(3,1, mSpm2(2), tanb_160, RSpm_T, Y_d_160, uU_L  &
               &           , uD_R , Y_l_160, vevSM, .True.)
+  !--------------------------------------------------------------------------
+  !     [BR(B -> D tau nu)/BR(B -> D e nu)]_SUSY
+  ! R = ------------------------------------------
+  !     [BR(B -> D tau nu)/BR(B -> D e nu)]_SM
+  !
+  !       [BR(B -> D^* tau nu)/BR(B -> D^* e nu)]_SUSY
+  ! R^* = ------------------------------------------
+  !       [BR(B -> D^* tau nu)/BR(B -> D^* e nu)]_SM
+  ! formula take from S.Fajfer, J.F.Kamenik, I Nisandzic, arXiv:1203.2654
+  !--------------------------------------------------------------------------
+  WC_gs = - Y_d_160(3,3) * Y_l_160(3,3) * vevSM(1)**2 /( 2._dp * mSpm2_T(2))
+  R_D = 1._dp + 1.5_dp * Real(WC_gs) + Abs(WC_gs)**2
+  R_Dstar = 1._dp + 0.12_dp * Real(WC_gs) + 0.05_dp * Abs(WC_gs)**2
   !-------------------
   ! Delta(M_Bd)
   !-------------------
@@ -4684,9 +4685,9 @@ end if
   !------------------------
   ! epsilon_K 
   !------------------------
-   Call epsilon_K(mf_d(1), mf_d(2), mf_u, mW2, CKM, WC_4d_VLL(2,2,1)  &
-      & , WC_4d_VRR(2,2,1), WC_4d_LR1(2,2,1), WC_4d_LR2(2,2,1) &
-      & , WC_4d_SLL1(2,2,1), WC_4d_SLL2(2,2,1), WC_4d_SRR1(2,2,1)     &
+   Call epsilon_K(mf_d(1), mf_d(2), mf_u, CKM, WC_4d_VLL(2,2,1)   &
+      & , WC_4d_VRR(2,2,1), WC_4d_LR1(2,2,1), WC_4d_LR2(2,2,1)    &
+      & , WC_4d_SLL1(2,2,1), WC_4d_SLL2(2,2,1), WC_4d_SRR1(2,2,1) &
       & , WC_4d_SRR2(2,2,1), epsK, epsK_SM, DMK )
    DeltaMK = DMK(2)
 
@@ -4766,6 +4767,14 @@ end if
              & , Y_l_mZ, Zero33C, uL_L, uL_R, U_T, V_T, cpl_CLSn_L(i1,i2,i3) &
              & , cpl_CLSn_R(i1,i2,i3) )
     End Do
+    Do i3=1,6
+     Call CoupCharginoSfermion(i1, i2, i3, g, 0.5_dp, RSdown_T       &
+      & , Y_d_mZ, Y_u_mZ, uU_L, uU_R, U_T, V_T, cpl_CUSd_L(i1,i2,i3) &
+      & , cpl_CUSd_R(i1,i2,i3) )
+     Call CoupCharginoSfermion(i1, i2, i3, g, -0.5_dp, RSup_T        &
+      & , Y_D_mZ, Y_U_mZ, uD_L, uD_R, U_T, V_T, cpl_CDSu_L(i1,i2,i3) &
+      & , cpl_CDSu_R(i1,i2,i3))
+    End Do
    End Do
   End Do
 
@@ -4774,9 +4783,29 @@ end if
     Do i3=1,6  
      Call CoupNeutralinoSlepton(i1, i2, i3, gp, g, RSlept_T &
          & , uL_L, uL_R, Y_l_mZ, N_T, cpl_LNSl_L(i1,i2,i3), cpl_LNSl_R(i1,i2,i3) )
+     Call CoupNeutralinoSdown(i1, i2, i3, gp, g, RSdown_T &
+      & , uD_L, uD_R, Y_d_mZ, N_T, cpl_DNSd_L(i1,i2,i3), cpl_DNSd_R(i1,i2,i3) )
+     Call CoupNeutralinoSup(i1, i2, i3, gp, g, RSdown_T &
+      & , uU_L, uU_R, Y_u_mZ, N_T, cpl_UNSu_L(i1,i2,i3), cpl_UNSu_R(i1,i2,i3) )
     End Do
    End Do
   End Do
+
+  Do i1=1,3
+   Do i3=1,6  
+    Call CoupGluinoSquark3(gs, phase_Glu_T, i1, i3, RSdown_T, uD_L, uD_R &
+           & , cpl_DGSd_L(i1,i3), cpl_DGSd_R(i1,i3) )
+    Call CoupGluinoSquark3(gs, phase_Glu_T, i1, i3, RSup_T, uU_L, uU_R &
+           & , cpl_GUSu_L(i1,i3), cpl_GUSu_R(i1,i3) )
+   End Do
+  End Do
+  !------------------------------------------------------------------
+  ! Neutron electric dipole moments
+  !------------------------------------------------------------------
+  Call Neutron_EDM(mN_T, mC_T, mglu_T, mSup2_T, cpl_UNSu_L, cpl_UNSu_R        &
+    & , cpl_GUSu_L, cpl_GUSu_R, cpl_CDSu_L, cpl_CDSu_R, mSdown2_T, cpl_DNSd_L &
+    & , cpl_DNSd_R, cpl_DGSd_L, cpl_DGSd_R, cpl_CUSd_L, cpl_CUSd_R   &
+    & , GenerationMixing, .True., .True., EDMs_N)
 
   !------------------------------------------------------------------
   ! leptonic electric dipole moments
@@ -5373,11 +5402,11 @@ end if
      & , C0_C_i_Snu_jk(2,3), C0_N_i_Sle_jk(4,6,6)                 &
      & , C1_C_i_Snu_jk(2,3), C1_N_i_Sle_jk(4,6,6)                 &
      & , C2_C_i_Snu_jk(2,3), C2_N_i_Sle_jk(4,6,6)                 &
-     & , C0_Snu_i_C_jk(3,2,2), C0_Sle_i_N_jk(6,4,4)                 &
-     & , C1_Snu_i_C_jk(3,2,2), C1_Sle_i_N_jk(6,4,4)                 &
-     & , C2_Snu_i_C_jk(3,2,2), C2_Sle_i_N_jk(6,4,4)                 &
-     & , B0_Z_CC(2,2), B0_0_CSn(2,3), B0_Z_NN(4,4), B0_0_NSl(4,6)   &
-     & , B1_Z_CC(2,2), B1_0_CSn(2,3), B1_Z_NN(4,4), B1_0_Nsl(4,6)!     &
+     & , C0_Snu_i_C_jk(3,2,2), C0_Sle_i_N_jk(6,4,4)               &
+     & , C1_Snu_i_C_jk(3,2,2), C1_Sle_i_N_jk(6,4,4)               &
+     & , C2_Snu_i_C_jk(3,2,2), C2_Sle_i_N_jk(6,4,4)               &
+     & , B0_Z_CC(2,2), B0_0_CSn(2,3), B0_Z_NN(4,4), B0_0_NSl(4,6) &
+     & , B1_0_CSn(2,3), B1_0_Nsl(4,6)!     &
 
   Integer :: i1, i2, i3
   Real(dp) :: mZ2a, gam
@@ -5393,12 +5422,9 @@ end if
    mZ2a = 0._dp ! the leptons are on-shell
    Do i1=1,2
     B0_Z_CC(i1,i1) = B0(mZ2, mC2(i1), mC2(i1) )
-    B1_Z_CC(i1,i1) = B1(mZ2, mC2(i1), mC2(i1) )
     Do i2=i1+1,2
      B0_Z_CC(i1,i2) = B0(mZ2, mC2(i1), mC2(i2) )
-     B1_Z_CC(i1,i2) = B1(mZ2, mC2(i1), mC2(i2) )
      B0_Z_CC(i2,i1) = B0(mZ2, mC2(i2), mC2(i1) )
-     B1_Z_CC(i2,i1) = B1(mZ2, mC2(i2), mC2(i1) )
     End Do
     Do i2=1,3
      B0_0_CSn(i1,i2) = B0(mZ2a, mSnu2(i2), mC2(i1) )
@@ -5437,12 +5463,9 @@ end if
    End Do
    Do i1=1,4
     B0_Z_NN(i1,i1) = B0(mZ2, mN2(i1), mN2(i1) )
-    B1_Z_NN(i1,i1) = B1(mZ2, mN2(i1), mN2(i1) )
     Do i2=i1+1,4
      B0_Z_NN(i1,i2) = B0(mZ2, mN2(i1), mN2(i2) )
-     B1_Z_NN(i1,i2) = B1(mZ2, mN2(i1), mN2(i2) )
      B0_Z_NN(i2,i1) = B0(mZ2, mN2(i2), mN2(i1) )
-     B1_Z_NN(i2,i1) = B1(mZ2, mN2(i2), mN2(i1) )
     End Do
     Do i2=1,6
      B0_0_NSl(i1,i2) = B0(mZ2a, mSle2(i2), mN2(i1) )

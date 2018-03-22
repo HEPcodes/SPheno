@@ -187,13 +187,13 @@ Contains
  ! true = Higgs bosons 1loop effective potential
 
  If (.Not.External_Spectrum) &
-  & Call TreeMassesNMSSM(gp, g, vevSM, vP, Mi(1), Mi(2), Mi(3), mu_in, B, h0  &
+  & Call TreeMassesNMSSM(gp, g, vevSM, vP, Mi(1), Mi(2), Mi(3), mu_in, h0  &
             &, lam, A_h0, A_lam, M2_E, M2_L, A_l, Y_l, M2_D, M2_U, M2_Q    &
             &, A_d, A_u, Y_d, Y_u, Glu%m, PhaseGlu, ChiPm%m, ChiPm%m2, U, V, Chi05%m      &
             &, Chi05%m2, N5, Sneut%m, Sneut%m2, Rsneut, Slepton%m, Slepton%m2      &
             &, RSlepton, Sdown%m, Sdown%m2, RSdown, Sup%m, Sup%m2, RSup        &
             &, P03%m, P03%m2, RP03, S03%m, S03%m2, RS03, Spm%m, Spm%m2 &
-            &, RSpm, GenerationMixing, kont, .True.)
+            &, RSpm, GenerationMixing, kont)
   Glu%m2 = Glu%m**2
 
   If (kont.Ne.0) Then

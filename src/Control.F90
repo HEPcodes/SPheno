@@ -51,7 +51,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  !------------------------------------
  ! version number
  !------------------------------------
- Character(len=8), Save :: version="v3.3.8"
+ Character(len=8), Save :: version="v4.0.3"
  !------------------------------------
  ! variables for spectrum calculation
  !------------------------------------
@@ -106,6 +106,9 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  Character (Len=40), Save :: NameOfUnit(40)
  Logical, Save :: Non_Zero_Exit = .False.
  Logical, Save :: Write_warning_to_screen = .False.
+ ! if one should switch to 1-loop calculation in case of large logs/huge corrections 
+ ! for m_h
+ Logical, Save ::  Switch_to_1_loop_mh = .False.  
  !-------------------------
  ! for the error system 
  !-------------------------
@@ -211,7 +214,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
   & ,  "LesHouches_Input: non-diagonl entries in a diagonal matrix  "    &
   & /)
 
- Character(len=60) :: Sugra_Error(19) =                                  &
+ Character(len=60) :: Sugra_Error(22) =                                  &
   & (/ "Routine BoundaryEW: negative scalar mass as input           "    &
   & ,  "Routine BoundaryEW: mZ^2(mZ) < 0                            "    &
   & ,  "Routine BoundaryEW: sin^2(theta_DR) < 0                     "    &
@@ -231,6 +234,9 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
   & ,  "Routine RunRGE_2: g1 and g2 do not meet at the high scale   "    &
   & ,  "Routine RunRGE_2: entering non-perturbative regime at M_GUT "    &
   & ,  "Routine RunRGE_2: entering non-perturbative regime at M_H3  "    &
+  & ,  "Routine Boundary_SUSY: more then 100% corrections to Y_l_i  "    &
+  & ,  "Routine Boundary_SUSY: more then 100% corrections to Y_d_i  "    &
+  & ,  "Routine Boundary_SUSY: more then 100% corrections to Y_u_i  "    &
   & /)
  Character(len=60) :: LoopMass_Error(25) =                               &
   & (/ "SleptonMass_1L: encountered a negative mass squared         "    &

@@ -41,7 +41,6 @@ Real(dp), Private :: mudim2=1._dp, divergence=0._dp, lambda2 = 1._dp
 !               determined at runtime by ffinit (IEEE: 2.e-308)
 !       xclogm: same for complex.
 !       xalog2: xalogm**2
-!       xclog2: xclogm**2
 !       reqprc: not used
 !	   the precision wanted in the complex D0 (and hence E0) when
 !	   nschem=7, these are calculated via Taylor exoansion in the real
@@ -51,7 +50,6 @@ Real(dp), Private :: mudim2=1._dp, divergence=0._dp, lambda2 = 1._dp
 !       pi12:   pi**2/12
 !       xlg2:   log(2)
 !       bf:     factors in the expansion of dilog (~Bernouilli numbers)
-!       xninv:  1/n
 !       xn2inv: 1/n**2
 !       xinfac: 1/n!
 !       fpij2:  vi.vj for 2point function 1-2: si, 3-3:  pi
@@ -59,7 +57,6 @@ Real(dp), Private :: mudim2=1._dp, divergence=0._dp, lambda2 = 1._dp
 !       fpij4:  vi.vj for 4point function 1-4: si, 5-10: pi
 !       fpij5:  vi.vj for 5point function 1-5: si, 6-15: pi
 !       fpij6:  vi.vj for 6point function 1-6: si, 7-21: pi
-!       fdel2:  del2 = delta_(p1,p2)^(p1,p2) = p1^2.p2^2 - p1.p2^2 in C0
 !       fdel3:  del3 = delta_(p1,p2,p3)^(p1,p2,p3) in D0
 !       fdel4s: del4s = delta_(s1,s2,s3,s4)^(s1,s2,s3,s4) in D0
 !       fdel4:  del4 = delta_(p1,p2,p3,p4)^(p1,p2,p3,p4) in E0
@@ -82,8 +79,8 @@ Real(dp), Private :: mudim2=1._dp, divergence=0._dp, lambda2 = 1._dp
 !       fidl4i: ier of dl4i (is not included in F0)
 !
 Real(dp), Private :: xloss = 0.125_dp, precx,precc,xalogm,xclogm,xalog2 &
- & ,xclog2,bf(20), xninv(30),xn2inv(30),xinfac(30), &
- &  fpij2(3,3),fpij3(6,6),fdel2, xlg2
+ & ,bf(20), xn2inv(30),xinfac(30), &
+ &  fpij2(3,3),fpij3(6,6), xlg2
 ! Real(dp), Private ::  reqprc=1.e-8_dp,fpij4(10,10),fpij5(15,15), &
 ! &  fpij6(21,21),fdel3,fdel4s,fdel4,fdl3i(5), &
 ! &  fdl4si(5),fdl3ij(6,6),fd4sij(6,6),fdl4i(6),fodel2, &
@@ -93,7 +90,6 @@ Real(dp), Private :: xloss = 0.125_dp, precx,precc,xalogm,xclogm,xalog2 &
 !
 !	c[zero1]:0,1 complex
 !	c2ipi:	2*i*pi
-!	cipi2:	i*pi**2
 !	cfp..:	complex version of fp..., only defined in ff[cz]*
 !	cmipj:	(internal only) mi^2 - pj^2 in C0
 !	c2sisj:	(internal only) 2*si.sj in D0
@@ -101,7 +97,7 @@ Real(dp), Private :: xloss = 0.125_dp, precx,precc,xalogm,xclogm,xalog2 &
 !	ca1:	(internal only) complex A1
 !	csdl2p: (internal only) complex transformed sqrt(del2)
 !
-Complex(dp), Private :: czero,cone,c2ipi,cipi2,cmipj(3,3)
+Complex(dp), Private :: czero,cone,c2ipi,cmipj(3,3)
 ! Complex(dp), Private :: ,ca1,cfdl4s,c2sisj(4,4), cfpij6(21,21), cfpij2(3,3) &
 !  & , cfpij3(6,6), cfpij4(10,10),cfpij5(15,15)
 
@@ -161,11 +157,7 @@ Complex(dp), Private, Save :: ca0i(2), cb0, cb1
 !	id:	identifier of scalar function (to be set by user)
 !	idsub:	internal identifier to pinpoint errors
 !	inx:	in D0: p(inx(i,j)) = isgn(i,j)*(s(i)-s(j))
-!	inx5:	in E0: p(inx5(i,j)) = isgn5(i,j)*(s(i)-s(j))
-!	inx6:	in F0: p(inx6(i,j)) = isgn6(i,j)*(s(i)-s(j))
 !	isgn:	see inx
-!	isgn5:	see inx5
-!	isgn6:	see inx6
 !	iold:	rotation matrix for 4point function
 !	isgrot:	signs to iold
 !	isgn34:	+1 or -1: which root to choose in the transformation (D0)
@@ -176,8 +168,7 @@ Complex(dp), Private, Save :: ca0i(2), cb0, cb1
 !	irota5:	same for the E0
 !	irota6:	same for the F0
 !
-Integer, Private :: id,idsub,inx(4,4),isgn(4,4),inx5(5,5)  &
-        & , isgn5(5,5),inx6(6,6),isgn6(6,6),isgnal=1  &
+Integer, Private :: id,idsub,inx(4,4),isgn(4,4),isgnal=1  &
         & , irota3 !,nevent = 0,ner,isgn34=1,irota4,irota5,irota6
 !Integer, Private ::  iold(13,12)  = Reshape(  Source = (/ &
 !  & 1,2,3,4, 5,6,7,8,9,10, 11,12,13, 4,1,2,3, 8,5,6,7,10,9, 11,13,12,  &
@@ -1626,7 +1617,7 @@ Contains
  Implicit None
   Real(dp), Intent(inout) :: xpi(6), dpipj(6,6)
 
-  Real(dp) :: xqi(6), dqiqj(6,6), qiDqj(6,6), dum66(6,6), del2, fdel2, del3 &
+  Real(dp) :: xqi(6), dqiqj(6,6), qiDqj(6,6), dum66(6,6), del2, del3 &
     & , del2s(3), delpsi(3), del3mi(3), xmax, alph(3),etalam,etami(6),sdel2 &
     & , blph(3)
   Complex(dp) :: cs3(80),cs,clogi(3),cslam,cetalm,cetami(6),cel2s(3)      &
@@ -1662,8 +1653,6 @@ Contains
 
  ! some determinats
   del2 = FFdel2(qiDqj,4,5,6)
-
-  If ( ldot ) fdel2 = del2
 
   If ( del2 .Gt. 0 ) Then
    If ( .Not.(xqi(4).Lt.0 .And. xqi(5).Lt.0 .And. xqi(6).Lt.0) ) Then
@@ -2020,8 +2009,7 @@ Contains
   Real(dp), Intent(in) :: m12, m22, m32, m42
 
   Integer, Parameter :: ord=9
-  Real(dp) :: Dm, x, ci(ord), di(ord), diff31, diff41, diff32 &
-    & , xl2, xh2, yl2, yh2
+  Real(dp) :: Dm, x, ci(ord), di(ord), diff31, diff41, diff32
   !-------------------------------------------------------------------
   ! recursion s1(i1+1) = (-1)^i1 * s1(i1) * i1 (i1+3)/(i1+1)**2
   !-------------------------------------------------------------------
@@ -2032,33 +2020,14 @@ Contains
   Integer :: i1, i2
 
   
-  If (     ((m12.eq.0._dp).and.(m22.eq.0._dp))  &
-     & .or.((m12.eq.0._dp).and.(m32.eq.0._dp))  &
-     & .or.((m12.eq.0._dp).and.(m42.eq.0._dp))  &
-     & .or.((m22.eq.0._dp).and.(m32.eq.0._dp))  &
-     & .or.((m22.eq.0._dp).and.(m42.eq.0._dp))  &
-     & .or.((m32.eq.0._dp).and.(m42.eq.0._dp)) )  then
+  If (     ((m12.Eq.0._dp).And.(m22.Eq.0._dp))  &
+     & .Or.((m12.Eq.0._dp).And.(m32.Eq.0._dp))  &
+     & .Or.((m12.Eq.0._dp).And.(m42.Eq.0._dp))  &
+     & .Or.((m22.Eq.0._dp).And.(m32.Eq.0._dp))  &
+     & .Or.((m22.Eq.0._dp).And.(m42.Eq.0._dp))  &
+     & .Or.((m32.Eq.0._dp).And.(m42.Eq.0._dp)) )  Then
    D0_Bagger = Huge(1._dp) ! infinity
-   return
-  Else ! resorting according to the symmetries
-       ! m12 <-> m22, m32 <-> m42
-
-
-   If (m12.le.m22) then
-    xl2 = m12
-    xh2 = m22
-   Else
-    xl2 = m22
-    xh2 = m12
-   end if
-
-   If (m32.le.m42) then
-    yl2 = m32
-    yh2 = m42
-   Else
-    yl2 = m42
-    yh2 = m32
-   end if
+   Return
 
   End If
 
@@ -2082,7 +2051,7 @@ Contains
 
   Else If ((m12.Eq.m22).And.(m12.Eq.m42)) Then
 
-   If (Abs((m32-m42)/m42).Lt.1.e-3_dp) then
+   If (Abs((m32-m42)/m42).Lt.1.e-3_dp) Then
     x = 1._dp - m42/m32 
     D0_Bagger = 1._dp / Real((ord+1)*(ord+2),dp)
     Do i1=ord-1,1,-1
@@ -2097,7 +2066,7 @@ Contains
 
   Else If ((m12.Eq.m32).And.(m12.Eq.m42)) Then
 
-   If (Abs((m12-m22)/m22).Lt.1.e-3_dp) then
+   If (Abs((m12-m22)/m22).Lt.1.e-3_dp) Then
     x = 1._dp - m22/m12 
     D0_Bagger = 1._dp / Real((ord+1)*(ord+2),dp)
     Do i1=ord-1,1,-1
@@ -2112,7 +2081,7 @@ Contains
 
   Else If ((m12.Eq.m22).And.(m12.Eq.m32)) Then
 
-   If (Abs((m32-m42)/m42).Lt.1.e-3_dp) then
+   If (Abs((m32-m42)/m42).Lt.1.e-3_dp) Then
     x = 1._dp - m42/m32 
     D0_Bagger =  Real(ord,dp) / Real(2*(ord+2),dp)
     Do i1=ord-1,1,-1
@@ -2127,7 +2096,7 @@ Contains
 
   Else If ((m22.Eq.m32).And.(m22.Eq.m42)) Then
 
-   If (Abs((m12-m22)/m22).Lt.1.e-3_dp) then
+   If (Abs((m12-m22)/m22).Lt.1.e-3_dp) Then
     x = 1._dp - m22/m12 
     D0_Bagger =  Real(ord,dp) / Real(2*(ord+2),dp)
     Do i1=ord-1,1,-1
@@ -2142,7 +2111,7 @@ Contains
 
   Else If (m12.Eq.m22) Then
 
-   If ( (Abs((m42-m32)/m42)).Lt.1.e-5_dp) then
+   If ( (Abs((m42-m32)/m42)).Lt.1.e-5_dp) Then
     x = m42 / m32 - 1._dp
     diff31 = m32 - m12
 
@@ -2174,7 +2143,7 @@ Contains
     D0_Bagger = ( m42 * Log(m42/m12) / (m12-m42)**2                 &
               & - m32 * Log(m32/m12) / (m12-m32)**2 ) / (m32-m42)   &
               & - 1._dp / ( (m12-m32) * (m12-m42) )
-   end If
+   End If
 
   Else If (m32.Eq.m42) Then
 
@@ -2183,10 +2152,10 @@ Contains
     diff31 = m32 - m12 
 
     ci = 0._dp
-    If (ord.gt.9) then
+    If (ord.Gt.9) Then
      Write(ErrCan,*) "Warning from D0_Bagger: for m32=m42, m22=m12(1+x)"
      Write(ErrCan,*) "the ci coefficients are only included up to order 9"
-    end if
+    End If
    
     ci(1) = - 2._dp
     ci(2) = 2.5_dp * m12 + 0.5_dp * m32
@@ -2213,7 +2182,7 @@ Contains
     Do i1=1,ord
      di(i1) = (m12/diff31)**(i1-1) * (m12 + i1*m32)/diff31**3
      ci(i1) = ci(i1) / (-diff31)**(i1+1)
-    end do
+    End Do
 
     di = di * Log(m32/m12)
 
@@ -2238,7 +2207,7 @@ Contains
    Do i1=1,ord-1
     ci(i1+1) = (-1)**(1+i1) / (diff31 * (1+i1)) + (m12*ci(i1))/diff31
     di(i1+1) = (-1)**i1 / (diff41 * (1+i1)) + (m12*di(i1))/diff41
-   End do
+   End Do
    ci = ci * m32
    di = di * m42
    D0_Bagger = ci(ord) + di(ord)
@@ -7972,7 +7941,6 @@ outer:  Do i=1,itime
  !  #[ calculations:
  !
   del2 = ffdel2(qiDqj,1,2,4)
-  If ( ldot ) fdel2 = del2
  !
  !	the case del2=0 is hopeless - this is really a two-point function
  !
@@ -10719,7 +10687,6 @@ Real(dp) Function KilianB0C0(a,b,c)
  ! cutoff for masses = sqrt(10^-10) GeV
  Implicit None
  Real(dp), Intent(in) :: a,b,c
- Real(dp) :: B0user, C0user
 
  If ((a.le.1.E-10_dp).and.(b.le.1.E-10_dp)) Then
   KilianB0C0 = 1._dp - Log(c/getRenormalizationScale())
@@ -10781,7 +10748,6 @@ End function vertexC0tildeaux
   End Do
   If (xclogm.Eq.0._dp) xclogm = Tiny(1._dp)
   xalog2 = Sqrt(xalogm)
-  xclog2 = Sqrt(xclogm)
 
   ! the precision to which real calculations are done is
   precx = 1._dp
@@ -10817,14 +10783,12 @@ End function vertexC0tildeaux
   czero =(0._dp, 0._dp)
   cone=(1._dp, 0._dp)
   c2ipi = Cmplx(0._dp, 2._dp * Pi, dp)
-  cipi2 = Cmplx(0._dp, Pi**2, dp)
 
  !
  !	inverses of   Integers:
  !
   Do i=1,30
-    xninv(i) = 1._dp/i
-    xn2inv(i) = 1._dp/(i*i)
+    xn2inv(i) = 1._dp/Real((i*i),dp)
   End Do
  !
  !	inverses of faculties of   Integers:
@@ -10868,98 +10832,6 @@ End function vertexC0tildeaux
   isgn(2,4) = -1
   isgn(3,4) = -1
   isgn(4,4) = -9999
-  inx5(1,1) = -9999
-  inx5(1,2) =  6
-  inx5(1,3) = 11
-  inx5(1,4) = 14
-  inx5(1,5) = 10
-  inx5(2,1) =  6
-  inx5(2,2) = -9999
-  inx5(2,3) =  7
-  inx5(2,4) = 12
-  inx5(2,5) = 15
-  inx5(3,1) = 11
-  inx5(3,2) =  7
-  inx5(3,3) = -9999
-  inx5(3,4) =  8
-  inx5(3,5) = 13
-  inx5(4,1) = 14
-  inx5(4,2) = 12
-  inx5(4,3) =  8
-  inx5(4,4) = -9999
-  inx5(4,5) =  9
-  inx5(5,1) = 10
-  inx5(5,2) = 15
-  inx5(5,3) = 13
-  inx5(5,4) =  9
-  inx5(5,5) = -9999
- !	isgn5 is not yet used.
-  Do i=1,5
-      Do j=1,5
-      isgn5(i,j) = -9999
-      End Do
-  End Do
- !
-  inx6(1,1) = -9999
-  inx6(1,2) =  7
-  inx6(1,3) = 13
-  inx6(1,4) = 19
-  inx6(1,5) = 17
-  inx6(1,6) = 12
-  inx6(2,1) =  7
-  inx6(2,2) = -9999
-  inx6(2,3) =  8
-  inx6(2,4) = 14
-  inx6(2,5) = 20
-  inx6(2,6) = 18
-  inx6(3,1) = 13
-  inx6(3,2) =  8
-  inx6(3,3) = -9999
-  inx6(3,4) =  9
-  inx6(3,5) = 15
-  inx6(3,6) = 21
-  inx6(4,1) = 19
-  inx6(4,2) = 14
-  inx6(4,3) =  9
-  inx6(4,4) = -9999
-  inx6(4,5) = 10
-  inx6(4,6) = 16
-  inx6(5,1) = 17
-  inx6(5,2) = 20
-  inx6(5,3) = 15
-  inx6(5,4) = 10
-  inx6(5,5) = -9999
-  inx6(5,6) = 11
-  inx6(6,1) = 12
-  inx6(6,2) = 18
-  inx6(6,3) = 21
-  inx6(6,4) = 16
-  inx6(6,5) = 11
-  inx6(6,6) = -9999
- !	isgn6 is used.
-  Do i=1,6
-      Do j=1,6
-      ji = j-i
-        If ( ji>+3 ) ji = ji - 6
-        If ( ji<-3 ) ji = ji + 6
-        If ( ji==0 ) Then
-        isgn6(j,i) = -9999
-        Else If ( Abs(ji)==3 ) Then
-          If ( i<0 ) Then
-          isgn6(j,i) = -1
-          Else
-          isgn6(j,i) = +1
-          End If
-        Else If ( ji>0 ) Then
-        isgn6(j,i) = +1
-        Else If ( ji<0 ) Then
-        isgn6(j,i) = -1
-        Else
-        Write(ErrCan,*) "InitialzeLoopFunctions: internal error in isgn6"
-        Call TerminateProgram()
-        End If
-      End Do
-  End Do
 !
  !      calculate the coefficients of the series expansion
  !      li2(x) = sum bn*z^n/(n+1)!, z = -log(1-x), bn are the
@@ -13515,11 +13387,7 @@ End Function C12m
 Real(dp) Function C22m(m1, m2, m3)
 Implicit None
 Real(dp), Intent(in) :: m1, m2, m3
-Real(dp) :: r1, r2
 Real(dp) :: eps=1E-10_dp, large = 1E+5_dp
-
-r1 = m2/m1
-r2 = m3/m1
 
 If ((SmallDifference(m1,m2)).And.(SmallDifference(m1,m3))) Then ! all masse equal
   If (Abs(m1).lt.eps) Then

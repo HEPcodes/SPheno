@@ -7,7 +7,6 @@ Use ThreeBodyPhaseSpace
 
 ! for check, if there is a numerical problem in the 3-body decays
  Real(dp), Private :: p_test 
- Real(dp), Private, Parameter :: prec=100._dp*Epsilon(1._dp)
 
 ! load modules
 Contains
@@ -4021,7 +4020,7 @@ Contains
      & , cpl_LNSl_L(:,:,:), cpl_LNSl_R(:,:,:)
   Real(dp), Intent(out) :: gPhoton
 
-  Integer :: i2, i3, n_char, n_Spm, i_gen,i_count
+  Integer :: i2, i3, n_char, n_Spm, i_gen
   Real(dp) :: mj2, mi2, m12, m22
   Complex(dp) :: Gcoup(2), Iinte, Jinte, Kinte, coup1, coup2, I2inte
 
@@ -4062,7 +4061,6 @@ Contains
   !--------------------
   ! S+ contribution
   !--------------------
-i_count=3
   Do i2=1,n_char
    m12 = mC(i2)**2
    Do i3=1,n_Spm

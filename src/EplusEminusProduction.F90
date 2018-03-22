@@ -6,11 +6,11 @@ Module EplusEminusProduction
 
 ! load modules
  Use Control
+ Use Couplings
+ Use LoopCouplings, Only: RunningCouplings, InitializeLoopCouplings
  Use Mathematics, Only: DGauss, Li2, Vegas1, PolInt, sq_kappa => kappa
  Use StandardModel, Only: mZ, mZ2, gmZ, gmZ2, mW2, mW, Alpha, &
                 & mf_l2, mf_l, KFactorLee, alpha_mz, mf_u2, mf_u
- Use Couplings
- Use LoopCouplings, Only: RunningCouplings, InitializeLoopCouplings
 ! load modules
 
 ! interfaces
@@ -60,10 +60,7 @@ Module EplusEminusProduction
   Real(dp), Private :: gg, gZ, ZZ, mSfer2(2), smax, smin,  &
                           & fgg, fgz, fzz
 ! for QCD corrections
-  Integer, Private :: icase
-  Real(dp), Private :: msq1, msq2, msq12, msq22, mq2, cos2th, sin2th &
-     &      ,mglu2, a(2,2), vq, aq, Qq, mglumq!, mq, QCDfact
-  Complex(dp), Private :: costh, sinth
+  Real(dp), Private :: vq, aq, Qq
 ! for the process e+ e- -> selectrons, charged scalars 
   Real(dp), Private :: mk(7), mk2(7), fgN(7), fZNr(7), fZNi(7), fNN(2,7,7)
 ! for the process e+ e- -> sneutrinos
@@ -181,7 +178,7 @@ Contains
   if (GenerationMixing) then
    Do i1=1,6
     Do i2=1,6
-     Call EpEmToSquarksZG(i1, i2, specie, mSup, Rsup, mf_U((i1+1)/2), mglu &
+     Call EpEmToSquarksZG(i1, i2, specie, mSup, Rsup &
                    & , Pm, Pp, Emax2 , ISR, Beam , SigSup(i1,i2), design )
     end do
    end do
@@ -192,7 +189,7 @@ Contains
     RSf = RSup(2*i1-1:2*i1, 2*i1-1:2*i1)
     Do i2=1,2
      Do i3=1,2
-      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, mf_U(i1), mglu, Pm, Pp &
+      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, Pm, Pp &
             & , Emax2 , ISR, Beam , SigSup(2*(i1-1)+i2, 2*(i1-1)+i3), design )
      end do
     end do
@@ -210,7 +207,7 @@ Contains
   if (GenerationMixing) then
    Do i1=1,6
     Do i2=1,6
-     Call EpEmToSquarksZG(i1, i2, specie, mSdown, Rsdown, mf_D((i1+1)/2),mglu &
+     Call EpEmToSquarksZG(i1, i2, specie, mSdown, Rsdown &
                    & , Pm, Pp, Emax2 , ISR, Beam , SigSdown(i1,i2), design )
     end do
    end do
@@ -221,7 +218,7 @@ Contains
     RSf = RSdown(2*i1-1:2*i1, 2*i1-1:2*i1)
     Do i2=1,2
      Do i3=1,2
-      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, mf_D(i1), mglu, Pm, Pp &
+      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, Pm, Pp &
            & , Emax2 , ISR, Beam , SigSdown(2*(i1-1)+i2, 2*(i1-1)+i3), design )
      end do
     end do
@@ -239,7 +236,7 @@ Contains
   if (GenerationMixing) then
    Do i1=1,6
     Do i2=1,6
-     Call EpEmToSleptonsMSSM(i1, i2, mSlepton, Rslepton, Ylp, id3C, id3C  &
+     Call EpEmToSleptonsMSSM(i1, i2, mSlepton, Rslepton, Ylp, id3C &
           &, mN, N, Pm, Pp, Emax2, ISR, Beam , SigSle(i1,i2), design )
     end do
    end do
@@ -459,7 +456,7 @@ Contains
   if (GenerationMixing) then
    Do i1=1,6
     Do i2=1,6
-     Call EpEmToSquarksZG(i1, i2, specie, mSup, Rsup, mf_U((i1+1)/2), mglu &
+     Call EpEmToSquarksZG(i1, i2, specie, mSup, Rsup &
                    & , Pm, Pp, Emax2 , ISR, Beam , SigSup(i1,i2), design )
     end do
    end do
@@ -470,7 +467,7 @@ Contains
     RSf = RSup(2*i1-1:2*i1, 2*i1-1:2*i1)
     Do i2=1,2
      Do i3=1,2
-      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, mf_U(i1), mglu, Pm, Pp &
+      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, Pm, Pp &
             & , Emax2 , ISR, Beam , SigSup(2*(i1-1)+i2, 2*(i1-1)+i3), design )
      end do
     end do
@@ -488,7 +485,7 @@ Contains
   if (GenerationMixing) then
    Do i1=1,6
     Do i2=1,6
-     Call EpEmToSquarksZG(i1, i2, specie, mSdown, Rsdown, mf_D((i1+1)/2),mglu &
+     Call EpEmToSquarksZG(i1, i2, specie, mSdown, Rsdown &
                    & , Pm, Pp, Emax2 , ISR, Beam , SigSdown(i1,i2), design )
     end do
    end do
@@ -499,7 +496,7 @@ Contains
     RSf = RSdown(2*i1-1:2*i1, 2*i1-1:2*i1)
     Do i2=1,2
      Do i3=1,2
-      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, mf_D(i1), mglu, Pm, Pp &
+      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, Pm, Pp &
            & , Emax2 , ISR, Beam , SigSdown(2*(i1-1)+i2, 2*(i1-1)+i3), design )
      end do
     end do
@@ -517,7 +514,7 @@ Contains
   if (GenerationMixing) then
    Do i1=1,6
     Do i2=1,6
-     Call EpEmToSleptonsMSSM(i1, i2, mSlepton, Rslepton, Ylp, id3C, id3C  &
+     Call EpEmToSleptonsMSSM(i1, i2, mSlepton, Rslepton, Ylp, id3C &
           &, mN, N, Pm, Pp, Emax2, ISR, Beam , SigSle(i1,i2), design )
     end do
    end do
@@ -698,7 +695,7 @@ Contains
 
   Integer :: i1, i2, i3
   Real(dp) :: Emax2, mSf(2), mSne
-  Complex(dp) :: Rsf(2,2), id3C(3,3)
+  Complex(dp) :: Rsf(2,2)
   character(len=9) :: specie
   ! for later implementatio of beamstrahlung
 #ifdef GENERATIONMIXING
@@ -721,10 +718,6 @@ Contains
   SigHp = 0._dp
 
   call InitializeLoopCouplings(vevSM)
-  id3C = 0._dp
-  id3C(1,1) = 1._dp
-  id3C(2,2) = 1._dp
-  id3C(3,3) = 1._dp
 
   !-----------
   ! u-squarks
@@ -735,7 +728,7 @@ Contains
   if (GenerationMixing) then
    Do i1=1,6
     Do i2=1,6
-     Call EpEmToSquarksZG(i1, i2, specie, mSup, Rsup, mf_U((i1+1)/2), mglu &
+     Call EpEmToSquarksZG(i1, i2, specie, mSup, Rsup &
                    & , Pm, Pp, Emax2 , ISR, Beam , SigSup(i1,i2), design )
     end do
    end do
@@ -746,7 +739,7 @@ Contains
     RSf = RSup(2*i1-1:2*i1, 2*i1-1:2*i1)
     Do i2=1,2
      Do i3=1,2
-      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, mf_U(i1), mglu, Pm, Pp &
+      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, Pm, Pp &
             & , Emax2 , ISR, Beam , SigSup(2*(i1-1)+i2, 2*(i1-1)+i3), design )
      end do
     end do
@@ -764,7 +757,7 @@ Contains
   if (GenerationMixing) then
    Do i1=1,6
     Do i2=1,6
-     Call EpEmToSquarksZG(i1, i2, specie, mSdown, Rsdown, mf_D((i1+1)/2),mglu &
+     Call EpEmToSquarksZG(i1, i2, specie, mSdown, Rsdown &
                    & , Pm, Pp, Emax2 , ISR, Beam , SigSdown(i1,i2), design )
     end do
    end do
@@ -775,7 +768,7 @@ Contains
     RSf = RSdown(2*i1-1:2*i1, 2*i1-1:2*i1)
     Do i2=1,2
      Do i3=1,2
-      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, mf_D(i1), mglu, Pm, Pp &
+      Call EpEmToSquarksZG(i2, i3, specie, mSf, Rsf, Pm, Pp &
            & , Emax2 , ISR, Beam , SigSdown(2*(i1-1)+i2, 2*(i1-1)+i3), design )
      end do
     end do
@@ -3122,7 +3115,7 @@ Contains
 
 
 #ifdef GENERATIONMIXING
- Subroutine EpEmToSleptonsMSSM(i, j, mSf, Rsf, Y_l, RlL, RlR, mN, N &
+ Subroutine EpEmToSleptonsMSSM(i, j, mSf, Rsf, Y_l, RlL, mN, N &
                                &, Pm, Pp, s, ISR, Beam, sigma, Design)
  !-----------------------------------------------------------------------
  ! calculates the production cross of sleptons in the 3-generation MSSM
@@ -3131,8 +3124,6 @@ Contains
  !  mSf(i) ..... slepton masses
  !  Rsf(i,j) ... Mixing matrices of sleptons
  !  Y_l(i,j) ... lepton Yukawa coupling divided by g_SU(2)
- !  RlL(i,j) ... left lepton mixing matrix
- !  RlR(i,j) ... right lepton mixing matrix
  !  mN(i) ...... Neutralino masses
  !  N(i,j) ..... Neutralino mixing matrix
  !  Pm ......... degree of e- polarisation
@@ -3150,8 +3141,7 @@ Contains
   Integer, Intent(in) :: i,j
   Real(dp), Intent(in) :: mSf(6), Pm, Pp, s, mN(:)
   Real(dp), Intent(out) :: sigma
-  Complex(dp), Intent(in) :: Rsf(6,6), Y_L(3,3), RlL(3,3), RlR(3,3) &
-                               &, N(:,:)
+  Complex(dp), Intent(in) :: Rsf(6,6), Y_L(3,3), N(:,:), RlL(3,3)
   Logical, Intent(in) :: ISR, Beam
   Character (Len=*), Optional, Intent(in) :: Design
 
@@ -3864,8 +3854,8 @@ Contains
  End Subroutine EpEmToSfermionsZG
 
 
- Subroutine EpEmToSquarksZG(i, j, specie, mSf, Rsf, mq, mglu, Pm, Pp, s, ISR &
-                          &, Beam , sigma, Design)
+ Subroutine EpEmToSquarksZG(i, j, specie, mSf, Rsf, Pm, Pp, s, ISR, Beam  &
+                          &, sigma, Design)
  !-----------------------------------------------------------------------
  ! calculates the production cross of squarks including QCD corrections, 
  ! the formula for polarized beams is taken from the Ph.D. thesis of 
@@ -3890,7 +3880,7 @@ Contains
  Implicit None
 
   Integer, Intent(in) :: i,j
-  Real(dp), Intent(in) :: mSf(:), Pm, Pp, s, mq, mglu
+  Real(dp), Intent(in) :: mSf(:), Pm, Pp, s
   Real(dp), Intent(out) :: sigma
   Complex(dp), Intent(in) :: Rsf(:,:)
   Logical, Intent(in) :: ISR, Beam
@@ -3937,22 +3927,7 @@ Contains
   !--------------------------------------------------------------------
   ! internal variables
   !--------------------------------------------------------------------
-  icase = i + j - 1
-  msq1 = mSf(1)
-  msq2 = mSf(2)
-  msq12 = msq1**2
-  msq22 = msq2**2
-  costh = Rsf(1,1)
-  sinth = Rsf(1,2)
-  cos2th = Abs(costh)**2 - Abs(sinth)**2
-  sin2th = 2._dp * Real( costh * sinth, dp )
   Qq = e_in
-
-  a(1,2) = - sin2th
-  a(2,1) = - sin2th
-  mglu2 = mglu**2
-  mglumq = mglu * mq
-  mq2 = mq**2
 
   ind_1 = i
   ind_2 = j
@@ -4030,7 +4005,6 @@ Contains
 
   Else
    sigma = EpEmToSfermionsQCD(s)
-
   End If
 
 !----------------------------
@@ -4127,7 +4101,7 @@ Contains
 
   Real(dp) :: gin(3), yukin(3), kappa, kappa3d2, sumI, erg, sinW2
   Real(dp) :: alpha3, SqrtS, m12, m22, del_eq, del_a, factor, aij
-  Real(dp) :: vq, aq, Le, Re, ae, ve 
+  Real(dp) :: Le, Re, ae, ve 
   Complex(dp) :: coup
 
   kappa = (s-mSfer2(1)-mSfer2(2))**2 - 4._dp * mSfer2(1) * mSfer2(2)
@@ -4139,11 +4113,6 @@ Contains
   Call runningCouplings(Sqrts,gin,yukin)
   sinW2 = gin(1)**2 / (gin(1)**2 + gin(2)**2)
   alpha3 = oo4pi * gin(3)**2
-
-  vq = 1._dp - 4._dp * Qq * sinw2
-  aq = 1._dp
-  a(1,1) = 2._dp * Abs(costh)**2 - 4._dp * Qq * sinw2
-  a(2,2) = 2._dp * Abs(sinth)**2 - 4._dp * Qq * sinw2
 
   Call CoupSfermionZ(ind_1, ind_2, gin(2), sinW2, e_in, T3_in  &
                  & , RSf_in(1:n_sf,1:n_sf), coup)
@@ -5324,7 +5293,7 @@ Contains
   Character (Len=*), Intent(in) :: Design
   Real(dp), Intent(in) :: E
   Real(dp) :: N, sigmax, sigmay, sigmaz, betax, betay, Re, GammaFactor, &
-                 & Dx, Dy, Hx, Hy, NuCl, NuGamma, Ncl, Ngamma, sigmaxB,      &
+                 & Dx, Dy, Hx, Hy, NuCl, NuGamma, Ngamma, sigmaxB,      &
                  & sigmayB 
 
 
@@ -5462,7 +5431,6 @@ Contains
    NuCl = 2.5_dp * Alpha**2 * Upsilon / (Sqrt(3._dp) * Re * GammaFactor )
    NuGamma = NuCl / Sqrt(1._dp + Upsilon**(2._dp/3._dp) )
 
-   Ncl = Sqrt(3._dp) * sigmaz * NuCl
    Ngamma = Sqrt(3._dp) * sigmaz * NuGamma
 
    Ngeff = NGamma * 0.5_dp ! = NGamma * Ngfraction

@@ -20,12 +20,12 @@ Module SugraRuns
 ! end interfaces
 
 ! global variables
-Real(dp), save :: n5plets
-Integer, save :: n10plets, YukScen
+Real(dp), Save :: n5plets
+Integer, Save :: n10plets, YukScen
 Real(dp), Save :: Lambda, MlambdaS, F_GMSB
 ! string scenarios
-Integer, save :: num_t
-Integer, save :: nH1_ai(36), nH2_ai(36), nE_ai(36,3), nL_ai(36,3)          &
+Integer, Save :: num_t
+Integer, Save :: nH1_ai(36), nH2_ai(36), nE_ai(36,3), nL_ai(36,3)          &
      &   , nD_ai(36,3), nU_ai(36,3), nQ_ai(36,3), mH1_ai(36), mH2_ai(36)   &
      &   , mE_ai(36,3), mL_ai(36,3), mD_ai(36,3), mU_ai(36,3)              &
      &   , mQ_ai(36,3), mtH1_ai(36), mtH2_ai(36), mtE_ai(36,3)             &
@@ -35,15 +35,18 @@ Integer, save :: nH1_ai(36), nH2_ai(36), nE_ai(36,3), nL_ai(36,3)          &
      &   , mG(36,3), pGE(36,3,3), pGL(36,3,3), pGD(36,3,3), pGU(36,3,3)    &
      &   , pGQ(36,3,3), pGH1(36,3), pGH2(36,3)
 Real(dp), Save :: C_a(3), C_ai(3,20),  SumC_O1(3)
-Real(dp), save :: m32, g_s, k_s, k_sb, k_ss, ThetaA(36)                     &
+Real(dp), Save :: m32, g_s, k_s, k_sb, k_ss, ThetaA(36)                     &
      &   , cosT, sumC1(3), sumC2(3), LnReDedekind(36), ReT(36)        &
      &   , oosqrt_k_ss, sinT, g_s2, delta_GS, sinT2, cosT2
-Complex(dp), save :: phase_s, t(36), phase_t(36), G2t(36),ReG2ThetaT(36)
-Real(dp), save :: mGUT_save, sinW2_DR_mZ      &
+Complex(dp), Save :: phase_s, t(36), phase_t(36), G2t(36),ReG2ThetaT(36)
+Real(dp), Save :: mGUT_save, sinW2_DR_mZ      &
     & , mf_l_DR_SM(3), mf_d_DR_SM(3), mf_u_DR_SM(3)
 Real(dp) :: m_32, M0_amsb
-Complex(dp), save :: Yl_mZ(3,3), Yu_mZ(3,3), Yd_mZ(3,3)
+Complex(dp), Save :: Yl_mZ(3,3), Yu_mZ(3,3), Yd_mZ(3,3)
 Real(dp), Save :: vevs_DR_save(2)
+! input scale of additional parameters close to EWSB scale
+!   in case of SUGRA or AMSB models
+Real(dp), Save :: InputScale
 ! flag to decide if nu-Yukawas are given from outside or not
 Logical, Save :: Fixed_Nu_Yukawas = .False., Ynu_eq_Yu = .False.
 Logical, Save :: Off_GMSB=.False.
@@ -54,18 +57,20 @@ Logical, Save :: l_Au=.False., l_Ad=.False., l_Al=.False., l_MD = .False. &
     & , l_MQ = .False., l_MU = .False., l_ME = .False. , l_ML = .False. 
 ! quick and dirty way to implement model by Suchita Kulkarni
 Logical, Save :: Model_Suchita = .False.      
+! use 3-loop m_t corrections
+Logical, Save :: l_mt_3loop = .False.
+! switch on SM decoupling
+Logical, Save :: l_SM_decoupling = .True.
 
 ! global variables
 
 ! private variables
-Integer, Private, save :: YukawaScheme=1
-Logical, Private, save :: CheckSugraDetails(10) = .False. &
-                & , SugraErrors(10) = .False.        &
-                & , StrictUnification = .False.      &
-                & , UseFixedScale = .False.          &
+Integer, Private, Save :: YukawaScheme=1
+Logical, Private, Save :: StrictUnification = .False. &
+                & , UseFixedScale = .False.           &
                 & , UseFixedGUTScale = .False.
 Real(dp), Private, Save :: GUT_scale
-Character(len=15), Private, save :: HighScaleModel
+Character(len=15), Private, Save :: HighScaleModel
 ! private variables
 
 Contains
@@ -781,11 +786,9 @@ Contains
     & , RSlept(6,6), RSneut(3,3), phase_glu, mat3(3,3), A, Y       &
     & , Rsf(2,2), epsD(3), epsL(3), epsD_FC
 
-  Complex(dp), Dimension(3,3) :: uU_L, uD_L, Del_ZuL(3,3), Del_ZdL(3,3)
+  Complex(dp), Dimension(3,3) :: Del_ZuL, Del_ZdL
 
-  Real(dp), Save :: vevs_DR(2)
-
-  Integer :: n_S0, i1, i_loop, i_loop_max, i2
+  Integer :: i1, i_loop, i_loop_max, i2
   Real(dp) :: D_mat(3,3), mf(3), mf2(3)
   Real(dp) :: alphaMZ, alpha3, rho, delta_rho    &
     & , mZ2_mZ, CosW2SinW2, gauge(3), delta, sinW2_old, delta_r     &
@@ -793,16 +796,15 @@ Contains
   Complex(dp) :: dmZ2, dmW2, dmW2_0, yuk_tau, yuk_t, yuk_b, SigLep, Sigdown  &
     & , SigUp, M2Q_ckm(3,3), V0ckmAd(3,3), Tu_ckm(3,3), TestC(3,3),ephi
   Complex(dp), Dimension(3,3) :: SigS_u, sigR_u, SigL_u, SigS_d, SigR_d    &
-    & , SigL_d, SigS_l, sigR_l, SigL_l, adCKM, Y_l_old, Y_d_old, Y_u_old
-  Complex(dp), Save :: Y0_d(3,3), Y0_u(3,3), Y0_l(3,3),CKM0(3,3)
-  Real(dp) :: msu(6), msu2(6), msd(6), msd2(6), s13,c13,s12,s23,ar,ai
+    & , SigL_d, SigS_l, sigR_l, SigL_l, Y_l_old, Y_d_old, Y_u_old
+  Complex(dp), Save :: CKM0(3,3)
+  Real(dp) :: s13,c13,s12,s23,ar,ai
   Logical :: converge
   Real(dp), Parameter :: e_d=-1._dp/3._dp, e_u=2._dp/3._dp, e_e=-1._dp &
     & , T3_d=-0.5_dp, T3_u=0.5_dp, mf_nu(3) = (/0._dp, 0._dp, 0._dp /) &
     & , YL_q = 1._dp/3._dp, YR_d = 2._dp/3._dp, YR_u = -4._dp/3._dp    &
     & , YL_l = -1._dp, YR_l = 2._dp
   Complex(dp), Parameter :: Y_nu(3,3) = ZeroC, Unu_L(3,3) = id3C
-  Complex(dp), Dimension(6,6) :: rot
 
   Iname = Iname + 1
   nameOfUnit(Iname) = "BoundaryEWnew"
@@ -1236,19 +1238,6 @@ Contains
   vev2 =  mZ2_mZ * CosW2SinW2 / (pi * alphamZ)
   vevSM(1) = Sqrt(vev2 / (1._dp+tanb**2) )
   vevSM(2) = tanb * vevSM(1)
-  !-------------------------------------
-  ! Initialize fermion mixing matrices
-  !-------------------------------------
-  uU_L = id3C
-  uD_L = id3C
-  If (GenerationMixing) Then
-   Call Adjungate(CKM, adCKM)
-   If (YukawaScheme.Eq.1) Then
-    uU_L = CKM
-   Else
-    uD_L = adCKM
-   End If
-  End If
 
   If (i_run.Eq.1) Then
    !--------------------------------------------------------------------------
@@ -1378,7 +1367,7 @@ Contains
        Del_ZuL(i1,i2) = 2._dp * ( mf(i2)**2 * SigL_u(i1,i2)       &
                       &         + mf(i1)*mf(i2) * SigR_u(i1,i2)   &
                       &         + mf(i1) * SigS_u(i1,i2)          &
-                      &         + mf(i2) * Conjg(SigR_u(i2,i1)) ) &
+                      &         + mf(i2) * Conjg(SigS_u(i2,i1)) ) &
                       &       / (mf2(i1) - mf2(i2) )
       End If
      End Do
@@ -1393,7 +1382,7 @@ Contains
        Del_ZdL(i1,i2) = 2._dp * ( mf(i2)**2 * SigL_d(i1,i2)       &
                       &         + mf(i1)*mf(i2) * SigR_d(i1,i2)   &
                       &         + mf(i1) * SigS_d(i1,i2)          &
-                      &         + mf(i2) * Conjg(SigR_d(i2,i1)) ) &
+                      &         + mf(i2) * Conjg(SigS_d(i2,i1)) ) &
                       &       / (mf2(i1) - mf2(i2) )
       End If
      End Do
@@ -1813,7 +1802,7 @@ Contains
 
   Real(dp) :: GammaH1, GammaH2, GammaGE(2,3), GammaGL(2,3), GammaGD(3,3)    &
      & , GammaGU(3,3), GammaGQ(3,3), GammaGH1(3), GammaGH2(3), GammaYH1     &
-     & , GammaYH2, LnG2(3), fac, m15(3)
+     & , GammaYH2, LnG2(3), fac, m15(3), m32p, m32p2
   Complex(dp), Dimension(3,3) :: GammaE, GammaL, GammaD, GammaU, GammaQ     &
      & , GammaYE, GammaYL, GammaYD, GammaYU, GammaYQ, GammaYQu, GammaYQd    &
      & , Ynu, d3, d3a, d3b, Yeff, UL, UR, MnuL5a, A_S_0, A_Z_0
@@ -1896,7 +1885,8 @@ Contains
   ! the following models need anomalous dimensions
   !--------------------------------------------------
   If (    (HighScaleModel.Eq.'AMSB').Or.(HighScaleModel.Eq.'Str_A')  &
-     &.Or.(HighScaleModel.Eq.'Str_B').Or.(HighScaleModel.Eq.'Str_C') ) Then
+     &.Or.(HighScaleModel.Eq.'Str_B').Or.(HighScaleModel.Eq.'Str_C') &
+     &.Or.(HighScaleModel.Eq.'Mirage') ) Then
    !-------------------------------------
    ! some General Definitions
    !-------------------------------------
@@ -1997,6 +1987,137 @@ Contains
     M2_D_0(i1,i1) = M2_D_0(1,1)
     M2_Q_0(i1,i1) = M2_Q_0(1,1)
     M2_U_0(i1,i1) = M2_U_0(1,1)
+   End Do
+
+  Else If (HighScaleModel.Eq.'Mirage') Then
+   m32p = oo16pi2 * m32 ! rescaled gravitino mass
+   m32p2 = m32p**2
+   !----------------------------------
+   ! gaugino mass parameters 
+   !----------------------------------
+   Mi_0 = m32p * (alpha_mir + b_1 * gauge2)
+   !----------------------------------------------------------------------
+   ! A parameter, part 1, this can be re-used for scalar masses squared
+   !----------------------------------------------------------------------
+   A_l_0 = ZeroC
+   A_d_0 = ZeroC
+   A_u_0 = ZeroC
+   If (GenerationMixing) Then
+    A_l_0 = Y_l_0 * GammaH1 + Matmul(GammaL, Conjg(Transpose(Y_l_0)) ) &
+         &               + Matmul(Y_l_0, GammaE)
+    A_d_0 = Y_d_0 * GammaH1 + Matmul(GammaQ, Conjg(Transpose(Y_d_0)) ) &
+         &               + Matmul(Y_d_0, GammaD)
+    A_u_0 = Y_u_0 * GammaH2 + Matmul(GammaQ, Conjg(Transpose(Y_u_0)) ) &
+         &               + Matmul(Y_u_0, GammaU)
+    A_l_0 = - m32 * A_l_0
+    A_d_0 = - m32 * A_d_0
+    A_u_0 = - m32 * A_u_0
+   Else ! .not. GenerationMixing
+    Do i1=1,3
+     A_l_0(i1,i1) = - m32 * Y_l_0(i1,i1) * (GammaL(i1,i1)+GammaE(i1,i1)+GammaH1)
+     A_d_0(i1,i1) = - m32 * Y_d_0(i1,i1) * (GammaQ(i1,i1)+GammaD(i1,i1)+GammaH1)
+     A_u_0(i1,i1) = - m32 * Y_u_0(i1,i1) * (GammaQ(i1,i1)+GammaU(i1,i1)+GammaH2)
+    End Do
+   End If
+   !----------------------------------------
+   ! scalar parameters
+   !----------------------------------------
+   M2_E_0 = ZeroC
+   M2_L_0 = ZeroC
+   M2_D_0 = ZeroC
+   M2_Q_0 = ZeroC
+   M2_U_0 = ZeroC
+   M2_H_0 = ZeroC
+   !---------------------------------------------------------------------
+   ! everything but the Yukawa contributions to the alpha xi_i part, 
+   ! easily adjusted from the AMSB model
+   !---------------------------------------------------------------------
+   M02 = cm_mir * alpha_mir**2 * m32p2
+   If (GenerationMixing) Then
+    M2_E_0 = - m32p * ( Matmul( Transpose(Conjg(Y_l_0)), A_l_0)   &
+          &           + Matmul( Transpose(Conjg(A_l_0)), Y_l_0)   )
+    M2_D_0 = - m32p * ( Matmul( Transpose(Conjg(Y_d_0)), A_d_0)   &
+          &           + Matmul( Transpose(Conjg(A_d_0)), Y_d_0)   )
+    M2_U_0 = - m32p * ( Matmul( Transpose(Conjg(Y_u_0)), A_u_0)   &
+          &           + Matmul( Transpose(Conjg(A_u_0)), Y_u_0)   )
+    M2_L_0 = 0.5_dp * Transpose( M2_E_0 )
+    M2_Q_0 = 0.5_dp * Transpose( M2_D_0 + M2_U_0 )
+    Do i1=1,3
+     M2_E_0(i1,i1) = M2_E_0(i1,i1) + M02              &
+         & - m32p2 * (198._dp / 25._dp * gauge4(1)    &
+         &           + 2.4_dp * alpha_mir * gauge2(1) )                           
+     M2_L_0(i1,i1) = M2_L_0(i1,i1) + M02                                      &
+         & -  m32p2 * (99._dp / 50._dp * gauge4(1) + 1.5_dp * gauge4(2) &
+         &             )
+     M2_D_0(i1,i1) = M2_D_0(i1,i1) + M02                                     &
+         & - m32p2 * (22._dp / 25._dp * gauge4(1) - 8._dp * gauge4(3))
+     M2_Q_0(i1,i1) = M2_Q_0(i1,i1) + M02                                     &
+         & - m32p2  * (11._dp / 50._dp * gauge4(1)  + 1.5_dp * gauge4(2)     &
+         &             - 8._dp * gauge4(3))
+     M2_U_0(i1,i1) = M2_U_0(i1,i1) + M02                                     &
+         & - m32p2 * (88._dp / 25._dp * gauge4(1) - 8._dp * gauge4(3))
+    End Do
+
+   Else ! .not. GenerationMixing
+    Do i1=1,3
+     M2_E_0(i1,i1) = M02                          &
+         & - m32p2 * (198._dp / 25._dp * gauge4(1) &
+         &           + 2.4_dp * alpha_mir * gauge2(1) ) &
+         & - m32p * 2._dp * Y_l_0(i1,i1) * A_l_0(i1,i1) &
+         & + 12._dp * m32p2 * alpha_mir * Abs(Y_l_0(i1,i1))**2
+     M2_L_0(i1,i1) = M02                                                  &
+         & - m32p2 * (99._dp / 50._dp * gauge4(1) + 1.5_dp * gauge4(2)    &
+         &           + alpha_mir * (3._dp * gauge2(2) + 0.6_dp * gauge2(1) ) ) &
+         & - m32p * Y_l_0(i1,i1) * A_l_0(i1,i1)        &
+         & + 6._dp *m32p2 * alpha_mir * Abs(Y_l_0(i1,i1))**2 
+     M2_D_0(i1,i1) = M02                                                      &
+         & - m32p2 * (22._dp / 25._dp * gauge4(1) - 8._dp * gauge4(3)  &
+         &           + alpha_mir * (4._dp / 15._dp * gauge2(1)             &
+                               + 16._dp / 3._dp * gauge2(3) ) )        &
+         & - m32p * 2._dp * Y_d_0(i1,i1) * A_d_0(i1,i1) 
+     M2_Q_0(i1,i1) = M02                                                     &
+         & - m32p2 * (11._dp / 50._dp * gauge4(1)  + 1.5_dp * gauge4(2)     &
+         &             - 8._dp * gauge4(3)                                  &
+         &        + alpha_mir * ( 1._dp/15._dp * gauge2(1) + 3._dp*gauge2(2) &
+               &                + 16._dp / 3._dp * gauge2(3) ) ) &
+         & - m32p * (Y_d_0(i1,i1) * A_d_0(i1,i1) + Y_u_0(i1,i1) * A_u_0(i1,i1) )
+     M2_U_0(i1,i1) = M02                                                      &
+         & - m32p2 * (88._dp / 25._dp * gauge4(1) - 8._dp * gauge4(3) &
+         &           + alpha_mir * (16._dp / 15._dp * gauge2(1)       &
+         &                         + 16._dp / 3._dp * gauge2(3) ) )   &
+         & - m32p * 2._dp * Y_u_0(i1,i1) * A_u_0(i1,i1)
+      M2_D_0(i1,i1) = M2_D_0(i1,i1)                                         &
+         & + 12._dp * m32p2 * alpha_mir * Abs(Y_d_0(i1,i1))**2
+      M2_U_0(i1,i1) = M2_U_0(i1,i1)    &
+         & + 12._dp * m32p2 * alpha_mir * Abs(Y_u_0(i1,i1))**2
+      M2_Q_0(i1,i1) = M2_Q_0(i1,i1)    &
+         & + 6._dp * m32p2 *alpha_mir                 &
+         &         * (Abs(Y_u_0(i1,i1))**2 + Abs(Y_d_0(i1,i1))**2  )
+    End Do
+   End If
+
+   M2_H_0 =  - m32p2 * (99._dp / 50._dp * gauge4(1) + 1.5_dp * gauge4(2) &
+          &     + alpha_mir * (3._dp * gauge2(2) + 0.6_dp  * gauge2(1) ) )
+   M2_H_0(1) = M2_H_0(1) + m32p2 * cHd_mir * alpha_mir**2  
+   M2_H_0(2) = M2_H_0(2) + m32p2 * cHu_mir * alpha_mir**2
+   If (GenerationMixing) Then
+   Else
+    Do i1=1,3
+     M2_H_0(1) = M2_H_0(1) - m32p * (3._dp *Y_d_0(i1,i1) *A_d_0(i1,i1) &
+              &                     +  Y_l_0(i1,i1) * A_l_0(i1,i1)     &
+              &                     -  6._dp *  m32p *alpha_mir        &
+              &  * (3._dp *Abs(Y_d_0(i1,i1))**2 + Abs(Y_l_0(i1,i1))**2))
+     M2_H_0(2) = M2_H_0(2) - m32p * (3._dp *Y_u_0(i1,i1) *A_u_0(i1,i1) &
+              &           - 18._dp* m32p*alpha_mir*Abs(Y_u_0(i1,i1))**2)
+    End Do  
+   End If
+   !--------------------------------------------------------
+   ! A parameter, second part, adding moduli contributions
+   !--------------------------------------------------------
+   Do i1=1,3
+    A_u_0(i1,i1) = A_u_0(i1,i1) - m32p * alpha_mir * a3_mir * Y_u_0(i1,i1)
+    A_d_0(i1,i1) = A_d_0(i1,i1) - m32p * alpha_mir * a3_mir * Y_d_0(i1,i1)
+    A_l_0(i1,i1) = A_l_0(i1,i1) - m32p * alpha_mir * a3_mir * Y_l_0(i1,i1)
    End Do
 
   Else If (HighScaleModel.Eq.'AMSB') Then
@@ -2589,7 +2710,8 @@ Contains
    Where(Abs(Y_l_0).Ne.0._dp) AoY_l_0 = A_l_0 / Y_l_0
    Where(Abs(Y_d_0).Ne.0._dp) AoY_d_0 = A_d_0 / Y_d_0
    Where(Abs(Y_u_0).Ne.0._dp) AoY_u_0 = A_u_0 / Y_u_0
-  Else  If ((HighScaleModel.Ne.'GMSB').And.(HighScaleModel(1:3).Ne.'Str')) Then 
+  Else  If ((HighScaleModel.Ne.'GMSB').And.(HighScaleModel(1:3).Ne.'Str') &
+         & .And.(HighScaleModel.Ne.'Mirage')) Then 
    !--------------------------------------------------------------
    ! check if parameters in the super CKM/PMNS basis are given 
    !--------------------------------------------------------------
@@ -2635,7 +2757,7 @@ Contains
     A_l_0 = AoY_l_0 * Y_l_0
     A_d_0 = AoY_d_0 * Y_d_0
     A_u_0 = AoY_u_0 * Y_u_0
-
+ 
    End If
 
   End If
@@ -2913,10 +3035,20 @@ Contains
 
   !--------------------------------------------------
   ! now the boundary conditions
-  !--------------------------------------------------------------
-  ! check if parameters in the super CKM/PMNS basis are given 
-  !--------------------------------------------------------------
-  If (GenerationMixing) Then
+  !-----------------------------------------------------------------
+  ! check first if general Mirage mediation used
+  ! and if not, whether parameters are given in the super CKM/PMNS
+  !-----------------------------------------------------------------
+  If (HighScaleModel.Eq.'Mirage') then
+   !use BoundaryHS
+   ! Higgs mass parameters are recalculated
+   cHu_mir = 0._dp
+   cHd_mir = 0._dp
+   Call BoundaryHS(g1(1:57),g2)
+   Call GToParameters(g2, gauge_0, Y_l_0, Y_d_0, Y_u_0, Mi_0, A_l_0, A_d_0 &
+          & , A_u_0, M2_E_0, M2_L_0, M2_D_0, M2_Q_0, M2_U_0, M2_H_0, mu_0, B_0)
+   
+  Else If (GenerationMixing) Then
    If (.Not.l_Al) Al_0_pmns = 0
    If (.Not.l_Ad) Ad_0_sckm = 0
    If (.Not.l_Au) Au_0_sckm = 0
@@ -2953,6 +3085,13 @@ Contains
 
   If ( ((Sum(in_extpar(23,:)).Gt.0).And.(Sum(in_extpar(24,:)).Gt.0) )         &
    & .Or. ((Sum(in_extpar(23,:)).Gt.0).And.(Sum(in_extpar(26,:)).Gt.0) ) ) Then
+   If (HighScaleModel.Eq.'Mirage') then
+    ! recalculate c_Hu and c_Hd
+    cHd_mir = (M2_H(1)-M2_H_0(1)) / (alpha_mir * oo16pi2 * m32)**2
+    cHu_mir = (M2_H(2)-M2_H_0(2)) / (alpha_mir * oo16pi2 * m32)**2
+    r_extpar(214) = cHu_mir
+    r_extpar(215) = cHd_mir
+   End If
    M2_H_0 = M2_H
    mu_0 = mu
    B_0 = B
@@ -3951,8 +4090,12 @@ Contains
    Do i1=1,3
     y_l(i1,i1) = sqrt2 * mf_L_mZ(i1) / vevS(1)
     If (i1.Eq.3) Then ! top and bottom are special
-     y_u(i1,i1) = sqrt2 * mf_U(i1)  / vevS(2) &
-               & * (1._dp - oo3pi *alphas_mZ *(5._dp +3._dp*Log(mZ2/mf_u2(3))))
+!     y_u(i1,i1) = sqrt2 * mf_U(i1)  / vevS(2) &
+!               & * (1._dp - oo3pi *alphas_mZ *(5._dp +3._dp*Log(mZ2/mf_u2(3))))
+     y_u(3,3) = 0.9_dp ! using a fixed value as initialisation for the first run, 
+                       ! this is more stable in the decoupling regime
+                       ! the final result depends hardly on this choice
+                       ! the variation is within the required numerical precsion
      y_d(i1,i1) = sqrt2 * mf_D_mZ(i1) / ( vevS(1) * (1._dp+0.015*tanb*phase_mu))
     Else
      y_u(i1,i1) = sqrt2 * mf_U_mZ(i1) / vevS(2)
@@ -3969,13 +4112,13 @@ Contains
      Y_d = Transpose(Y_d)
     End If
    End If
-   
+
    Call  CouplingsToG(gauge, y_l, y_d, y_u, g1)
    TwoLoopRGE_save = TwoLoopRGE
 
    If (.Not.UseFixedScale) Then
-    mudim =  0.5_dp*Abs(M2_U_0(3,3)+M2_Q_0(3,3))+4._dp*Abs(Mi_0(3))**2
-    mudim = Max(mf_u2(3),mudim) 
+    mudim =  0.5_dp*Abs(M2Q_0_sckm(3,3)+M2U_0_sckm(3,3))+4._dp*Abs(Mi_0(3))**2
+    mudim = Max(mf_u2(3),mudim)
     Call SetRGEScale(mudim)
     UseFixedScale = .False.
    Else
@@ -4109,7 +4252,7 @@ Contains
       &      , TUIN, TDIN, TEIN
 !  Real :: A0, m0  ! I assume they are global variables
     
-  Integer :: i,j
+  Integer :: i
     
 ! initiate the trilinears and soft terms to zero
    TUIN = ZeroC
@@ -4144,6 +4287,19 @@ Contains
 ! by Suchita Kulkarni
 !----------------------
  
+
+ Subroutine GetInputScale(scale)
+ Implicit None
+  Real(dp), Intent(out) :: scale
+
+  If (InputScale.gt.0._dp) then ! has been defined for fixed  value
+   scale = InputScale 
+  Else  ! use scale EWSB = sqrt(m_st_1 m_st_2)
+   scale = Sqrt(GetRenormalizationScale())
+  End If
+ 
+ End Subroutine GetInputScale
+
 
  Integer Function GetYukawaScheme()
  !-----------------------------------------------------------------------
@@ -4261,9 +4417,10 @@ Contains
   !---------------------------
   ! looking for the GUT scale
   !---------------------------
-  If (   (HighScaleModel.Eq.'SUGRA').Or.(HighScaleModel.Eq.'Oscar')         &
-   & .Or.(HighScaleModel.Eq.'Str_A').Or.(HighScaleModel.Eq.'Str_B')         &
-   & .Or.(HighScaleModel.Eq.'Str_C').Or.(HighScaleModel.Eq.'AMSB')  ) Then 
+  If (   (HighScaleModel.Eq.'SUGRA').Or.(HighScaleModel.Eq.'Oscar') &
+   & .Or.(HighScaleModel.Eq.'Str_A').Or.(HighScaleModel.Eq.'Str_B') &
+   & .Or.(HighScaleModel.Eq.'Str_C').Or.(HighScaleModel.Eq.'AMSB')  &
+   & .Or.(HighScaleModel.Eq.'Mirage') ) Then 
 
    If (.Not.UseFixedGUTScale) Then
     tz = Log(m_lo/1.e18_dp)
@@ -5122,7 +5279,6 @@ Contains
 
   If ((.Not.UseFixedGUTScale).And.(.Not.FoundUnification)) Then
    Write (ErrCan,*) 'SUGRA: no unification found'
-   SugraErrors(1) = .True.
    kont = -409
    Call AddError(409)
    Iname = Iname - 1
@@ -6141,7 +6297,7 @@ Contains
   Real(dp), Intent(inout) :: g1(213)
   Real(dp), Intent(out) :: g2(213), mGUT
   
-  Integer:: i1, i2, SumI
+  Integer:: i1, i2
   Real(dp) :: g1a(285), g2a(285), g1b(75), g2b(267) &
       & , g2c(277), g1d(356), g2d(356), g1f(573), g2f(573)     &
       & , g1g(365), g2g(365)
@@ -6154,7 +6310,6 @@ Contains
       &  , ooSqrt3,      ooSqrt3,          ooSqrt3           &
       &  , 0._dp ,       ooSqrt2,         -ooSqrt2 /), shape = (/3, 3/) )
   Real(dp), Parameter :: ZeroR2(2) = 0._dp
-  Complex(dp), Dimension(3,3) :: mat3, UnuR, Ynu, Anu, Mr2
 
   Complex(dp), Dimension(3,3) :: RotXl, RotXr, RotGl, RotGr, RotBl, RotBr &
       & , RotWl, RotWr, ZER, ZEL
@@ -6223,7 +6378,7 @@ Contains
   !---------------------------
   ! looking for the GUT scale
   !---------------------------
-  If (HighScaleModel.Eq.'SUGRA') Then 
+  If ((HighScaleModel.Eq.'SUGRA').or.(HighScaleModel.Eq.'Mirage')) Then 
 
    If (.Not.UseFixedGUTScale) Then
     tz = Log(m_lo/1.e18_dp)
@@ -7211,7 +7366,6 @@ Contains
 
   If ((.Not.UseFixedGUTScale).And.(.Not.FoundUnification)) Then
    Write (ErrCan,*) 'SUGRA: no unification found'
-   SugraErrors(1) = .True.
    kont = -417
    Call AddError(417)
    Iname = Iname - 1
@@ -8030,191 +8184,1973 @@ Contains
 
  End Subroutine RunRGE_2_boundaries
 
- Subroutine RunRGEup(g2, mGUT, Qvec, g_out, g_out2, kont)
+ Subroutine RunRGE_from_Msusy(kont, delta, vevSM, Qin, g1, g2, mGUT)
  !-----------------------------------------------------------------------
  ! Uses Runge-Kutta method to integrate RGE's from M_Z to M_GUT
- ! Written by Werner Porod, 17.04.02
- ! 17.04.02 : - including the mSugra case and a simplified version
- !              for varying m_t
- !            - setting flag for writing
- ! 01.02.03: remodelling everything, because this routine should only
- !           serve as possiblity to run up RGEs, structure is build such
- !           that right handed neutrinos can be included
+ ! and back, putting in correct thresholds. For the first iteration
+ ! only the first 6 couplings are included and a common threshold is used.
+ ! Written by Werner Porod, 10.07.99
+ ! 07.03.2001: including right handed neutrinos
+ ! 24.09.01: portation to f90
+ ! 27.03.02: including a check if perturbation theory is valid
+ ! 16.09.02: the electroweak scale is now set entirely outside, either
+ !           in the main program or in the routine sugra(...)
  !-----------------------------------------------------------------------
  Implicit None
 
   Integer, Intent(inout) :: kont
-  Real(dp), Intent(in) :: g2(:), mGUT
-  Real(dp), Intent(out) :: g_out(:,:), g_out2(:,:), Qvec(:)
-  
-  Logical :: check
-  Integer:: i1, len1, len2, len3, len4
-  Real(dp) :: g2a(213), w2(213,3), g2b(267), w2b(267,3), tz, dt, t, mudim
+  Real(dp), Intent(in) :: delta, vevSM(2),Qin
+  Real(dp), Intent(inout) :: g1(57)
+  Real(dp), Intent(out) :: g2(213), mGUT
+
+  Integer:: i1, i2, SumI
+  Real(dp) :: g1a(93), g2a(285), g5_a(59), g5_b(180), g1b(75), g2b(267) &
+      & , g1c(79), g2c(277), g1d(118), g2d(356), g1f(111), g2f(573)     &
+      & , g1g(115), g2g(365)
+  Real(dp) :: tz, dt, t_out
+  Real(dp) :: mudim, gGUT, g1_h(57), m_hi, m_lo, M15(3)
+  Logical :: FoundUnification
+
+  Real(dp), Parameter :: Umns(3,3) = Reshape(   Source = (/  &
+      &    Sqrt2/Sqrt3, -ooSqrt2*ooSqrt3, -ooSqrt2*ooSqrt3   &
+      &  , ooSqrt3,      ooSqrt3,          ooSqrt3           &
+      &  , 0._dp ,       ooSqrt2,         -ooSqrt2 /), shape = (/3, 3/) )
+  Real(dp), Parameter :: ZeroR2(2) = 0._dp
+  Complex(dp), Dimension(3,3) :: mat3, UnuR, Ynu, Anu, Mr2
+
+  Complex(dp), Dimension(3,3) :: RotXl, RotXr, RotGl, RotGr, RotBl, RotBr &
+      & , RotWl, RotWr, ZER, ZEL
+  Real(dp) :: EigMWM3(3),EigMBM3(3),EigMXM3(3), EigMGM3(3), test2(2)
+  Integer :: ierr
 
   Iname = Iname + 1
-  NameOfUnit(Iname) = 'RunRGEup'
+  NameOfUnit(Iname) = 'RunRGE_from_Msusy'
 
-  !-------------------------------------------
-  ! first a check if everthing is consistent
-  !-------------------------------------------
-  len1 = Size( g2 )
-  len2 = Size( Qvec )
-  len3 = Size( g_out, dim=1 )
-  len4 = Size( g_out, dim=2 )
+  !-------------------------------------
+  ! running to the high scale
+  !-------------------------------------
+  g1_h = g1
+  If ((HighScaleModel(1:9).Eq.'SUGRA_NuR').Or.(HighScaleModel.Eq.'SUGRA_SU5')) &
+  Then
+   m_lo = MnuR(1)
+   FoundUnification = .False.
+  Else If (HighScaleModel.Eq.'SEESAW_II') Then
+   m_lo = M_H3(1)
+   FoundUnification = .False.
+  Else If (HighScaleModel.Eq.'GMSB') Then
+   m_lo = MlambdaS
+   FoundUnification = .True.
 
-  check = .True.  
-  If (len1.Ne.len4) check = .False. ! size of parameter vector do not conincide
-  If (len2.Ne.len3) check = .False. ! number of steps do not conincide
-  If (.Not.check) Then
-   Write(ErrCan,*) "Problem in routine "//NameOfUnit(Iname)
-   Write(ErrCan,*) "dimension of g2   :",len1
-   Write(ErrCan,*) "dimension of Qvec :",len2
-   Write(ErrCan,*) "dimension of g2   :",len1
-   If (ErrorLevel.Ge.0) Call TerminateProgram
-  End If   
+! Florian Staub Seesaw II+III
+# ifdef SEESAWIII
+  Else If (HighScaleModel.Eq.'SEESAW_III_3G') Then
+   m_lo = Abs(MWM30(1,1))
+   FoundUnification = .False.
+  Else If (HighScaleModel.Eq.'SEESAW_II_SARAH') Then
+   m_lo = Abs(MTM_GUT)
+   FoundUnification = .False.
+# endif SEESAWIII
+! Florian Staub Seesaw II+III
 
-  !---------------------------------------------
-  ! data for running: mudim is low energy scale
-  !---------------------------------------------
-  mudim = GetRenormalizationScale()
-  mudim = Sqrt(mudim)
-  tz = Log(mudim/mGUT)
-  dt = - tz / Real(len2-1, dp)
-  g2a = g2
-  !------------------
-  ! now the running
-  !------------------
-  g_out(1,:) = g2a
-  g_out2 = 0._dp
+  Else If (UseFixedGUTScale) Then ! GUT scale is fixed
+   m_lo = GUT_scale
+   mGUT = GUT_scale
+   FoundUnification = .True.
+  Else ! Sugra, strings with minimal particle content
+   m_lo = 5.e14_dp
+   FoundUnification = .False.
+  End If
+
+  tz = Log(Qin/m_lo)
+  dt = - tz / 50._dp
+
+  Call odeint(g1, 57, tz, 0._dp, delta, dt, 0._dp, rge57, kont)
+
+  If (kont.Ne.0) Then
+   Iname = Iname - 1
+   Return
+  End If
+  !--------------------------
+  ! check for perturbativity
+  !--------------------------
+  If ( (oo4pi*Maxval(g1**2)).Gt.0.5_dp) Then
+   Write(ErrCan,*) "Non perturbative regime at high scale"
+   Write(*,*) "Non perturbative regime at high scale"
+   If (ErrorLevel.Ge.2) Call TerminateProgram
+   Do i1=1,57
+    If (Abs(g1(i1)).Gt.1.e-12) Write(errcan,*)  i1,g1(i1),oo4pi*g1(i1)**2
+   end do
+   Write(errcan,*) " "
+   kont = -408
+   Call AddError(408)
+   Iname = Iname - 1
+   Return
+  End If
+
+
+  !---------------------------
+  ! looking for the GUT scale
+  !---------------------------
+  If (   (HighScaleModel.Eq.'SUGRA').Or.(HighScaleModel.Eq.'Oscar') &
+   & .Or.(HighScaleModel.Eq.'Str_A').Or.(HighScaleModel.Eq.'Str_B') &
+   & .Or.(HighScaleModel.Eq.'Str_C').Or.(HighScaleModel.Eq.'AMSB')  &
+   & .Or.(HighScaleModel.Eq.'Mirage') ) Then
+
+   If (.Not.UseFixedGUTScale) Then
+    tz = Log(m_lo/1.e18_dp)
+    dt = - tz / 50._dp
+
+    Call odeintB(g1, 57, tz, 0._dp, delta, dt, 0._dp, rge57, t_out, kont)
+    If (kont.Eq.0) Then
+     FoundUnification = .True.
+     mGUT = 1.e18_dp * Exp(t_out)
+     gGUT = Sqrt( 0.5_dp * (g1(1)**2+g1(2)**2) )
+     g1(1) = gGUT
+     g1(2) = gGUT
+     If (StrictUnification) g1(3) = gGUT
+    Else
+     Write(ErrCan,*) "kont",kont,delta,tz,dt
+     Write(ErrCan,*) "m_t",mf_u(3)
+     Write (ErrCan,*) "t_out",t_out,1.e18_dp * Exp(t_out)
+     Do i1=1,57
+      If ((g1(i1).Ne.0._dp).Or.(g1_h(i1).Ne.0._dp)) &
+                 & Write(ErrCan,*) i1,g1_h(i1),g1(i1)
+     End Do
+     Write(ErrCan,*) " "
+     Iname = Iname - 1
+     Return
+    End If
+   End If ! .not.UseFixedGUTScale
+
+  Else If ((HighScaleModel.Eq.'SUGRA_NuR').Or.(HighScaleModel.Eq.'SUGRA_SU5')) &
+   &  Then
+
+   Call GToCouplings(g1,gauge_mR,Y_l_mR(1,:,:),Y_d_mR(1,:,:),Y_u_mR(1,:,:))
+
+   Call CouplingsToG3(gauge_mR, Y_l_mR(1,:,:), Y_nu_mR(1,:,:), Y_d_mR(1,:,:) &
+          & , Y_u_mR(1,:,:), MnuL5, g1a)
+   !---------------------------
+   ! running from m_R1 -> m_R2
+   !---------------------------
+   m_lo = MnuR(1)
+   m_hi = MnuR(2)
+   If (MnuR(1).Ne.MnuR(2)) Then
+    tz = Log(m_lo / m_hi)
+    dt = - tz / 50._dp
+    Call odeint(g1a, 93, tz, 0._dp, delta, dt, 0._dp, rge93, kont)
+   End If
+
+   Call GToCouplings3(g1a, gauge_mR, Y_l_mR(1,:,:), Y_nu_mR(1,:,:) &
+           & , Y_d_mR(1,:,:), Y_u_mR(1,:,:), MnuL5 )
+
+   Call CouplingsToG3(gauge_mR, Y_l_mR(1,:,:), Y_nu_mR(2,:,:), Y_d_mR(1,:,:) &
+           & , Y_u_mR(1,:,:), MnuL5, g1a)
+   m_lo = m_hi
+   !---------------------------
+   ! running from m_R2 -> m_R3
+   !---------------------------
+   m_hi = MnuR(3)
+   If (m_lo.Ne.MnuR(3)) Then
+    tz = Log(m_lo / m_hi)
+    dt = - tz / 50._dp
+
+    Call odeint(g1a, 93, tz, 0._dp, delta, dt, 0._dp, rge93, kont)
+   End If
+
+   Call GToCouplings3(g1a, gauge_mR, Y_l_mR(1,:,:), Y_nu_mR(2,:,:) &
+           & , Y_d_mR(1,:,:), Y_u_mR(1,:,:), MnuL5 )
+
+   If (Ynu_at_MR3) Then
+    Call FermionMass(Y_l_mR(2,:,:),1._dp,EigMGM3,ZER,ZEL,kont)
+    Y_l_mR(3,:,:) = Matmul( Matmul(Conjg(ZER), Y_l_mR(1,:,:)) &
+                  &       , Transpose(Conjg(ZEL)))
+    Y_nu_mR(3,:,:) = Y_nu_0
+   Else
+    Y_l_mR(3,:,:) = Y_l_mR(1,:,:)
+   End If
+
+   Call CouplingsToG3(gauge_mR, Y_l_mR(3,:,:), Y_nu_mR(3,:,:), Y_d_mR(1,:,:) &
+          & , Y_u_mR(1,:,:), MnuL5, g1a)
+   m_lo = m_hi
+   !---------------------------
+   ! running from m_R3 -> m_GUT
+   !---------------------------
+   If (UseFixedGUTScale) Then
+    tz = Log(MnuR(3)/GUT_scale)
+    mGUT = GUT_scale
+    dt = - tz / 50._dp
+    Call odeint(g1a, 93, tz, 0._dp, delta, dt, 0._dp, rge93, kont)
+    If (kont.Ne.0) Then
+     Iname = Iname -1
+     Return
+    End If
+
+   Else
+    If (g1a(1).Lt.g1a(2)) Then ! I am still below GUT scale
+     tz = Log(MnuR(3)/1.e18_dp)
+     dt = - tz / 50._dp
+     Call odeintB(g1a, 93, tz, 0._dp, delta, dt, 0._dp, rge93, t_out, kont)
+     If (kont.Eq.0) Then
+      FoundUnification = .True.
+      mGUT = 1.e18_dp * Exp(t_out)
+      gGUT = Sqrt( 0.5_dp * (g1a(1)**2+g1a(2)**2) )
+      g1a(1) = gGUT
+      g1a(2) = gGUT
+      If (StrictUnification) g1a(3) = gGUT
+     Else
+      Iname = Iname - 1
+      Return
+     End If
+
+    Else If (g1a(1).Eq.g1a(2)) Then ! I am at the GUT scale, very unlikely
+                                    ! but possible
+     FoundUnification = .True.
+     mGUT = 1.e15_dp * Exp(t_out)
+     gGUT = g1a(1)
+     If (StrictUnification) g1a(3) = gGUT
+
+    Else ! I have already crossed the GUT scale
+     tz = Log(MnuR(3)/1.e15_dp)
+     dt = - tz / 50._dp
+     Call odeintC(g1a, 93, tz, 0._dp, delta, dt, 0._dp, rge93, t_out, kont)
+     If (kont.Eq.0) Then
+      FoundUnification = .True.
+      mGUT = 1.e15_dp * Exp(t_out)
+      gGUT = Sqrt( 0.5_dp * (g1a(1)**2+g1a(2)**2) )
+      g1a(1) = gGUT
+      g1a(2) = gGUT
+      If (StrictUnification) g1a(3) = gGUT
+     Else
+      Iname = Iname - 1
+      Return
+     End If
+    End If
+
+   End If
+
+
+   !----------------------------------------------------
+   ! run up to SO(10) scale in case of the SU(5) model
+   !----------------------------------------------------
+   If (HighScaleModel.Eq.'SUGRA_SU5') Then
+    tz = Log(mGUT/M_SO_10)
+    dt = - tz / 50._dp
+
+    g5_a = 0._dp
+    g5_a(1) = g1a(1)
+    g5_a(2:19) = g1a(58:75)    ! u-quark Yukawa couplines
+
+    If (g1a(56).Gt.g1a(20)) Then
+     g5_a(20:37) = g1a(40:57)   ! d-quark Yukawa couplines
+    Else
+     g5_a(20:37) = g1a(4:21)   ! lepton Yukawa couplines
+    End If
+    g5_a(38:55) = g1a(22:39)   ! neutrino Yukawa couplines
+!    Write(*,*) "SU(5) Y_tau , Y_b, %",g1a(20),g1a(56),(g1a(20)-g1a(56))/g1a(20)
+    g5_a(56) = Real(lam_0, dp)
+    g5_a(57) = Aimag(lam_0)
+    g5_a(58) = Real(lamp_0, dp)
+    g5_a(59) = Aimag(lamp_0)
+
+    Call odeint(g5_a, 59, tz, 0._dp, delta, dt, 0._dp, rge_SU5, kont)
+   End If
+
+  Else If (HighScaleModel.Eq.'SUGRA_NuR1') Then
+
+    Call GToCouplings(g1,gauge_mR,Y_l_mR(1,:,:),Y_d_mR(1,:,:),Y_u_mR(1,:,:))
+
+
+    If (Ynu_at_MR3) Then
+     Call FermionMass(Y_l_mR(2,:,:),1._dp,EigMGM3,ZER,ZEL,kont)
+     Y_l_mR(1,:,:) = Matmul( Matmul(Conjg(ZER), Y_l_mR(1,:,:)) &
+                   &       , Transpose(Conjg(ZEL)))
+     Y_nu_mR(1,:,:) = Y_nu_0
+    End If
+
+    Call CouplingsToG2(gauge_mR, Y_l_mR(1,:,:), Y_nu_mR(1,:,:), Y_d_mR(1,:,:) &
+             & , Y_u_mR(1,:,:), g1a)
+
+    tz = Log(mGUT/GUT_scale)
+    dt = tz / 50._dp
+
+   If (UseFixedGUTScale) Then
+    tz = Log(mGUT/GUT_scale)
+    mGUT = GUT_scale
+    dt = - tz / 50._dp
+    Call odeint(g1a, 75, tz, 0._dp, delta, dt, 0._dp, rge75, kont)
+    If (kont.Ne.0) Then
+     Iname = Iname -1
+     Return
+    End If
+
+   Else
+    tz = Log(mGUT/1.e18_dp)
+    dt = - tz / 50._dp
+    Call odeintB(g1a, 75, tz, 0._dp, delta, dt, 0._dp, rge75, t_out, kont)
+    If (kont.Eq.0) Then
+     FoundUnification = .True.
+     mGUT = 1.e18_dp * Exp(t_out)
+     gGUT = Sqrt( 0.5_dp * (g1a(1)**2+g1a(2)**2) )
+     g1a(1) = gGUT
+     g1a(2) = gGUT
+     If (StrictUnification) g1a(3) = gGUT
+    Else
+     Iname = Iname - 1
+     Return
+    End If
+   End If
+
+  Else If ((HighScaleModel.Eq.'SEESAW_II').And.Fifteen_plet) Then
+
+   If (g1(1).Gt.g1(2)) Then ! already above the GUT scale
+    !---------------------------------------------------
+    ! heavy states are not to be included
+    !---------------------------------------------------
+    Call Set_Decoupling_Heavy_States(.True.)
+
+    If (UseFixedGUTScale) Then
+     tz = Log(m_lo/GUT_scale)
+     mGUT = GUT_scale
+     dt = - tz / 50._dp
+     Call odeint(g1, 57, tz, 0._dp, delta, dt, 0._dp, rge57, kont)
+     If (kont.Ne.0) Then
+      Iname = Iname -1
+      Return
+     End If
+
+    Else ! .not.UseFixedGUTScale
+     tz = Log(m_lo/1.e15_dp)
+     dt = - tz / 50._dp
+     Call odeintC(g1, 57, tz, 0._dp, delta, dt, 0._dp, rge57, t_out, kont)
+     If (kont.Eq.0) Then
+      FoundUnification = .True.
+      mGUT = 1.e15_dp * Exp(t_out)
+      gGUT = Sqrt( 0.5_dp * (g1(1)**2+g1(2)**2) )
+      g1(1) = gGUT
+      g1(2) = gGUT
+      If (StrictUnification) g1(3) = gGUT
+     Else
+      Iname = Iname - 1
+      Return
+     End If
+
+    End If ! UseFixedGUTScale
+
+    Call GToCouplings(g1, gauge_mH3, Y_l_mH3, Y_d_mH3, Y_u_mH3)
+
+    M15 = M_H3(1)
+    Call CouplingsToG5(gauge_mH3, Y_l_mH3, Y_T_0, Y_d_mH3, Y_u_mH3 &
+                 & , Y_T_0, Y_T_0, lam12_0(1), lam12_0(2), M15, g1d )
+
+   Else ! still below the GUT scale
+
+    !---------------------------------------------------
+    ! heavy states are to be included
+    !---------------------------------------------------
+    Call Set_Decoupling_Heavy_States(.False.)
+
+    Call GToCouplings(g1, gauge_mH3, Y_l_mH3, Y_d_mH3, Y_u_mH3)
+
+    M15 = M_H3(1)
+
+    Delta_b_1 = 7._dp
+    If (TwoLoopRGE) Then
+     Delta_b_2(1,1) = 181._dp/15._dp
+     Delta_b_2(1,2) = 29.4_dp
+     Delta_b_2(1,3) = 656._dp/15._dp
+     Delta_b_2(2,1) = 9.8_dp
+     Delta_b_2(2,2) = 69._dp
+     Delta_b_2(2,3) = 16._dp
+     Delta_b_2(3,1) = 82._dp/15._dp
+     Delta_b_2(3,2) = 6._dp
+     Delta_b_2(3,3) = 358._dp/3._dp
+
+    !-----------------------------------------------------
+    ! adding shifts to gauge couplings
+    !-----------------------------------------------------
+     gauge_mH3(1) = gauge_mH3(1) * (1._dp - oo16pi2 * gauge_mH3(1)**2          &
+                 &                       * (8._dp/3._dp*Log(MS15_mH3/MT15_mH3) &
+                 &                         + Log(MZ15_mH3/MT15_mH3) /6._dp ) )
+     gauge_mH3(2) = gauge_mH3(2) * (1._dp - oo16pi2 * gauge_mH3(2)**2          &
+                 &                       * 1.5_dp *Log(MZ15_mH3/MT15_mH3) )
+     gauge_mH3(3) = gauge_mH3(3) * (1._dp - oo16pi2 * gauge_mH3(3)**2          &
+                 &                       * (2.5_dp*Log(MS15_mH3/MT15_mH3) &
+                 &                         + Log(MZ15_mH3/MT15_mH3) ) )
+    End If
+
+
+    If (Ynu_at_MR3) Then
+     Call FermionMass(Y_l_mH3,1._dp,EigMGM3,ZER,ZEL,kont)
+     Y_l_mH3 = Matmul( Matmul(Conjg(ZER), Y_l_mH3), Transpose(Conjg(ZEL)))
+     Call CouplingsToG5(gauge_mH3, Y_l_mH3, Y_T_0, Y_d_mH3, Y_u_mH3 &
+                 & , Y_T_0, Y_T_0, lam12_MH3(1), lam12_MH3(2), M15, g1d )
+    Else
+     Call CouplingsToG5(gauge_mH3, Y_l_mH3, Y_T_mH3, Y_d_mH3, Y_u_mH3 &
+                 & , Y_Z_mH3, Y_S_mH3, lam12_MH3(1), lam12_MH3(2), M15, g1d )
+    End If
+
+    If (UseFixedGUTScale) Then
+     tz = Log(m_lo/GUT_scale)
+     mGUT = GUT_scale
+     dt = - tz / 50._dp
+     Call odeint(g1d, 118, tz, 0._dp, delta, dt, 0._dp, rge118, kont)
+     If (kont.Ne.0) Then
+      Iname = Iname -1
+      Return
+     End If
+
+    Else
+
+     If (g1d(1).Lt.g1d(2)) Then ! I am still below GUT scale
+      tz = Log(m_lo/1.e18_dp)
+      dt = - tz / 50._dp
+      Call odeintB(g1d, 118, tz, 0._dp, delta, dt, 0._dp, rge118, t_out, kont)
+
+      If (kont.Eq.0) Then
+       FoundUnification = .True.
+       mGUT = 1.e18_dp * Exp(t_out)
+       gGUT = Sqrt( 0.5_dp * (g1d(1)**2+g1d(2)**2) )
+       g1d(1) = gGUT
+       g1d(2) = gGUT
+       If (StrictUnification) g1d(3) = gGUT
+      Else
+       Iname = Iname - 1
+       Return
+      End If
+
+     Else If (g1d(1).Eq.g1d(2)) Then ! I am at the GUT scale, very unlikely
+                                    ! but possible
+      FoundUnification = .True.
+      mGUT = 1.e15_dp * Exp(t_out)
+      gGUT = g1d(1)
+      If (StrictUnification) g1d(3) = gGUT
+
+     End If
+
+    End If
+
+   End If ! check if below or above GUT scale
+
+  Else If (HighScaleModel.Eq.'SEESAW_II') Then
+
+    Call GToCouplings(g1, gauge_mH3, Y_l_mH3, Y_d_mH3, Y_u_mH3)
+
+    If (Ynu_at_MR3) Then
+     Call FermionMass(Y_l_mH3,1._dp,EigMGM3,ZER,ZEL,kont)
+     Y_l_mH3 = Matmul( Matmul(Conjg(ZER), Y_l_mH3), Transpose(Conjg(ZEL)))
+     Y_T_mH3 = Y_T_0
+    End If
+
+    Call CouplingsToG4(gauge_mH3, Y_l_mH3, Y_T_mH3, Y_d_mH3, Y_u_mH3 &
+            & , lam12_MH3(1), lam12_MH3(2), g1c)
+
+    Delta_b_1(1) = 3.6_dp
+    Delta_b_1(2) = 4._dp
+
+    Delta_b_2(1,1) = 8.64_dp
+    Delta_b_2(1,2) = 28.8_dp
+    Delta_b_2(2,1) = 9.6_dp
+    Delta_b_2(2,2) = 48._dp
+
+   If (UseFixedGUTScale) Then
+    tz = Log(m_lo/GUT_scale)
+    mGUT = GUT_scale
+    dt = - tz / 50._dp
+    Call odeint(g1c, 79, tz, 0._dp, delta, dt, 0._dp, rge79, kont)
+    If (kont.Ne.0) Then
+     Iname = Iname -1
+     Return
+    End If
+
+   Else
+
+    If (g1c(1).Lt.g1c(2)) Then ! I am still below GUT scale
+     tz = Log(m_lo/1.e18_dp)
+     dt = - tz / 50._dp
+     Call odeintB(g1c, 79, tz, 0._dp, delta, dt, 0._dp, rge79, t_out, kont)
+
+     If (kont.Eq.0) Then
+      FoundUnification = .True.
+      mGUT = 1.e18_dp * Exp(t_out)
+      gGUT = Sqrt( 0.5_dp * (g1c(1)**2+g1c(2)**2) )
+      g1c(1) = gGUT
+      g1c(2) = gGUT
+      If (StrictUnification) g1c(3) = gGUT
+     Else
+      Iname = Iname - 1
+      Return
+     End If
+
+    Else If (g1c(1).Eq.g1c(2)) Then ! I am at the GUT scale, very unlikely
+                                    ! but possible
+     FoundUnification = .True.
+     mGUT = 1.e15_dp * Exp(t_out)
+     gGUT = g1c(1)
+     If (StrictUnification) g1c(3) = gGUT
+
+    Else ! I have already crossed the GUT scale, therefore I have to use
+            ! the MSSM RGEs without Higgs triplets
+
+     delta_b_1 = 0.0_dp
+     delta_b_2 = 0.0_dp
+
+     tz = Log(m_lo/1.e15_dp)
+     dt = - tz / 50._dp
+     Call odeintC(g1, 75, tz, 0._dp, delta, dt, 0._dp, rge75, t_out, kont)
+     If (kont.Eq.0) Then
+      FoundUnification = .True.
+      mGUT = 1.e15_dp * Exp(t_out)
+      gGUT = Sqrt( 0.5_dp * (g1(1)**2+g1(2)**2) )
+      g1(1) = gGUT
+      g1(2) = gGUT
+      If (StrictUnification) g1(3) = gGUT
+     Else
+      Iname = Iname - 1
+      Return
+     End If
+    End If
+
+   End If
+
+
+! Florian Staub Seesaw II+III
+# ifdef SEESAWIII
+  Else If (HighScaleModel.Eq.'SEESAW_III_3G') Then
+
+   If (g1(1).Gt.g1(2)) Then ! already above the GUT scale
+    !---------------------------------------------------
+    ! heavy states are not to be included
+    !---------------------------------------------------
+    Call Set_Decoupling_Heavy_States(.True.)
+
+    If (UseFixedGUTScale) Then
+     tz = Log(m_lo/GUT_scale)
+     mGUT = GUT_scale
+     dt = - tz / 50._dp
+     Call odeint(g1, 57, tz, 0._dp, delta, dt, 0._dp, rge57, kont)
+     If (kont.Ne.0) Then
+      Iname = Iname -1
+      Return
+     End If
+
+    Else ! .not.UseFixedGUTScale
+     tz = Log(m_lo/1.e15_dp)
+     dt = - tz / 50._dp
+     Call odeintC(g1, 57, tz, 0._dp, delta, dt, 0._dp, rge57, t_out, kont)
+     If (kont.Eq.0) Then
+      FoundUnification = .True.
+      mGUT = 1.e15_dp * Exp(t_out)
+      gGUT = Sqrt( 0.5_dp * (g1(1)**2+g1(2)**2) )
+      g1(1) = gGUT
+      g1(2) = gGUT
+      If (StrictUnification) g1(3) = gGUT
+     Else
+      Iname = Iname - 1
+      Return
+     End If
+
+    End If ! UseFixedGUTScale
+
+    Call GToCouplings(g1, gauge_H24, Ye_H24, Yd_H24, Yu_H24)
+    Call ParametersToG111(gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24,Yd_H24 &
+       & ,Ye_H24,Yb30_H24(3,:,:),Yw30_H24(3,:,:),Yx30_H24(3,:,:),g1f)
+
+    NGHb3 = 3._dp
+    NGHg3 = 3._dp
+    NGHw3 = 3._dp
+    NGHx3 = 3._dp
+    NGHxb3 = 3._dp
+    ThresholdCrossed = 3
+
+   Else
+
+    Call GToCouplings(g1, gauge_H24, Ye_H24, Yd_H24, Yu_H24)
+
+   !-----------------------------------------------------
+   ! 1 -> 2
+   ! adding shifts to gauge couplings
+   !-----------------------------------------------------
+    If (TwoLoopRGE) Then
+
+     gauge_h24(1) = gauge_h24(1) * (1._dp - oo16pi2 * gauge_h24(1)**2          &
+                  &                  * 5._dp/2._dp*Log(MassMXM3(1)/MWM30(1,1)) )
+     gauge_h24(2) = gauge_h24(2) * (1._dp - oo16pi2 * gauge_h24(2)**2          &
+                &                     *( 1.5_dp *Log(MassMXM3(1)/MWM30(1,1))   &
+                &                      + 2._dp *Log(MassMWM3(1)/MWM30(1,1))) )
+     gauge_h24(3) = gauge_h24(3) * (1._dp - oo16pi2 * gauge_h24(3)**2          &
+                &                       * (Log(MassMXM3(1)/MWM30(1,1)) &
+                &                         + 3._dp*Log(MassMGM3(1)/MWM30(1,1)) ))
+    End If
+
+    MWM3 = MWM3running(1,:,:)
+
+    NGHb3 = 1._dp
+    NGHg3 = 1._dp
+    NGHw3 = 1._dp
+    NGHx3 = 1._dp
+    NGHxb3 = 1._dp
+    ThresholdCrossed = 1
+
+    Call ParametersToG111(gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24,Yd_H24 &
+      &  ,Ye_H24,Yb30_H24(1,:,:),Yw30_H24(1,:,:),Yx30_H24(1,:,:),g1f)
+
+    m_lo = MWM30(1,1)
+    If (MWM30(1,1).Ne.MWM30(2,2)) Then
+     m_hi = MWM30(2,2)
+     tz = Log(m_lo / m_hi)
+     dt = - tz / 50._dp
+     Call odeint(g1f, 111, tz, 0._dp, delta, dt, 0._dp, rge111, kont)
+
+     Call GToParameters111(g1f,gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24 &
+       &  ,Yd_H24,Ye_H24,Yb30_H24(1,:,:),Yw30_H24(1,:,:),Yx30_H24(1,:,:))
+
+     m_lo = m_hi
+    End If
+
+    Call ParametersToG111(gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24,Yd_H24 &
+       &  ,Ye_H24,Yb30_H24(2,:,:),Yw30_H24(2,:,:),Yx30_H24(2,:,:),g1f)
+
+    !---------
+    ! 2 -> 3
+    !---------
+    If (g1f(1).Gt.g1f(2)) Then ! already above the GUT scale
+    !---------------------------------------------------
+    ! heavy states are not to be included
+    !---------------------------------------------------
+     Call Set_Decoupling_Heavy_States(.True.)
+
+     tz = Log(m_lo/1.e15_dp)
+     dt = - tz / 50._dp
+     Call odeintC(g1f, 111, tz, 0._dp, delta, dt, 0._dp, rge111, t_out, kont)
+     If (kont.Eq.0) Then
+      FoundUnification = .True.
+      mGUT = 1.e15_dp * Exp(t_out)
+      gGUT = Sqrt( 0.5_dp * (g1f(1)**2+g1f(2)**2) )
+      g1f(1) = gGUT
+      g1f(2) = gGUT
+      If (StrictUnification) g1f(3) = gGUT
+     Else
+      Iname = Iname - 1
+      Return
+     End If
+
+     Call GToParameters111(g1f,gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24   &
+       & ,Yd_H24,Ye_H24,Yb30_H24(2,:,:),Yw30_H24(2,:,:),Yx30_H24(2,:,:))
+     Call ParametersToG111(gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24,Yd_H24&
+       & ,Ye_H24,Yb30_H24(3,:,:),Yw30_H24(3,:,:),Yx30_H24(3,:,:),g1f)
+
+     NGHb3 = 3._dp
+     NGHg3 = 3._dp
+     NGHw3 = 3._dp
+     NGHx3 = 3._dp
+     NGHxb3 = 3._dp
+     ThresholdCrossed = 3
+
+    Else
+     MWM3 = MWM3running(2,:,:)
+    !-----------------------------------------------------
+    ! adding shifts to gauge couplings
+    !-----------------------------------------------------
+     If (TwoLoopRGE) Then
+      gauge_h24(1) = gauge_h24(1) * (1._dp - oo16pi2 * gauge_h24(1)**2         &
+                &                    * 5._dp/2._dp*Log(MassMXM3(2)/MWM30(2,2)) )
+      gauge_h24(2) = gauge_h24(2) * (1._dp - oo16pi2 * gauge_h24(2)**2         &
+                &                     *( 1.5_dp *Log(MassMXM3(2)/MWM30(2,2)) + &
+                &                    2._dp *Log(MassMWM3(2)/MWM30(2,2))) )
+      gauge_h24(3) = gauge_h24(3) * (1._dp - oo16pi2 * gauge_h24(3)**2         &
+                &                       * (Log(MassMXM3(2)/MWM30(2,2)) &
+                &                        + 3._dp*Log(MassMGM3(2)/MWM30(2,2)) ) )
+
+     End If
+
+     Call ParametersToG111(gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24,Yd_H24&
+        &  ,Ye_H24,Yb30_H24(2,:,:),Yw30_H24(2,:,:),Yx30_H24(2,:,:),g1f)
+
+     NGHb3 = 2._dp
+     NGHg3 = 2._dp
+     NGHw3 = 2._dp
+     NGHx3 = 2._dp
+     NGHxb3 = 2._dp
+     ThresholdCrossed = 2
+
+     m_lo = MWM30(2,2)
+     If (MWM30(2,2).Ne.MWM30(3,3)) Then
+      m_hi = MWM30(3,3)
+      tz = Log(m_lo / m_hi)
+      dt = - tz / 50._dp
+      Call odeint(g1f, 111, tz, 0._dp, delta, dt, 0._dp, rge111, kont)
+
+      Call GToParameters111(g1f,gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24  &
+         &  ,Yd_H24,Ye_H24,Yb30_H24(2,:,:),Yw30_H24(2,:,:),Yx30_H24(2,:,:))
+
+      m_lo = m_hi
+     End If
+
+     Call ParametersToG111(gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24,Yd_H24&
+         &  ,Ye_H24,Yb30_H24(3,:,:),Yw30_H24(3,:,:),Yx30_H24(3,:,:),g1f)
+
+     If (g1f(1).Gt.g1f(2)) Then ! already above the GUT scale
+    !---------------------------------------------------
+    ! heavy states are not to be included
+    !---------------------------------------------------
+      Call Set_Decoupling_Heavy_States(.True.)
+
+      tz = Log(m_lo/1.e15_dp)
+      dt = - tz / 50._dp
+      Call odeintC(g1f, 111, tz, 0._dp, delta, dt, 0._dp, rge111, t_out, kont)
+      If (kont.Eq.0) Then
+       FoundUnification = .True.
+       mGUT = 1.e15_dp * Exp(t_out)
+       gGUT = Sqrt( 0.5_dp * (g1f(1)**2+g1f(2)**2) )
+       g1f(1) = gGUT
+       g1f(2) = gGUT
+       If (StrictUnification) g1f(3) = gGUT
+      Else
+       Iname = Iname - 1
+       Return
+      End If
+
+      Call GToParameters111(g1f,gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24  &
+        &  ,Yd_H24,Ye_H24,Yb30_H24(3,:,:),Yw30_H24(3,:,:),Yx30_H24(3,:,:))
+
+      Call ParametersToG111(gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24 &
+       & ,Yd_H24,Ye_H24,Yb30_H24(3,:,:),Yw30_H24(3,:,:),Yx30_H24(3,:,:),g1f)
+
+
+      NGHb3 = 3._dp
+      NGHg3 = 3._dp
+      NGHw3 = 3._dp
+      NGHx3 = 3._dp
+      NGHxb3 = 3._dp
+      ThresholdCrossed = 3
+
+     Else
+
+     !-----------------------------------------------------
+     ! 3 -> GUT
+     !-----------------------------------------------------
+
+      MWM3 = MWM3running(3,:,:)
+
+      NGHb3 = 3._dp
+      NGHg3 = 3._dp
+      NGHw3 = 3._dp
+      NGHx3 = 3._dp
+      NGHxb3 = 3._dp
+      ThresholdCrossed = 3
+
+     !-----------------------------------------------------
+     ! adding shifts to gauge couplings
+     !-----------------------------------------------------
+      If (TwoLoopRGE) Then
+       gauge_h24(1) = gauge_h24(1) * (1._dp - oo16pi2 * gauge_h24(1)**2        &
+                &                    * 5._dp/2._dp*Log(MassMXM3(3)/MWM30(3,3)) )
+       gauge_h24(2) = gauge_h24(2) * (1._dp - oo16pi2 * gauge_h24(2)**2        &
+                &                     *( 1.5_dp *Log(MassMXM3(3)/MWM30(3,3)) + &
+                &                     2._dp *Log(MassMWM3(3)/MWM30(3,3))) )
+       gauge_h24(3) = gauge_h24(3) * (1._dp - oo16pi2 * gauge_h24(3)**2        &
+                &                       * (Log(MassMXM3(3)/MWM30(3,3)) &
+                &                        + 3._dp*Log(MassMGM3(3)/MWM30(3,3)) ) )
+
+      End If
+
+      If (Ynu_at_MR3) Then
+       Call FermionMass(Ye_H24,1._dp,EigMGM3,ZER,ZEL,kont)
+       Ye_H24 = Matmul( Matmul(Conjg(ZER), Ye_H24), Transpose(Conjg(ZEL)))
+
+       Yb30_H24(3,:,:) = Yb3_H24_GUT
+       Yw30_H24(3,:,:) = Yb3_H24_GUT
+       Yx30_H24(3,:,:) = Yb3_H24_GUT
+       AYe_H24 = Matmul( Matmul(Conjg(ZER), AYe_H24), Transpose(Conjg(ZEL)))
+       ME2_H24 = Matmul( Matmul(ZER, ME2_H24), Transpose(Conjg(ZER)))
+       ML2_H24 = Matmul( Matmul(ZEL, ML2_H24), Transpose(Conjg(ZEL)))
+      End If
+
+      Call ParametersToG111(gauge_H24(1),gauge_H24(2),gauge_H24(3),Yu_H24     &
+      & ,Yd_H24,Ye_H24,Yb30_H24(3,:,:),Yw30_H24(3,:,:),Yx30_H24(3,:,:),g1f)
+
+      If (UseFixedGUTScale) Then
+       tz = Log(m_lo/GUT_scale)
+       mGUT = GUT_scale
+       dt = - tz / 50._dp
+       Call odeint(g1f, 111, tz, 0._dp, delta, dt, 0._dp, rge111, kont)
+       If (kont.Ne.0) Then
+        Iname = Iname -1
+        Return
+       End If
+
+      Else
+
+       If (g1f(1).Lt.g1f(2)) Then ! I am still below GUT scale
+        tz = Log(m_lo/1.e18_dp)
+        dt = - tz / 50._dp
+        Call odeintB(g1f, 111, tz, 0._dp, delta, dt, 0._dp, rge111, t_out, kont)
+        If (kont.Eq.0) Then
+         FoundUnification = .True.
+         mGUT = 1.e18_dp * Exp(t_out)
+         gGUT = Sqrt( 0.5_dp * (g1f(1)**2+g1f(2)**2) )
+         g1f(1) = gGUT
+         g1f(2) = gGUT
+         If (StrictUnification) g1f(3) = gGUT
+        Else
+         Iname = Iname - 1
+         Return
+        End If
+
+       Else If (g1f(1).Eq.g1f(2)) Then ! I am at the GUT scale, very unlikely
+                                    ! but possible
+        FoundUnification = .True.
+        mGUT = 1.e15_dp * Exp(t_out)
+        gGUT = g1f(1)
+        If (StrictUnification) g1f(3) = gGUT
+
+       Else ! I have already crossed the GUT scale
+        tz = Log(m_lo/1.e15_dp)
+        dt = - tz / 50._dp
+        Call odeintC(g1f, 111, tz, 0._dp, delta, dt, 0._dp, rge111, t_out, kont)
+        If (kont.Eq.0) Then
+         FoundUnification = .True.
+         mGUT = 1.e15_dp * Exp(t_out)
+         gGUT = Sqrt( 0.5_dp * (g1f(1)**2+g1f(2)**2) )
+         g1f(1:2) = gGUT
+         If (StrictUnification) g1f(3) = gGUT
+        Else
+         Iname = Iname - 1
+         Return
+        End If
+       End If
+
+      End If
+
+     End If
+    End If
+
+
+   End If
+
+
+  Else If (HighScaleModel.Eq.'SEESAW_II_SARAH') Then
+
+   If (g1(1).Gt.g1(2)) Then ! already above the GUT scale
+    !---------------------------------------------------
+    ! heavy states are not to be included
+    !---------------------------------------------------
+    If (UseFixedGUTScale) Then
+     tz = Log(m_lo/GUT_scale)
+     mGUT = GUT_scale
+     dt = - tz / 50._dp
+     Call odeint(g1, 57, tz, 0._dp, delta, dt, 0._dp, rge57, kont)
+     If (kont.Ne.0) Then
+      Iname = Iname -1
+      Return
+     End If
+
+    Else ! .not.UseFixedGUTScale
+     tz = Log(m_lo/1.e15_dp)
+     dt = - tz / 50._dp
+     Call odeintC(g1, 57, tz, 0._dp, delta, dt, 0._dp, rge57, t_out, kont)
+     If (kont.Eq.0) Then
+      FoundUnification = .True.
+      mGUT = 1.e15_dp * Exp(t_out)
+      gGUT = Sqrt( 0.5_dp * (g1(1)**2+g1(2)**2) )
+      g1(1) = gGUT
+      g1(2) = gGUT
+      If (StrictUnification) g1(3) = gGUT
+     Else
+      Iname = Iname - 1
+      Return
+     End If
+
+    End If ! UseFixedGUTScale
+
+    Call GToCouplings(g1, gauge_h15, Ye_h15, Yd_h15, Yu_h15)
+    M15 = M_H3(1)
+
+    Call ParametersToG115(gauge_h15(1),gauge_h15(2),gauge_h15(3), &
+    & Yu_h15,Yd_h15,Ye_h15,Yt0_h15,Ys0_h15,Yz0_h15,Lambda10,Lambda20,g1g)
+
+   Else ! still below the GUT scale
+
+
+    !---------------------------------------------------
+    ! heavy states are to be included
+    !---------------------------------------------------
+    Call GToCouplings(g1, gauge_h15, Ye_h15, Yd_h15, Yu_h15)
+
+
+    If (TwoLoopRGE) Then
+     !-----------------------------------------------------
+     ! adding shifts to gauge couplings
+     !-----------------------------------------------------
+     gauge_h15(1) = gauge_h15(1) * (1._dp - 0.2_dp * oo16pi2 * gauge_h15(1)**2 &
+                 &                       * (8._dp * Log(MSM/MTM_GUT)           &
+                 &                         + 9._dp * Log(MTM0/MTM_GUT)         &
+                 &                         + 0.5_dp*Log(MZM/MTM_GUT) ) )
+     gauge_h15(2) = gauge_h15(2) * (1._dp - oo16pi2 * gauge_h15(2)**2          &
+                 &    * (2._dp *Log(MTM0/MTM_GUT) + 1.5_dp *Log(MZM/MTM_GUT) ))
+     gauge_h15(3) = gauge_h15(3) * (1._dp - oo16pi2 * gauge_h15(3)**2          &
+                 &    * (2.5_dp*Log(MSM/MTM_GUT) + Log(MZM/MTM_GUT) ) )
+    End If
+
+
+    If (Ynu_at_MR3) Then
+     Call FermionMass(Ye_H15,1._dp,EigMGM3,ZER,ZEL,kont)
+     Ye_H15 = Matmul( Matmul(Conjg(ZER), Ye_H15), Transpose(Conjg(ZEL)))
+     YT0_H15 = Y_T_0
+     Ys0_H15 = Y_T_0
+     Yz0_H15 = Y_T_0
+    End If
+
+    Call ParametersToG115(gauge_h15(1),gauge_h15(2),gauge_h15(3),Yu_h15,Yd_h15 &
+       & ,Ye_h15,Yt0_h15,Ys0_h15,Yz0_h15,Lambda10,Lambda20,g1g)
+
+    If (UseFixedGUTScale) Then
+     tz = Log(m_lo/GUT_scale)
+     mGUT = GUT_scale
+     dt = - tz / 50._dp
+     Call odeint(g1g, 115, tz, 0._dp, delta, dt, 0._dp, rge115, kont)
+     If (kont.Ne.0) Then
+      Iname = Iname -1
+      Return
+     End If
+
+    Else
+
+     If (g1g(1).Lt.g1g(2)) Then ! I am still below GUT scale
+      tz = Log(m_lo/1.e18_dp)
+      dt = - tz / 50._dp
+      Call odeintB(g1g, 115, tz, 0._dp, delta, dt, 0._dp, rge115, t_out, kont)
+
+      If (kont.Eq.0) Then
+       FoundUnification = .True.
+       mGUT = 1.e18_dp * Exp(t_out)
+       gGUT = Sqrt( 0.5_dp * (g1g(1)**2+g1g(2)**2) )
+       g1g(1) = gGUT
+       g1g(2) = gGUT
+       If (StrictUnification) g1g(3) = gGUT
+      Else
+       Iname = Iname - 1
+       Return
+      End If
+
+     Else If (g1g(1).Eq.g1g(2)) Then ! I am at the GUT scale, very unlikely
+                                    ! but possible
+      FoundUnification = .True.
+      mGUT = 1.e15_dp * Exp(t_out)
+      gGUT = g1g(1)
+      If (StrictUnification) g1g(3) = gGUT
+
+     End If
+
+    End If
+
+
+   End If ! check if below or above GUT scale
+# endif SEESAWIII
+! Florian Staub Seesaw II+III
+
+  End If
+
+  If ((.Not.UseFixedGUTScale).And.(.Not.FoundUnification)) Then
+   Write (ErrCan,*) 'SUGRA: no unification found'
+   kont = -409
+   Call AddError(409)
+   Iname = Iname - 1
+   Return
+  End If
+
+  !------------------------------------
+  ! Saving parameters at high scale
+  !------------------------------------
+  If (HighScaleModel.Eq."GMSB") Then
+   mGUT_Save = MlambdaS
+  Else
+   mGUT_Save = mGUT
+  End If
+  !---------------------------------------
+  ! boundary condition at the high scale
+  !---------------------------------------
   If (HighScaleModel.Eq.'SUGRA_NuR') Then
-   tz = Log(mudim/mNuR(3))
-   dt = - tz / Real(len2-18, dp)
-   Do i1=0,len2-19
-    t =  tz + dt * i1
-    Qvec(i1+1) = mNuR(3) * Exp(t)
-    Call rkstp(dt,t,g2a,rge213,w2)
-    g_out(2+i1,:) = g2a
+   Call BoundaryHS(g1a,g2a)
+
+  Else If (HighScaleModel.Eq.'SUGRA_NuR1') Then
+   Call BoundaryHS(g1b,g2b)
+
+  Else If ((HighScaleModel.Eq.'SEESAW_II').And.Fifteen_plet) Then
+    Call BoundaryHS(g1d,g2d)
+
+  Else If (HighScaleModel.Eq.'SEESAW_II') Then
+    Call BoundaryHS(g1c,g2c)
+
+  Else If (HighScaleModel.Eq.'SUGRA_SU5') Then
+   g5_b = 0._dp
+   g5_b(1:59) = g5_a   ! gauge and Yukawa coupling
+   g5_b(38:55) = g5_b(2:19) ! setting Y_nu = Y_u
+   g5_b(60:63) = 0._dp ! bilinear parameters
+   g5_b(64) = Real( Mi_0(1), dp )
+   g5_b(65) = Aimag( Mi_0(1) )
+   g5_b(66:123) = AoY_u_0(1,1) * g5_a(2:59)
+   Do i1=1,3
+    g5_b(8*i1+116) = M2_H_0(1) + D_SO_10          ! 10-plets
+    g5_b(8*i1+134) = M2_H_0(1) - 3._dp * D_SO_10  ! 5-plets, matter
+    g5_b(8*i1+152) = M2_H_0(1) + 5._dp * D_SO_10  ! singlet, nu_R
    End Do
-    Qvec(i1+1) = mNuR(3)
-   Call GToParameters(g2a, gauge_mR, y_l_mR, y_d_mR, y_u_mR, Mi_mR &
-          & , A_l_mR, A_d_mR, A_u_mR, M2_E_mR, M2_L_mR     &
-          & , M2_D_mR, M2_Q_mR, M2_U_mR, M2_H_mR, mu_mR, B_mR)
+   g5_b(178) = M2_H_0(1) - 2._dp * D_SO_10  ! 5-plets, u-type Higgs
+   g5_b(179) = M2_H_0(1) + 2._dp * D_SO_10  ! 5-plets, d-type Higgs
+   g5_b(180) = M2_H_0(1)                    ! Higgs 24-plet
 
-   Call ParameterstoG2( gauge_mR, y_l_mR, y_nu_mR, y_d_mR, y_u_mR, Mi_mR &
-          & , A_l_mR, A_nu_mR, A_d_mR, A_u_mR, M2_E_mR, M2_L_mR, M2_R_mR     &
-          & , M2_D_mR, M2_Q_mR, M2_U_mR, M2_H_mR, mu_mR, B_mR, g2b)
+! Florian Staub Seesaw II+III
+# ifdef SEESAWIII
+ Else If (HighScaleModel.Eq.'SEESAW_III_3G') Then
+   Call BoundaryHS(g1f,g2f)
+
+  Else If (HighScaleModel.Eq.'SEESAW_II_SARAH') Then
+
+   Call BoundaryHS(g1g,g2g)
+# endif SEESAWIII
+! Florian Staub Seesaw II+III
+  Else
+
+   Call BoundaryHS(g1,g2)
+  End If
+
+  !--------------------------------------
+  ! running down to the electroweak scale
+  !--------------------------------------
+  If ((HighScaleModel.Eq.'SUGRA_NuR').Or.(HighScaleModel.Eq.'SUGRA_SU5')) Then
+   !-------------------------------------
+   ! m_SO(10) -> m_GUT in case of SU(5)
+   !-------------------------------------
+   If (HighScaleModel.Eq.'SUGRA_SU5') Then
+    tz = Log(mGUT/M_SO_10)
+    dt = tz / 50._dp
+    Call odeint(g5_b, 180, 0._dp, tz, delta, dt, 0._dp, rge_SU5, kont)
+
+    g2a(1:75) = g1a(1:75)  ! using orginal boundary conditions
+    g2a(22:39) = g5_b(38:55) ! neutrino Yukawa couplings
+    g2a(76:77) = g5_b(64:65)  ! gaugino mass parameters
+    g2a(78:79) = g5_b(64:65)
+    g2a(80:81) = g5_b(64:65)
+    g2a(82:99) = g5_b(84:101)    ! A_l = A_d
+    g2a(100:117) = g5_b(102:119) ! A_nu
+    g2a(118:135) = g5_b(84:101)  ! A_d = A_l
+    g2a(136:153) = g5_b(66:83)   ! A_u
+    g2a(154:171) = g5_b(124:141) ! M_E = M_Q = M_U
+    g2a(172:189) = g5_b(142:159) ! M_L = M_D
+    g2a(190:207) = g5_b(160:177) ! M_R
+    g2a(208:225) = g5_b(142:159) ! M_L = M_D
+    g2a(226:243) = g5_b(124:141) ! M_Q = M_U = M_E
+    g2a(244:261) = g5_b(124:141) ! M_U = M_E = M_Q
+    g2a(262:263) = g5_b(178:179) ! M_H
+    g2a(264:285) = 0._dp         ! mu, B, MnuL5
+    M2S_GUT = g5_b(180)
+    Alam_GUT = Cmplx(g5_b(120),g5_b(121),dp)
+    Alamp_GUT = Cmplx(g5_b(122),g5_b(123),dp)
+    Do i1=1,3
+     Do i2=1,3
+      SumI = 6*i1+2*i2
+      Ynu(i1,i2) = Cmplx( g2a(SumI+14), g2a(SumI+15),dp )
+      Anu(i1,i2) = Cmplx( g2a(SumI+92), g2a(SumI+93),dp )
+      Mr2(i1,i2) = Cmplx( g2a(SumI+182), g2a(SumI+183),dp )
+     End Do
+    End Do
+
+   Else
+
+    Ynu = Y_nu_0
+    Anu = A_nu_0
+    Mr2 = M2_R_0
+   End If
+
+    !--------------------------------------
+    ! recalculating m_Nu_R, if necessary
+    !--------------------------------------
+    If ((.Not.Fixed_Nu_Yukawas).And.(.Not. Ynu_at_MR3)) Then
+     mat3 = 0._dp
+     mat3(1,1) = 1._dp / mf_nu(1)
+     mat3(2,2) = 1._dp / mf_nu(2)
+     mat3(3,3) = 1._dp / mf_nu(3)
+
+     mat3 = Matmul(Umns,Matmul(mat3,Transpose(Umns)))
+     mat3 = vevSM(2)**2 * Matmul(Ynu,Matmul(mat3,Transpose(Ynu)))
+
+     Call Neutrinomasses(mat3, mNuR, UnuR, kont)
+
+!    Else ! for the rotation below
+!     UnuR = id3C
+    !--------------------------------------------
+    ! rotating R-neutrinos to mass eigenbasis
+    !--------------------------------------------
+     Ynu = Matmul(UnuR,Ynu)
+     Anu = Matmul(UnuR,Anu)
+     MR2 = Matmul(Transpose(Conjg(UnuR)),Matmul(MR2,UnuR))
+
+     Do i1=1,3
+      Do i2=1,3
+       SumI = 6*i1+2*i2
+       g2a(SumI+14) = Real(Ynu(i1,i2),dp)
+       g2a(SumI+15) = Aimag(Ynu(i1,i2))
+       g2a(SumI+92) = Real(Anu(i1,i2),dp)
+       g2a(SumI+93) = Aimag(Anu(i1,i2))
+       g2a(SumI+182) = Real(MR2(i1,i2),dp)
+       g2a(SumI+183) = Aimag(MR2(i1,i2))
+      End Do
+     End Do
+    End If
 
 
-   g_out2(1+i1,:) = g2b
-   tz = Log(MnuR(3)/mGUT)
-   dt = - tz / Real(17, dp)
-   Do i1=len2-18,len2-2
-    t =  tz + dt * (i1 - len2 + 18)
-    Qvec(i1+1) = Mgut * Exp(t)
-    Call rkstp(dt,t,g2a,rge213,w2)
-    g_out(2+i1,:) = g2a
-    t =  tz + dt * (i1 - len2 + 18)
-    Call rkstp(dt,t,g2b,rge267,w2b)
-    g_out2(2+i1,:) = g2b
+   !------------------------
+   ! m_GUT -> m_nuR_3
+   !------------------------
+   m_hi = mGUT
+   m_lo = MNuR(3)
+   If (Abs(m_lo).Lt.Abs(m_hi)) Then
+    tz = Log(Abs(m_hi/m_lo))
+    dt = - tz / 50._dp
+    Call odeint(g2a, 285, tz, 0._dp, delta, dt, 0._dp, rge285, kont)
+    m_hi = m_lo
+   Endif
 
+   Call GToParameters3(g2a, gauge_mR, y_l_mR(3,:,:), y_nu_mR(3,:,:)          &
+      & , y_d_mR(3,:,:), y_u_mR(3,:,:), Mi_mR, A_l_mR(3,:,:), A_nu_mR(3,:,:) &
+      & , A_d_mR(3,:,:), A_u_mR(3,:,:), M2_E_mR(3,:,:), M2_L_mR(3,:,:)       &
+      & , M2_R_mR(3,:,:), M2_D_mR(3,:,:), M2_Q_mR(3,:,:), M2_U_mR(3,:,:)     &
+      & , M2_H_mR, mu_mR, B_mR, MnuL5)
+
+   If (Ynu_at_MR3) Then  ! to enhance numerical stability and speed
+    Call FermionMass(Y_l_mR(3,:,:),1._dp,EigMGM3,ZER,ZEL,kont)
+    Y_l_mR(3,:,:) = Matmul( Matmul(Conjg(ZER), Y_l_mR(3,:,:)) &
+                  &       , Transpose(Conjg(ZEL)))
+    Y_nu_mR(3,:,:) = Y_nu_0
+    A_l_mR(3,:,:) = Matmul( Matmul(Conjg(ZER), A_l_mR(3,:,:)) &
+                  &       , Transpose(Conjg(ZEL)))
+    M2_E_mR(3,:,:) = Matmul( Matmul(ZER, M2_E_mR(3,:,:)) &
+                   &       , Transpose(Conjg(ZER)))
+    M2_L_mR(3,:,:) = Matmul( Matmul(ZEL, M2_L_mR(3,:,:)) &
+                   &       , Transpose(Conjg(ZEL)))
+   End If
+
+   Do i1=1,3
+    Do i2=1,3
+     MnuL5(i1,i2) = - Y_nu_mR(3,3,i1) * Y_nu_mR(3,3,i2) / MNuR(3)
+    End Do
    End Do
+   Y_nu_mR(2,:,:) = Y_nu_mR(3,:,:)
+   Y_nu_mR(2,3,:) = 0._dp
+   A_nu_mR(2,:,:) = A_nu_mR(3,:,:)
+   A_nu_mR(2,3,:) = 0._dp
+   M2_R_mR(2,:,:) = M2_R_mR(3,:,:)
+   M2_R_mR(2,3,:) = 0._dp
+   M2_R_mR(2,:,3) = 0._dp
+   !------------------------
+   ! m_nuR_3 -> m_nuR_2
+   !------------------------
+   Call ParametersToG3(gauge_mR, y_l_mR(3,:,:), y_nu_mR(2,:,:), y_d_mR(3,:,:) &
+      & , y_u_mR(3,:,:), Mi_mR, A_l_mR(3,:,:), A_nu_mR(2,:,:), A_d_mR(3,:,:)  &
+      & , A_u_mR(3,:,:), M2_E_mR(3,:,:), M2_L_mR(3,:,:), M2_R_mR(2,:,:)       &
+      & , M2_D_mR(3,:,:), M2_Q_mR(3,:,:), M2_U_mR(3,:,:), M2_H_mR, mu_mR      &
+      & , B_mR, MnuL5, g2a)
+
+   m_lo = MNuR(2)
+   If (Abs(m_lo).Lt.Abs(m_hi)) Then
+    tz = Log(Abs(m_hi/m_lo))
+    dt = - tz / 50._dp
+    Call odeint(g2a, 285, tz, 0._dp, delta, dt, 0._dp, rge285, kont)
+    m_hi = m_lo
+   Endif
+
+   Call GToParameters3(g2a, gauge_mR, y_l_mR(2,:,:), y_nu_mR(2,:,:)          &
+      & , y_d_mR(2,:,:), y_u_mR(2,:,:), Mi_mR, A_l_mR(2,:,:), A_nu_mR(2,:,:) &
+      & , A_d_mR(2,:,:), A_u_mR(2,:,:), M2_E_mR(2,:,:), M2_L_mR(2,:,:)       &
+      & , M2_R_mR(2,:,:), M2_D_mR(2,:,:), M2_Q_mR(2,:,:), M2_U_mR(2,:,:)     &
+      & , M2_H_mR, mu_mR, B_mR, MnuL5)
+
+   Do i1=1,3
+    Do i2=1,3
+     MnuL5(i1,i2) = MnuL5(i1,i2) - Y_nu_mR(2,2,i1) * Y_nu_mR(2,2,i2) / MNuR(2)
+    End Do
+   End Do
+   Y_nu_mR(1,:,:) = Y_nu_mR(2,:,:)
+   Y_nu_mR(1,2,:) = 0._dp
+   A_nu_mR(1,:,:) = A_nu_mR(2,:,:)
+   A_nu_mR(1,2,:) = 0._dp
+   M2_R_mR(1,:,:) = M2_R_mR(2,:,:)
+   M2_R_mR(1,2,:) = 0._dp
+   M2_R_mR(1,:,2) = 0._dp
+   !------------------------
+   ! m_nuR_2 -> m_nuR_1
+   !------------------------
+   Call ParametersToG3(gauge_mR, y_l_mR(2,:,:), y_nu_mR(1,:,:), y_d_mR(2,:,:) &
+      & , y_u_mR(2,:,:), Mi_mR, A_l_mR(2,:,:), A_nu_mR(1,:,:), A_d_mR(2,:,:)  &
+      & , A_u_mR(2,:,:), M2_E_mR(2,:,:), M2_L_mR(2,:,:), M2_R_mR(1,:,:)       &
+      & , M2_D_mR(2,:,:), M2_Q_mR(2,:,:), M2_U_mR(2,:,:), M2_H_mR, mu_mR      &
+      & , B_mR, MnuL5, g2a)
+
+   m_lo = MNuR(1)
+   If (Abs(m_lo).Lt.Abs(m_hi)) Then
+    tz = Log(Abs(m_hi/m_lo))
+    dt = - tz / 50._dp
+    Call odeint(g2a, 285, tz, 0._dp, delta, dt, 0._dp, rge285, kont)
+    m_hi = m_lo
+   Endif
+
+   Call GToParameters3(g2a, gauge_mR, y_l_mR(1,:,:), y_nu_mR(1,:,:)          &
+      & , y_d_mR(1,:,:), y_u_mR(1,:,:), Mi_mR, A_l_mR(1,:,:), A_nu_mR(1,:,:) &
+      & , A_d_mR(1,:,:), A_u_mR(1,:,:), M2_E_mR(1,:,:), M2_L_mR(1,:,:)       &
+      & , M2_R_mR(1,:,:), M2_D_mR(1,:,:), M2_Q_mR(1,:,:), M2_U_mR(1,:,:)     &
+      & , M2_H_mR, mu_mR, B_mR, MnuL5)
+
+   Do i1=1,3
+    Do i2=1,3
+     MnuL5(i1,i2) = MnuL5(i1,i2) - Y_nu_mR(1,1,i1) * Y_nu_mR(1,1,i2) / MNuR(1)
+    End Do
+   End Do
+   !------------------------
+   ! m_nuR_1 -> Q_EWSB
+   !------------------------
+   Call ParametersToG3(gauge_mR, y_l_mR(1,:,:), Zero33C, y_d_mR(1,:,:)     &
+        & , y_u_mR(1,:,:), Mi_mR, A_l_mR(1,:,:), Zero33C, A_d_mR(1,:,:)    &
+        & , A_u_mR(1,:,:), M2_E_mR(1,:,:), M2_L_mR(1,:,:), Zero33C         &
+        & , M2_D_mR(1,:,:), M2_Q_mR(1,:,:), M2_U_mR(1,:,:), M2_H_mR, mu_mR &
+        & , B_mR, MnuL5, g2a)
+
+   mudim = GetRenormalizationScale()
+   mudim = Max(mudim, mZ2)
+   tz = 0.5_dp * Log(m_hi**2/mudim)
+   dt = - tz / 100._dp
+
+   Call odeint(g2a, 285, tz, 0._dp, delta, dt, 0._dp, rge285, kont)
+
+   Call GToParameters3(g2a, gauge, y_l, Y_nu, y_d, y_u, Mi, A_l, A_nu, A_d &
+      & , A_u, M2_E, M2_L, M2_R, M2_D, M2_Q, M2_U, M2_H, mu, B, MnuL5)
+
+   Call ParametersToG(gauge, y_l, y_d, y_u, Mi, A_l, A_d, A_u, M2_E, M2_L  &
+      & , M2_D, M2_Q, M2_U, M2_H, mu, B, g2)
+
+  Else If (HighScaleModel.Eq.'SUGRA_NuR1') Then
+   mudim = MNuR(1)**2
+   tz = 0.5_dp * Log(mudim/mGUT**2)
+   dt = tz / 50._dp
+   Call odeint(g2a, 267, 0._dp, tz, delta, dt, 0._dp, rge267, kont)
+
+
+   Call GToParameters2(g2a, gauge_mR, y_l_mR(1,:,:), y_nu_mR(1,:,:)          &
+      & , y_d_mR(1,:,:), y_u_mR(1,:,:), Mi_mR, A_l_mR(1,:,:), A_nu_mR(1,:,:) &
+      & , A_d_mR(1,:,:), A_u_mR(1,:,:), M2_E_mR(1,:,:), M2_L_mR(1,:,:)       &
+      & , M2_R_mR(1,:,:), M2_D_mR(1,:,:), M2_Q_mR(1,:,:), M2_U_mR(1,:,:)     &
+      & , M2_H_mR, mu_mR, B_mR)
+
+
+   Call ParametersToG(gauge_mR, y_l_mR(1,:,:), y_d_mR(1,:,:), y_u_mR(1,:,:)  &
+      & , Mi_mR, A_l_mR(1,:,:), A_d_mR(1,:,:), A_u_mR(1,:,:), M2_E_mR(1,:,:) &
+      & , M2_L_mR(1,:,:), M2_D_mR(1,:,:), M2_Q_mR(1,:,:), M2_U_mR(1,:,:)     &
+      & , M2_H_mR, mu_mR, B_mR, g2)
+
+   mudim = GetRenormalizationScale()
+   mudim = Max(mudim, mZ2)
+
+   tz = 0.5_dp * Log(mudim/mNuR(1)**2)
+   dt = tz / 100._dp
+   Call odeint(g2, 213, 0._dp, tz, delta, dt, 0._dp, rge213, kont)
+
+  Else If ((HighScaleModel.Eq.'SEESAW_II').And.Fifteen_plet) Then
+
+   If ( (oo4pi*Maxval(g2d(1:115)**2)).Gt.0.5_dp) Then
+    Write(ErrCan,*) "Non perturbative regime at M_GUT"
+    If (ErrorLevel.Ge.2) Call TerminateProgram
+    Write(errcan,*) " "
+    kont = -410
+    Call AddError(410)
+    Iname = Iname - 1
+    Return
+   End If
+
+   !-------------------------
+   ! run only if m_H < m_GUT
+   !-------------------------
+   If (m_H3(1).Lt.mGUT) Then
+    !---------------------------------------------------
+    ! heavy states are to be included
+    !---------------------------------------------------
+    Call Set_Decoupling_Heavy_States(.False.)
+
+    mudim = M_H3(1)**2
+    tz = 0.5_dp * Log(mudim/mGUT**2)
+    dt = tz / 50._dp
+    Call odeint(g2d, 356 , 0._dp, tz, delta, dt, 0._dp, rge356, kont)
+    m_lo = M_H3(1)
+    If ( (oo4pi*Maxval(g2d(1:115)**2)).Gt.0.5_dp) Then
+     Write(ErrCan,*) "Non perturbative regime at M_H3"
+     If (ErrorLevel.Ge.2) Call TerminateProgram
+     Write(errcan,*) " "
+     kont = -411
+     Call AddError(411)
+     Iname = Iname - 1
+     Return
+    End If
+
+   Else
+     m_lo = mGUT
+   End If
+
+   Call GToParameters5(g2d, gauge_mH3, y_l_mH3, y_T_mH3, y_d_mH3, y_u_mH3     &
+          & , y_Z_mH3, y_S_mH3, lam12_mH3(1), lam12_mH3(2), Mi_mH3, A_l_mH3   &
+          & , A_T_mH3, A_d_mH3, A_u_mH3, A_Z_mH3, A_S_mH3, Alam12_MH3(1)      &
+          & , Alam12_MH3(2), M2_E_mH3, M2_L_mH3, M2_D_mH3, M2_Q_mH3, M2_U_mH3 &
+          & , M2_H_mH3, M2_T_mH3, M2_Z_mH3, M2_S_mH3, MT15_mH3, MZ15_mH3      &
+          & , MS15_mH3, mu_mH3, B_mH3, MnuL5)
+
+   MnuL5 = - lam12_MH3(2) * y_T_mH3 / M_H3(1)
+
+   Delta_b_1 = 0._dp ! decoupling the Higgs triplets
+   Delta_b_2 = 0._dp ! decoupling the Higgs triplets
+
+   If ((m_H3(1).Lt.mGUT).And.TwoLoopRGE) Then
+   !-----------------------------------------------------
+   ! adding shifts to gauge couplings
+   !-----------------------------------------------------
+    gauge_mH3(1) = gauge_mH3(1) / (1._dp - oo16pi2 * gauge_mH3(1)**2           &
+                &                       * (8._dp/3._dp*Log(MS15_mH3/MT15_mH3) &
+                &                         + Log(MZ15_mH3/MT15_mH3) /6._dp ) )
+    gauge_mH3(2) = gauge_mH3(2) / (1._dp - oo16pi2 * gauge_mH3(2)**2           &
+                &                       * 1.5_dp *Log(MZ15_mH3/MT15_mH3) )
+    gauge_mH3(3) = gauge_mH3(3) / (1._dp - oo16pi2 * gauge_mH3(3)**2           &
+                &                       * (2.5_dp*Log(MS15_mH3/MT15_mH3) &
+                &                         + Log(MZ15_mH3/MT15_mH3) ) )
+    Mi_mH3(1) = Mi_mH3(1) / (1._dp - oo16pi2 * gauge_mH3(1)**2           &
+                &                       * (8._dp/3._dp*Log(MS15_mH3/MT15_mH3) &
+                &                         + Log(MZ15_mH3/MT15_mH3) /6._dp ) )
+    Mi_mH3(2) = Mi_mH3(2) / (1._dp - oo16pi2 * gauge_mH3(2)**2           &
+                &                       * 1.5_dp *Log(MZ15_mH3/MT15_mH3) )
+    Mi_mH3(3) = Mi_mH3(3) / (1._dp - oo16pi2 * gauge_mH3(3)**2           &
+                &                       * (2.5_dp*Log(MS15_mH3/MT15_mH3) &
+                &                         + Log(MZ15_mH3/MT15_mH3) ) )
+   End If
+
+    !---------------------------------------------------
+    ! heavy states are not to be included
+    !---------------------------------------------------
+    Call Set_Decoupling_Heavy_States(.True.)
+
+   Call ParametersToG4(gauge_mH3, y_l_mH3, Zero33C, y_d_mH3, y_u_mH3   &
+          & , ZeroC, ZeroC, Mi_mH3, A_l_mH3, Zero33C, A_d_mH3 &
+          & , A_u_mH3, ZeroC, ZeroC, M2_E_mH3, M2_L_mH3     &
+          & , M2_D_mH3, M2_Q_mH3, M2_U_mH3, M2_H_mH3, ZeroR2, mu_mH3      &
+          & , B_mH3, MnuL5, g2c)
+
+   mudim = GetRenormalizationScale()
+   mudim = Max(mudim, mZ2)
+
+   tz = 0.5_dp * Log(mudim/m_lo**2)
+   dt = tz / 100._dp
+   Call odeint(g2c, 277, 0._dp, tz, delta, dt, 0._dp, rge277, kont)
+
+   Call GToParameters4(g2c, gauge, y_l, y_T, y_d, y_u, lam12(1), lam12(2), Mi &
+          & , A_l, A_T, A_d, A_u, Alam12(1), Alam12(2), M2_E, M2_L, M2_D      &
+          & , M2_Q, M2_U, M2_H, M2_T, mu, B, MnuL5)
+   Call ParametersToG(gauge, y_l, y_d, y_u, Mi, A_l, A_d, A_u, M2_E, M2_L  &
+      & , M2_D, M2_Q, M2_U, M2_H, mu, B, g2)
+
+  Else If (HighScaleModel.Eq.'SEESAW_II') Then
+
+   If ( (oo4pi*Maxval(g2c(1:79)**2)).Gt.0.5_dp) Then
+    Write(ErrCan,*) "Non perturbative regime at M_GUT"
+    If (ErrorLevel.Ge.2) Call TerminateProgram
+    Write(errcan,*) " "
+    kont = -410
+    Call AddError(410)
+    Iname = Iname - 1
+    Return
+   End If
+
+   !-------------------------
+   ! run only if m_H < m_GUT
+   !-------------------------
+   If (m_H3(1).Lt.mGUT) Then
+    mudim = M_H3(1)**2
+    tz = 0.5_dp * Log(mudim/mGUT**2)
+    dt = tz / 50._dp
+    Call odeint(g2c, 277, 0._dp, tz, delta, dt, 0._dp, rge277, kont)
+    m_lo = M_H3(1)
+   Else
+     m_lo = mGUT
+   End If
+
+   If ( (oo4pi*Maxval(g2c(1:79)**2)).Gt.0.5_dp) Then
+    Write(ErrCan,*) "Non perturbative regime at M_H3"
+    If (ErrorLevel.Ge.2) Call TerminateProgram
+    Write(errcan,*) " "
+    kont = -411
+    Call AddError(411)
+    Iname = Iname - 1
+    Return
+   End If
+
+   Call GToParameters4(g2c, gauge_mH3, y_l_mH3, y_T_mH3, y_d_mH3, y_u_mH3   &
+          & , lam12_mH3(1), lam12_mH3(2), Mi_mH3, A_l_mH3, A_T_mH3, A_d_mH3 &
+          & , A_u_mH3, Alam12_MH3(1), Alam12_MH3(2), M2_E_mH3, M2_L_mH3     &
+          & , M2_D_mH3, M2_Q_mH3, M2_U_mH3, M2_H_mH3, M2_T_mH3, mu_mH3      &
+          & , B_mH3, MnuL5)
+
+   MnuL5 = - lam12_MH3(2) * y_T_mH3 / M_H3(1)
+
+   Delta_b_1 = 0._dp ! decoupling the Higgs triplets
+   Delta_b_2 = 0._dp ! decoupling the Higgs triplets
+   Call ParametersToG4(gauge_mH3, y_l_mH3, Zero33C, y_d_mH3, y_u_mH3   &
+          & , ZeroC, ZeroC, Mi_mH3, A_l_mH3, Zero33C, A_d_mH3 &
+          & , A_u_mH3, ZeroC, ZeroC, M2_E_mH3, M2_L_mH3     &
+          & , M2_D_mH3, M2_Q_mH3, M2_U_mH3, M2_H_mH3, ZeroR2, mu_mH3      &
+          & , B_mH3, MnuL5, g2c)
+
+   mudim = GetRenormalizationScale()
+   mudim = Max(mudim, mZ2)
+
+   tz = 0.5_dp * Log(mudim/m_lo**2)
+   dt = tz / 100._dp
+   Call odeint(g2c, 277, 0._dp, tz, delta, dt, 0._dp, rge277, kont)
+
+   Call GToParameters4(g2c, gauge, y_l, y_T, y_d, y_u, lam12(1), lam12(2), Mi &
+          & , A_l, A_T, A_d, A_u, Alam12(1), Alam12(2), M2_E, M2_L, M2_D      &
+          & , M2_Q, M2_U, M2_H, M2_T, mu, B, MnuL5)
+
+   Call ParametersToG(gauge, y_l, y_d, y_u, Mi, A_l, A_d, A_u, M2_E, M2_L  &
+      & , M2_D, M2_Q, M2_U, M2_H, mu, B, g2)
+
+! Florian Staub Seesaw II+III
+# ifdef SEESAWIII
+  Else If (HighScaleModel.Eq.'SEESAW_III_3G') Then
+   !---------------
+   ! GUT -> 3
+   !---------------
+   m_hi = mGUT
+   If (Abs(MWM30(3,3)).Lt.Abs(m_hi)) Then
+    m_lo = Abs(MWM30(3,3))
+    tz = Log(Abs(m_hi/m_lo))
+    dt = - tz / 50._dp
+    Call odeint(g2f, 573, tz, 0._dp, delta, dt, 0._dp, rge555, kont)
+    m_hi = m_lo
+   Endif
+
+   Call GToParameters555(g2f,g1_H24,g2_H24,g3_H24,Yu_H24,Yd_H24,Ye_H24,Yb3_H24 &
+      & ,Yw3_H24,Yx3_H24,mu_H24,MXM3,MWM3,MGM3,MBM3,AYu_H24,AYd_H24,AYe_H24    &
+      & ,AYb3_H24,AYw3_H24,AYx3_H24,Amue,AMXM3,AMWM3,AMGM3,AMBM3, mq2_H24      &
+      & ,ml2_H24,mHd2_H24,mHu2_H24,md2_H24,mu2_H24,me2_H24,mHw32,mHg32,mHb32   &
+      & ,mHx32,mHxb32,MassB_H24,MassWB_H24,MassG_H24,MnuL5)
+
+   MBM3Running(3,:,:)=MBM3
+   MGM3Running(3,:,:)=MGM3
+   MWM3Running(3,:,:)=MWM3
+   MXM3Running(3,:,:)=MXM3
+
+   NGHb3 = 2._dp
+   NGHg3 = 2._dp
+   NGHw3 = 2._dp
+   NGHx3 = 2._dp
+   NGHxb3 = 2._dp
+   ThresholdCrossed = 2
+
+   Call FermionMass(MWM3,sqrt2,EigMWM3,RotWL, RotWR,kont)
+   Call FermionMass(MXM3,sqrt2,EigMXM3,RotXL, RotXR,kont)
+   Call FermionMass(MGM3,sqrt2,EigMGM3,RotGL, RotGR,kont)
+   Call FermionMass(MBM3,sqrt2,EigMBM3,RotBL, RotBR,kont)
+
+   Yb3_H24 = Matmul(RotBL,Yb3_H24)
+   Yw3_H24 = Matmul(RotWL,Yw3_H24)
+   Yx3_H24 = Matmul(RotXL,Yx3_H24)
+   AYb3_H24 = Matmul(RotBL,AYb3_H24)
+   AYw3_H24 = Matmul(RotwL,AYb3_H24)
+   AYx3_H24 = Matmul(RotxL,AYb3_H24)
+   MWM3 = Matmul(Conjg(Transpose(RotWR)),Matmul(MWM3,RotWL))
+   MGM3 = Matmul(Conjg(Transpose(RotGR)),Matmul(MGM3,RotGL))
+   MXM3 = Matmul(Conjg(Transpose(RotXR)),Matmul(MXM3,RotXL))
+   MBM3 = Matmul(Conjg(Transpose(RotBR)),Matmul(MBM3,RotBL))
+   mHx32 = Matmul(Conjg(Transpose(RotXL)),Matmul(mHx32,RotXL))
+   mHxb32 = Matmul(Conjg(Transpose(RotXR)),Matmul(mHxb32,RotXR))
+   mHg32 = Matmul(Conjg(Transpose(RotGL)),Matmul(mHg32,RotGL))
+   mHb32 = Matmul(Conjg(Transpose(RotBL)),Matmul(mHb32,RotBL))
+   mHw32 = Matmul(Conjg(Transpose(RotWL)),Matmul(mHw32,RotWL))
+
+   MassMWM3(3) = Maxval(EigMWM3)
+   MassMXM3(3) = Maxval(EigMXM3)
+   MassMGM3(3) = Maxval(EigMGM3)
+   MassMBM3(3) = Maxval(EigMBM3)
+
+   If (MassMWM3(3).Lt.Abs(mGUT)) Then
+    Do i1=1,3
+     Do i2=1,3
+      MnuL5(i1,i2) = 0.5_dp*Yw3_H24(3,i1)*Yw3_H24(3,i2)/MassMWM3(3) + &
+                   & 0.3_dp*Yb3_H24(3,i1)*Yb3_H24(3,i2)/MassMBM3(3)
+     End Do
+    End Do
+    If (TwoLoopRGE) Then
+     g1_h24 = g1_h24 * (1._dp + oo16pi2 * g1_h24**2           &
+                &                    * 5._dp/2._dp*Log(MassMXM3(3)/MWM30(3,3)) )
+     g2_h24 = g2_h24 * (1._dp + oo16pi2 * g2_h24**2           &
+                &                     *( 1.5_dp *Log(MassMXM3(3)/MWM30(3,3)) + &
+                &                      2._dp *Log(MassMWM3(3)/MWM30(3,3))) )
+     g3_h24 = g3_h24 * (1._dp + oo16pi2 * g3_h24**2           &
+                &                       * (Log(MassMXM3(3)/MWM30(3,3)) &
+                &                        + 3._dp*Log(MassMGM3(3)/MWM30(3,3)) ) )
+
+     MassB_h24 = MassB_h24 * (1._dp + oo16pi2 * g1_h24**2           &
+                &                    * 5._dp/2._dp*Log(MassMXM3(3)/MWM30(3,3)) )
+     MassWB_h24 = MassWB_h24 * (1._dp + oo16pi2 * g2_h24**2           &
+                &                     *( 1.5_dp *Log(MassMXM3(3)/MWM30(3,3)) + &
+                &                     2._dp *Log(MassMWM3(3)/MWM30(3,3))) )
+     MassG_h24 = MassG_h24 * (1._dp + oo16pi2 * g3_h24**2           &
+                &                      * (Log(MassMXM3(3)/MWM30(3,3)) &
+                &                        + 3._dp*Log(MassMGM3(3)/MWM30(3,3)) ) )
+    End If
+
+   Else
+
+    Do i1=1,3
+     Do i2=1,3
+      MnuL5(i1,i2) = 0.5_dp * Yw3_H24(3,i1)*Yw3_H24(3,i2)/MWM30(3,3) + &
+                   & 0.3_dp * Yb3_H24(3,i1)*Yb3_H24(3,i2)/MWM30(3,3)
+     End Do
+    End Do
+
+   End If
+
+   Yb30_H24(3,:,:) = Yb3_H24
+   Yw30_H24(3,:,:) = Yw3_H24
+   Yx30_H24(3,:,:) = Yx3_H24
+   Yb3_H24(3,:) = 0._dp
+   Yw3_H24(3,:) = 0._dp
+   Yx3_H24(3,:) = 0._dp
+   AYb3_H24(3,:) = 0._dp
+   AYw3_H24(3,:) = 0._dp
+   AYx3_H24(3,:) = 0._dp
+   MWM3(:,3) = 0._dp
+   MWM3(3,:) = 0._dp
+   MGM3(:,3) = 0._dp
+   MGM3(3,:) = 0._dp
+   MXM3(:,3) = 0._dp
+   MXM3(3,:) = 0._dp
+   MBM3(:,3) = 0._dp
+   MBM3(3,:) = 0._dp
+
+   mHx32(3,:) = 0._dp
+   mHx32(:,3) = 0._dp
+   mHxb32(3,:) = 0._dp
+   mHxb32(:,3) = 0._dp
+   mHg32(3,:) = 0._dp
+   mHg32(:,3) = 0._dp
+   mHb32(3,:) = 0._dp
+   mHb32(:,3) = 0._dp
+   mHw32(3,:) = 0._dp
+   mHw32(:,3) = 0._dp
+
+   Call ParametersToG555(g1_H24,g2_H24,g3_H24,Yu_H24,Yd_H24,Ye_H24,Yb3_H24   &
+      & ,Yw3_H24,Yx3_H24,mu_H24,MXM3,MWM3,MGM3,MBM3,AYu_H24,AYd_H24,AYe_H24  &
+      & ,AYb3_H24,AYw3_H24,AYx3_H24,Amue,AMXM3,AMWM3,AMGM3,AMBM3, mq2_H24    &
+      & ,ml2_H24,mHd2_H24,mHu2_H24,md2_H24,mu2_H24,me2_H24,mHw32,mHg32,mHb32 &
+      & ,mHx32,mHxb32,MassB_H24,MassWB_H24,MassG_H24,MnuL5,g2f)
+
+   !------------
+   ! 3 -> 2
+   !------------
+   If (Abs(MWM30(2,2)).Lt.Abs(m_hi)) Then
+    m_lo = Abs(MWM30(2,2))
+    tz = Log(Abs(m_hi/m_lo))
+    dt = - tz / 50._dp
+    Call odeint(g2f, 573, tz, 0._dp, delta, dt, 0._dp, rge555, kont)
+    m_hi = m_lo
+   Endif
+
+   Call GToParameters555(g2f,g1_H24,g2_H24,g3_H24,Yu_H24,Yd_H24,Ye_H24,Yb3_H24 &
+      & ,Yw3_H24,Yx3_H24,mu_H24,MXM3,MWM3,MGM3,MBM3,AYu_H24,AYd_H24,AYe_H24    &
+      & ,AYb3_H24,AYw3_H24,AYx3_H24,Amue,AMXM3,AMWM3,AMGM3,AMBM3, mq2_H24      &
+      & ,ml2_H24,mHd2_H24,mHu2_H24,md2_H24,mu2_H24,me2_H24,mHw32,mHg32,mHb32   &
+      & ,mHx32,mHxb32,MassB_H24,MassWB_H24,MassG_H24,MnuL5)
+
+   MBM3Running(2,:,:)=MBM3
+   MGM3Running(2,:,:)=MGM3
+   MWM3Running(2,:,:)=MWM3
+   MXM3Running(2,:,:)=MXM3
+
+   NGHb3 = 1._dp
+   NGHg3 = 1._dp
+   NGHw3 = 1._dp
+   NGHx3 = 1._dp
+   NGHxb3 = 1._dp
+   ThresholdCrossed = 1
+
+   RotWR = 0._dp
+   RotWL = 0._dp
+   RotXR = 0._dp
+   RotXL = 0._dp
+   RotGR = 0._dp
+   RotGL = 0._dp
+   RotBR = 0._dp
+   RotBL = 0._dp
+   EigMWM3 = 0._dp
+   EigMGM3 = 0._dp
+   EigMXM3 = 0._dp
+   EigMBM3 = 0._dp
+
+   Call EigenSystem(Matmul(Transpose(Conjg(MWM3(1:2,1:2))),MWM3(1:2,1:2)) &
+    & , EigMWM3(1:2),RotWR(1:2,1:2), ierr, test2)
+   Call EigenSystem(Matmul(MWM3(1:2,1:2),Transpose(Conjg(MWM3(1:2,1:2)))) &
+    & , EigMWM3(1:2),RotWL(1:2,1:2), ierr, test2)
+
+   Call EigenSystem(Matmul(Transpose(Conjg(MBM3(1:2,1:2))),MBM3(1:2,1:2)) &
+    & , EigMBM3(1:2),RotBR(1:2,1:2), ierr, test2)
+   Call EigenSystem(Matmul(MBM3(1:2,1:2),Transpose(Conjg(MBM3(1:2,1:2)))) &
+    & , EigMBM3(1:2),RotBL(1:2,1:2), ierr, test2)
+
+   Call EigenSystem(Matmul(Transpose(Conjg(MGM3(1:2,1:2))),MGM3(1:2,1:2)) &
+    & , EigMGM3(1:2),RotGR(1:2,1:2), ierr, test2)
+   Call EigenSystem(Matmul(MGM3(1:2,1:2),Transpose(Conjg(MGM3(1:2,1:2)))) &
+    & , EigMGM3(1:2),RotGL(1:2,1:2), ierr, test2)
+
+   Call EigenSystem(Matmul(Transpose(Conjg(MXM3(1:2,1:2))),MXM3(1:2,1:2)) &
+    & , EigMXM3(1:2),RotXR(1:2,1:2), ierr, test2)
+   Call EigenSystem(Matmul(MXM3(1:2,1:2),Transpose(Conjg(MXM3(1:2,1:2)))) &
+    & , EigMXM3(1:2),RotXL(1:2,1:2), ierr, test2)
+
+
+   Yb3_H24 = Matmul(RotBL,Yb3_H24)
+   Yw3_H24 = Matmul(RotWL,Yw3_H24)
+   Yx3_H24 = Matmul(RotXL,Yx3_H24)
+   AYb3_H24 = Matmul(RotBL,AYb3_H24)
+   AYw3_H24 = Matmul(RotwL,AYb3_H24)
+   AYx3_H24 = Matmul(RotxL,AYb3_H24)
+   MWM3 = Matmul(Conjg(Transpose(RotWR)),Matmul(MWM3,RotWL))
+   MGM3 = Matmul(Conjg(Transpose(RotGR)),Matmul(MGM3,RotGL))
+   MXM3 = Matmul(Conjg(Transpose(RotXR)),Matmul(MXM3,RotXL))
+   MBM3 = Matmul(Conjg(Transpose(RotBR)),Matmul(MBM3,RotBL))
+   mHx32 = Matmul(Conjg(Transpose(RotXL)),Matmul(mHx32,RotXL))
+   mHxb32 = Matmul(Conjg(Transpose(RotXR)),Matmul(mHxb32,RotXR))
+   mHg32 = Matmul(Conjg(Transpose(RotGL)),Matmul(mHg32,RotGL))
+   mHb32 = Matmul(Conjg(Transpose(RotBL)),Matmul(mHb32,RotBL))
+   mHw32 = Matmul(Conjg(Transpose(RotWL)),Matmul(mHw32,RotWL))
+
+   MassMWM3(2) = Sqrt(EigMWM3(2))
+   MassMXM3(2) = Sqrt(EigMXM3(2))
+   MassMGM3(2) = Sqrt(EigMGM3(2))
+   MassMBM3(2) = Sqrt(EigMBM3(2))
+
+   If (MassMWM3(2).Lt.Abs(mGUT)) Then
+
+    Do i1=1,3
+     Do i2=1,3
+      MnuL5(i1,i2) = MnuL5(i1,i2) &
+                & + 0.5_dp * Yw3_H24(2,i1)*Yw3_H24(2,i2)/MassMWM3(2)  &
+                & + 0.3_dp * Yb3_H24(2,i1)*Yb3_H24(2,i2)/MassMBM3(2)
+     End Do
+    End Do
+
+    If (TwoLoopRGE) Then
+     g1_h24 = g1_h24 * (1._dp + oo16pi2 * g1_h24**2           &
+                &                   * 5._dp/2._dp*Log( MassMXM3(2)/MWM30(2,2)) )
+     g2_h24 = g2_h24 * (1._dp + oo16pi2 * g2_h24**2           &
+                &                    *( 1.5_dp *Log(MassMXM3(2)/MWM30(2,2)) + &
+                &                      2._dp *Log(MassMWM3(2)/MWM30(2,2))) )
+     g3_h24 = g3_h24 * (1._dp + oo16pi2 * g3_h24**2           &
+                &                     * (Log( MassMXM3(2)/MWM30(2,2)) &
+                &                       + 3._dp*Log( MassMGM3(2)/MWM30(2,2)) ) )
+
+     MassB_h24 = MassB_h24 * (1._dp + oo16pi2 * g1_h24**2           &
+                 &                  * 5._dp/2._dp*Log( MassMXM3(2)/MWM30(2,2)) )
+     MassWB_h24 = MassWB_h24 * (1._dp + oo16pi2 * g2_h24**2           &
+                 &                    *( 1.5_dp *Log(MassMXM3(2)/MWM30(2,2)) + &
+                 &                       2._dp *Log(MassMWM3(2)/MWM30(2,2))) )
+     MassG_h24 = MassG_h24 * (1._dp + oo16pi2 * g3_h24**2           &
+                &                     * (Log( MassMXM3(2)/MWM30(2,2)) &
+                &                       + 3._dp*Log( MassMGM3(2)/MWM30(2,2)) ) )
+    End If
+
+   Else
+
+    Do i1=1,3
+     Do i2=1,3
+      MnuL5(i1,i2) = MnuL5(i1,i2)   &
+                 & + 0.5_dp * Yw3_H24(2,i1)*Yw3_H24(2,i2)/mGut  &
+                 & + 0.3_dp * Yb3_H24(2,i1)*Yb3_H24(2,i2)/mGut
+     End Do
+    End Do
+
+   End If
+
+   Yb30_H24(2,:,:) = Yb3_H24
+   Yw30_H24(2,:,:) = Yw3_H24
+   Yx30_H24(2,:,:) = Yx3_H24
+   Yb3_H24(2,:) = 0._dp
+   Yw3_H24(2,:) = 0._dp
+   Yx3_H24(2,:) = 0._dp
+   AYb3_H24(2,:) = 0._dp
+   AYw3_H24(2,:) = 0._dp
+   AYx3_H24(2,:) = 0._dp
+   MWM3(:,2) = 0._dp
+   MWM3(2,:) = 0._dp
+   MGM3(:,2) = 0._dp
+   MGM3(2,:) = 0._dp
+   MXM3(:,2) = 0._dp
+   MXM3(2,:) = 0._dp
+   MBM3(:,2) = 0._dp
+   MBM3(2,:) = 0._dp
+
+   mHx32(2,:) = 0._dp
+   mHx32(:,2) = 0._dp
+   mHxb32(2,:) = 0._dp
+   mHxb32(:,2) = 0._dp
+   mHg32(2,:) = 0._dp
+   mHg32(:,2) = 0._dp
+   mHb32(2,:) = 0._dp
+   mHb32(:,2) = 0._dp
+   mHw32(2,:) = 0._dp
+   mHw32(:,2) = 0._dp
+
+   Call ParametersToG555(g1_H24,g2_H24,g3_H24,Yu_H24,Yd_H24,Ye_H24,Yb3_H24 &
+      & ,Yw3_H24,Yx3_H24,mu_H24,MXM3,MWM3,MGM3,MBM3,AYu_H24,AYd_H24,AYe_H24    &
+      & ,AYb3_H24,AYw3_H24,AYx3_H24,Amue,AMXM3,AMWM3,AMGM3,AMBM3, mq2_H24      &
+      & ,ml2_H24,mHd2_H24,mHu2_H24,md2_H24,mu2_H24,me2_H24,mHw32,mHg32,mHb32   &
+      & ,mHx32,mHxb32,MassB_H24,MassWB_H24,MassG_H24,MnuL5,g2f)
+
+   !------------
+   ! 2 -> 1
+   !------------
+
+   If (Abs(MWM30(1,1)).Lt.Abs(m_hi)) Then
+    m_lo = MWM30(1,1)
+    tz = Log(Abs(m_hi/m_lo))
+    dt = - tz / 50._dp
+    Call odeint(g2f, 573, tz, 0._dp, delta, dt, 0._dp, rge555, kont)
+    m_hi = m_lo
+   Endif
+
+   Call GToParameters555(g2f,g1_H24,g2_H24,g3_H24,Yu_H24,Yd_H24,Ye_H24,Yb3_H24 &
+      & ,Yw3_H24,Yx3_H24,mu_H24,MXM3,MWM3,MGM3,MBM3,AYu_H24,AYd_H24,AYe_H24    &
+      & ,AYb3_H24,AYw3_H24,AYx3_H24,Amue,AMXM3,AMWM3,AMGM3,AMBM3, mq2_H24      &
+      & ,ml2_H24,mHd2_H24,mHu2_H24,md2_H24,mu2_H24,me2_H24,mHw32,mHg32,mHb32   &
+      & ,mHx32,mHxb32,MassB_H24,MassWB_H24,MassG_H24,MnuL5)
+
+   MBM3Running(1,:,:)=MBM3
+   MGM3Running(1,:,:)=MGM3
+   MWM3Running(1,:,:)=MWM3
+   MXM3Running(1,:,:)=MXM3
+
+   NGHb3 = 0._dp
+   NGHg3 = 0._dp
+   NGHw3 = 0._dp
+   NGHx3 = 0._dp
+   NGHxb3 = 0._dp
+   ThresholdCrossed = 0
+
+   MassMWM3(1) = Abs(MWM3(1,1))
+   MassMXM3(1) = Abs(MXM3(1,1))
+   MassMGM3(1) = Abs(MGM3(1,1))
+   MassMBM3(1) = Abs(MBM3(1,1))
+
+   Yb30_H24(1,:,:) = Yb3_H24
+   Yw30_H24(1,:,:) = Yw3_H24
+   Yx30_H24(1,:,:) = Yx3_H24
+
+   gauge_h24(1) = g1_h24
+   gauge_h24(2) = g2_h24
+   gauge_h24(3) = g3_h24
+   Mi_h24(1) = MassB_h24
+   Mi_h24(2) = MassWB_h24
+   Mi_h24(3) = MassG_h24
+   mh2_h24(1) = mHd2_h24
+   mh2_h24(2) = mHu2_h24
+
+   If (MassMWM3(1).Lt.Abs(mGUT)) Then
+
+    If (TwoLoopRGE) Then
+     g1_h24 = g1_h24 * (1._dp + oo16pi2 * g1_h24**2           &
+                &                  * 5._dp/12._dp*Log( MassMXM3(1)/MWM30(1,1)) )
+     g2_h24 = g2_h24 * (1._dp + oo16pi2 * g2_h24**2           &
+                &                     *( 0.5_dp *Log(MassMXM3(1)/MWM30(1,1)) + &
+                &                       2._dp *Log(MassMWM3(1)/MWM30(1,1))) )
+     g3_h24 = g3_h24 * (1._dp + oo16pi2 * g3_h24**2           &
+                &                     * (0.5_dp*Log( MassMXM3(1)/MWM30(1,1)) &
+                &                       + 3._dp*Log( MassMGM3(1)/MWM30(1,1)) ) )
+
+     MassB_h24 = MassB_h24 * (1._dp + oo16pi2 * g1_h24**2           &
+                &                  * 5._dp/12._dp*Log( MassMXM3(1)/MWM30(1,1)) )
+     MassWB_h24 = MassWB_h24 * (1._dp + oo16pi2 * g2_h24**2           &
+                 &                    *( 0.5_dp *Log(MassMXM3(1)/MWM30(1,1)) + &
+                 &                       2._dp *Log(MassMWM3(1)/MWM30(1,1))) )
+     MassG_h24 = MassG_h24 * (1._dp + oo16pi2 * g3_h24**2           &
+                &                     * (0.5_dp*Log( MassMXM3(1)/MWM30(1,1)) &
+                &                       + 3._dp*Log( MassMGM3(1)/MWM30(1,1)) ) )
+    End If
+
+    Do i1=1,3
+     Do i2=1,3
+      MnuL5(i1,i2) = MnuL5(i1,i2) &
+                & + 0.5_dp * Yw3_H24(1,i1)*Yw3_H24(1,i2)/ MassMWM3(1)  &
+                & + 0.3_dp * Yb3_H24(1,i1)*Yb3_H24(1,i2)/ MassMBM3(1)
+     End Do
+    End Do
+
+   Else
+
+    Do i1=1,3
+     Do i2=1,3
+      MnuL5(i1,i2) = MnuL5(i1,i2)   &
+                & + 0.5_dp * Yw3_H24(1,i1)*Yw3_H24(1,i2)/Abs(MWM30(1,1))  &
+                & + 0.3_dp * Yb3_H24(1,i1)*Yb3_H24(1,i2)/Abs(MWM30(1,1))
+     End Do
+    End Do
+
+   End If
+
+
+  Call ParametersToG4(gauge_H24, ye_H24, Zero33C, yd_H24, yu_H24   &
+          & , ZeroC, ZeroC, Mi_H24, AYe_h24, Zero33C, AYd_h24 &
+          & , AYu_h24, ZeroC, ZeroC, Me2_h24, ML2_h24     &
+          & , MD2_h24, MQ2_h24, MU2_h24, MH2_h24, ZeroR2, mu_h24      &
+          & , Amue, MnuL5, g2c)
+
+  mudim = GetRenormalizationScale()
+  mudim = Max(mudim, mZ2)
+
+  tz = 0.5_dp * Log(mudim/m_hi**2)
+  dt = tz / 100._dp
+  Call odeint(g2c, 277, 0._dp, tz, delta, dt, 0._dp, rge277, kont)
+
+  Call GToParameters4(g2c, gauge, y_l, y_T, y_d, y_u, lam12(1), lam12(2), Mi &
+          & , A_l, A_T, A_d, A_u, Alam12(1), Alam12(2), M2_E, M2_L, M2_D      &
+          & , M2_Q, M2_U, M2_H, M2_T, mu, B, MnuL5)
+
+  Call ParametersToG(gauge, y_l, y_d, y_u, Mi, A_l, A_d, A_u, M2_E, M2_L  &
+      & , M2_D, M2_Q, M2_U, M2_H, mu, B, g2)
+
+
+ Else If (HighScaleModel.Eq.'SEESAW_II_SARAH') Then
+
+   If ( (oo4pi*Maxval(g2g(1:115)**2)).Gt.0.5_dp) Then
+    Write(ErrCan,*) "Non perturbative regime at M_GUT"
+    If (ErrorLevel.Ge.2) Call TerminateProgram
+    Write(errcan,*) " "
+    kont = -410
+    Call AddError(410)
+    Iname = Iname - 1
+    Return
+   End If
+
+   !-------------------------
+   ! run only if m_H < m_GUT
+   !-------------------------
+
+   If (Abs(MTM_GUT).Lt.mGUT) Then
+    !---------------------------------------------------
+    ! heavy states are to be included
+    !---------------------------------------------------
+
+
+    mudim = Abs(MTM_GUT)**2
+    tz = 0.5_dp * Log(mudim/mGUT**2)
+    dt = tz / 50._dp
+    Call odeint(g2g, 365 , 0._dp, tz, delta, dt, 0._dp, rge365, kont)
+    m_lo = Abs(MTM_GUT)
+
+    If ( (oo4pi*Maxval(g2g(1:115)**2)).Gt.0.5_dp) Then
+     Write(ErrCan,*) "Non perturbative regime at M_H3"
+     If (ErrorLevel.Ge.2) Call TerminateProgram
+     Write(errcan,*) " "
+     kont = -411
+     Call AddError(411)
+     Iname = Iname - 1
+     Return
+    End If
+
+   Else
+     m_lo = mGUT
+   End If
+
+
+   Call GToParameters365(g2g,g1_h15,g2_h15,g3_h15,Yu_h15,Yd_h15,Ye_h15,Yt0_h15 &
+      & ,Ys0_h15,Yz0_h15, Lambda10,Lambda20,mu_h15,MTM,MZM,MSM,AYu_h15,AYd_h15 &
+      & ,AYe_h15,AYt_h15,AYs_h15,AYz_h15,ALambda1,ALambda2,Amue,AMTM,AMZM,AMSM &
+      & ,mq2_h15,ml2_h15,mHd2_h15, mHu2_h15,md2_h15,mu2_h15,me2_h15,mt2_H15    &
+      & ,mtb2_H15,ms2_H15,msb2_H15,mz2_H15,mzb2_H15,MassB_h15,MassWB_h15       &
+      & ,MassG_h15,MnuL5)
+
+   gauge_h15(1) = g1_h15
+   gauge_h15(2) = g2_h15
+   gauge_h15(3) = g3_h15
+   Mi_h15(1) = MassB_h15
+   Mi_h15(2) = MassWB_h15
+   Mi_h15(3) = MassG_h15
+   mh2_h15(1) = mHd2_h15
+   mh2_h15(2) = mHu2_h15
+
+   MnuL5 = - Lambda20 * YT0_h15 / MTM
+
+   If ((Abs(MTM_GUT).Lt.mGUT).And.TwoLoopRGE) Then
+   !-----------------------------------------------------
+   ! adding shifts to gauge couplings and gaugino masses
+   !-----------------------------------------------------
+    gauge_h15(1) = gauge_h15(1) / (1._dp - 0.2_dp * oo16pi2 * gauge_h15(1)**2 &
+                &                       * ( 8._dp * Log(Abs(MSM/MTM_GUT))     &
+                &                         + 9._dp * Log(Abs(MTM/MTM_GUT))     &
+                &                         + 0.5_dp * Log(Abs(MZM/MTM_GUT)) ) )
+    gauge_h15(2) = gauge_h15(2) / (1._dp - oo16pi2 * gauge_h15(2)**2          &
+              & *(2._dp*Log(Abs(MTM/MTM_GUT))+ 1.5_dp *Log(Abs(MZM/MTM_GUT)) ))
+    gauge_h15(3) = gauge_h15(3) / (1._dp - oo16pi2 * gauge_h15(3)**2          &
+                &   * (2.5_dp*Log(Abs(MSM/MTM_GUT)) + Log(Abs(MZM/MTM_GUT)) ) )
+    Mi_h15(1) = Mi_h15(1) / (1._dp - 0.2_dp * oo16pi2 * gauge_h15(1)**2       &
+                &                       * ( 8._dp * Log(Abs(MSM/MTM_GUT))     &
+                &                         + 9._dp * Log(Abs(MTM/MTM_GUT))     &
+                &                         + 0.5_dp * Log(Abs(MZM/MTM_GUT)) ) )
+    Mi_h15(2) = Mi_h15(2) / (1._dp - oo16pi2 * gauge_h15(2)**2                &
+             & *(2._dp *Log(Abs(MTM/MTM_GUT))+ 1.5_dp *Log(Abs(MZM/MTM_GUT)) ))
+    Mi_h15(3) = Mi_h15(3) / (1._dp - oo16pi2 * gauge_h15(3)**2           &
+                &   * (2.5_dp*Log(Abs(MSM/MTM_GUT)) + Log(Abs(MZM/MTM_GUT)) ) )
+   End If
+
+   !---------------------------------------------------
+   ! heavy states are not to be included
+   !---------------------------------------------------
+
+   Call ParametersToG4(gauge_h15, ye_h15, Zero33C, yd_h15, yu_h15   &
+          & , ZeroC, ZeroC, Mi_h15, AYe_h15, Zero33C, AYd_h15 &
+          & , AYu_h15, ZeroC, ZeroC, ME2_h15, ML2_h15     &
+          & , MD2_h15, MQ2_h15, MU2_h15, MH2_h15, ZeroR2, mu_h15      &
+          & , Amue, MnuL5, g2c)
+
+   mudim = GetRenormalizationScale()
+   mudim = Max(mudim, mZ2)
+
+   tz = 0.5_dp * Log(mudim/m_lo**2)
+   dt = tz / 100._dp
+   Call odeint(g2c, 277, 0._dp, tz, delta, dt, 0._dp, rge277, kont)
+
+
+
+   Call GToParameters4(g2c, gauge, y_l, y_T, y_d, y_u, lam12(1), lam12(2), Mi &
+          & , A_l, A_T, A_d, A_u, Alam12(1), Alam12(2), M2_E, M2_L, M2_D      &
+          & , M2_Q, M2_U, M2_H, M2_T, mu, B, MnuL5)
+   Call ParametersToG(gauge, y_l, y_d, y_u, Mi, A_l, A_d, A_u, M2_E, M2_L  &
+      & , M2_D, M2_Q, M2_U, M2_H, mu, B, g2)
+
+# endif SEESAWIII
+! Florian Staub Seesaw II+III
 
   Else
 
-   Do i1=0,len2-2
-    t =  tz + dt * i1
-    Qvec(i1+1) = Mgut * Exp(t)
-    Call rkstp(dt,t,g2a,rge213,w2)
-    g_out(2+i1,:) = g2a
-   End Do
+   mudim = GetRenormalizationScale()
+   mudim = Max(mudim, mZ2)
+
+   tz = 0.5_dp * Log(mudim/mGUT_save**2)
+   dt = tz / 100._dp
+
+   Call odeint(g2, 213, 0._dp, tz, delta, dt, 0._dp, rge213, kont)
+
   End If
 
-  Qvec(len2) = Mgut
-
- Iname = Iname - 1
- 
- End Subroutine RunRGEup
+  Iname = Iname - 1
 
 
- Subroutine RunRGEup2(lenR, lenQ, g2, Qi, Qf, Qvec, g_out)
- !-----------------------------------------------------------------------
- ! Uses Runge-Kutta method to integrate RGE's from Qi to Qf
- ! input:
- !   lenR .. length of data vector
- !   lenQ .. length of Q vector 
- !   g2 .... initial data
- !   Qi .... starting scale
- !   Qf .... final scale
- ! output:
- !   Qvec .. vector containing the scales
- !   g_out.. vector containing the data at the various scale
- ! Written by Werner Porod, 17.04.02
- !-----------------------------------------------------------------------
- Implicit None
+  900 Format(a20,e15.6)
+  910 Format(a15,3e15.6)
 
-  Integer, Intent(in) :: lenR, lenQ
-  Real(dp), Intent(in) :: g2(lenR), Qi, Qf
-  Real(dp), Intent(out) :: g_out(lenR,lenQ), Qvec(lenQ)
-  
-  Integer:: i1
-  Real(dp) :: g2a(lenR), w2(lenR,3), tz, dt, t
-
-  Iname = Iname + 1
-  NameOfUnit(Iname) = 'RunRGEup2'
-
-  tz = Log(Qi/Qf)
-  dt = - tz / Real(lenQ-1, dp)
-  g2a = g2
-  !------------------
-  ! now the running
-  !------------------
-  g_out(:,1) = g2a
-  Qvec(1) = Qi
-  Do i1=0,lenQ-2 
-   t =  tz + dt * i1
-   Qvec(i1+1) = Qf * Exp(t)
-   If (lenR.Eq.180) Call rkstp(dt,t,g2a,rge_SU5,w2)
-   If (lenR.Eq.213) Call rkstp(dt,t,g2a,rge213,w2)
-   If (lenR.Eq.267) Call rkstp(dt,t,g2a,rge267,w2)
-   If (lenR.Eq.285) Call rkstp(dt,t,g2a,rge285,w2)
-   g_out(:,2+i1) = g2a
-  End Do
-
-  Qvec(lenQ) = Qf
-
- Iname = Iname - 1
- 
- End Subroutine RunRGEup2
-
-
-
- Logical Function SetCheckSugraDetails(V1, V2, V3, V4, V5)
- !----------------------------------------------------------------------------
- ! Sets the variable CheckSugraDetails which controls writing of the details
- ! during the run. Default is .False. In case that one of the entries .True.
- ! the following action is performed:
- ! CheckSugraDetails(1) -> write high scale values for gauge and Yukawa
- !                         couplings to channel 10 for each iteration
- ! CheckSugraDetails(2) -> write low scale values for gauge and Yukawa
- !                         couplings to channel 10 for each iteration
- ! CheckSugraDetails(3) -> write high scale values for soft SUSY parameters
- !                         to channel 10 for each iteration
- ! CheckSugraDetails(4) -> write low scale values for soft SUSY parameters
- !                         to channel 10 for each iteration
- ! CheckSugraDetails(5) -> write inital low scale values for gauge and Yukawa
- !                         couplings to channel 10 for each iteration
- ! Written by Werner Porod, 24..09.01
- !----------------------------------------------------------------------------
- Implicit None
-  Logical, Intent(in) :: V1, V2, V3, V4, V5
-   SetCheckSugraDetails = .False.
-   CheckSugraDetails(1) = V1
-   CheckSugraDetails(2) = V2
-   CheckSugraDetails(3) = V3
-   CheckSugraDetails(4) = V4
-   CheckSugraDetails(5) = V5
-   SetCheckSugraDetails = .True.
- End Function SetCheckSugraDetails
+ End Subroutine RunRGE_from_Msusy
 
 
  Subroutine SetGUTScale(scale)
@@ -8239,6 +10175,14 @@ Contains
   HighScaleModel = model
   SetHighScaleModel = .True.
  End  Function SetHighScaleModel
+
+ Subroutine SetInputScale(scale)
+ Implicit None
+  Real(dp), Intent(in) :: scale
+
+  InputScale = scale
+
+ End Subroutine SetInputScale
 
  Subroutine SetRGEScale(scale)
  Implicit None
@@ -8280,6 +10224,1735 @@ Contains
   SetYukawaScheme = YukawaScheme
   YukawaScheme = V1
  End Function SetYukawaScheme
+
+ Subroutine BoundarySM(i_run, mH2, delta_VB_BSM, mZ2_run, mW2_run, delta0 &
+                    & , g1, kont)
+ !-----------------------------------------------------------------------
+ ! Calculates the SM gauge and yukawa couplings at m_Z, which are evolved
+ ! to Q_EWSB where the SUSY corrections are included.
+ ! written by Werner Porod
+ ! 07.01.09:taking  BoundaryEW as a start
+ ! 12.10.14 Extended by J.E. Camargo-Molina
+ ! 10.07.2015: cleaned up by W.Porod
+ !-----------------------------------------------------------------------
+ Implicit None
+  Integer, Intent(in) :: i_run
+  Real(dp), Intent(in) :: mH2, delta_VB_BSM, delta0
+  Real(dp), Intent(out) :: g1(57), mW2_run, mZ2_run
+  Integer, Intent(inout) :: kont
+
+  Integer :: i1, i_loop, i2
+  Real(dp) :: D_mat(3,3), logQ
+  Real(dp) :: test, alphaMZ, alpha3, gSU2, rho, delta_rho, vev2    &
+    & , mZ2_mZ, CosW2SinW2, gauge(3), delta, sinW2_old, delta_r  &
+    & , xt2, fac(2), delta_rw, sinW2, cosW2
+  Complex(dp) :: dmZ2, dmW2, dmW2_0, yuk_tau, yuk_t, yuk_b
+  Complex(dp), Dimension(3,3) :: SigS_u, sigR_u, SigL_u, SigS_d, SigR_d    &
+    & , SigL_d, SigS_l, sigR_l, SigL_l, Y_u, Y_d, Y_l, adCKM, uU_L_T, uU_R_T &
+    & , uD_L_T, uD_R_T, uL_L_T, uL_R_T, Y_l_old, Y_d_old, Y_u_old
+  Logical :: converge
+  Real(dp), Parameter :: e_d=-1._dp/3._dp, e_u=2._dp/3._dp, e_e=-1._dp &
+    & , T3_d=-0.5_dp, T3_u=0.5_dp, mf_nu(3) = (/0._dp, 0._dp, 0._dp /)
+  Complex(dp), Parameter :: Y_nu(3,3) = ZeroC
+  Real(dp), Parameter :: &
+    & as2loop = 1._dp / 24._dp + 2011._dp * oo32Pi2 / 12._dp           &
+    &         + Log2 / 12._dp - oo8Pi2 * Zeta3                        &
+    & , log2loop_a = 123._dp * oo32Pi2, log2loop_b = 33._dp * oo32Pi2
+  !--------------------------------------------------
+  ! data, which need to be save for an follow-up run
+  !--------------------------------------------------
+  Real(dp), Save :: sinW2_DR_mZ, sinW2_DR, vev
+  Real(dp),Dimension(3), Save :: mf_l_DR, mf_d_DR, mf_u_DR
+  Complex(dp), Dimension(3,3), Save :: Yl_mZ, Yu_mZ, Yd_mZ
+
+  Iname = Iname + 1
+  nameOfUnit(Iname) = "BoundarySM"
+
+
+  sinW2 = 1._dp - mW2/mZ2
+  !-------------------------------------------------------------------
+  ! setting renormalisation scale to m_Z, because the RGEs start there
+  !-------------------------------------------------------------------
+  test = SetRenormalizationScale(mZ2)
+  !-----------------
+  ! sin(theta_W)^2
+  !-----------------
+  If (i_run.Eq.1) Then
+   sinW2_DR = sinW2
+   sinW2_old = sinW2_DR
+   Y_l = 0._dp
+   Do i1=1,3
+    y_l(i1,i1) = sqrt2 * mf_l_mZ(i1) / 246._dp
+   End Do
+   mf_l2 = mf_l_mZ**2
+   mf_d2 = mf_d_mZ**2
+   mf_u2 = mf_u_mZ**2
+   uL_L_T = id3C
+   uL_R_T = id3C
+   mf_l_DR = mf_l_mZ
+   mf_d_DR = mf_d_mZ
+   mf_u_DR = mf_u_mZ
+  Else
+   sinW2_DR = sinW2_DR_mZ
+   sinW2_old = sinW2_DR
+   Y_l = Yl_mZ
+   Y_d = Yd_mZ
+   Y_u = Yu_mZ
+
+   Call FermionMass(Y_l,vev,mf_l_DR,uL_L_T,uL_R_T,kont)
+   Call FermionMass(Y_d,vev,mf_d_DR,uD_L_T,uD_R_T,kont)
+   Call FermionMass(Y_u,vev,mf_u_DR,uU_L_T,uU_R_T,kont)
+
+   mf_l2 = mf_l_DR**2
+   mf_d2 = mf_d_DR**2
+   mf_u2 = mf_u_DR**2
+  End If
+
+  !-------------------------------------------------------------------
+  ! alpha(mZ), include also m_t part, to get a SU(2) invariant model
+  !-------------------------------------------------------------------
+  alphaMZ = AlphaEwDR_SM(mZ, mW, mf_u(3))
+
+  !-----------
+  ! alpha_s(mZ)
+  !-----------
+  alpha3 = AlphaS_mZ / ( 1._dp + oo3pi * AlphaS_mZ * Log(mf_u(3)/mZ) ) 
+  !--------------------
+  ! for 2-loop parts
+  !--------------------
+   xt2 = 3._dp * (G_F * mf_u2(3) * oo8pi2 * oosqrt2)**2        &
+      & * rho_2(Sqrt(mH2)/mf_u(3))     !&
+   fac(1) = alphaMZ * alphaS_mZ * oo4pi                                    &
+        & * (2.145_dp * mf_u2(3)/mZ2 + 0.575 * Log(mf_u(3)/mZ) - 0.224_dp  &
+        &   - 0.144_dp * mZ2 / mf_u2(3)) / Pi
+   fac(2) = alphamZ * alphaS_mZ * oo4pi                                   &
+       & * (-2.145_dp * mf_u2(3)/mW2 + 1.262 * Log(mf_u(3)/mZ) - 2.24_dp  &
+       &   - 0.85_dp * mZ2 / mf_u2(3)) / Pi
+
+  vev = Sqrt(mZ2 *(1-sinW2_DR)* sinW2_DR / (pi * alphamZ))
+
+
+  Do i1=1,100
+   gSU2 = Sqrt( 4._dp*pi*alphamZ/sinW2_DR)
+   Call PiZZT1_SM(mZ2, gSU2, sinW2_DR, mZ2, mW2, mH2, mf_l2, mf_u2, mf_d2 &
+                 & , dmZ2)
+   mZ2_mZ = Real(dmZ2+mZ2,dp)
+   If (mZ2_mZ.Lt.0._dp) Then
+    Iname = Iname - 1
+    kont = -407
+    Return
+   End If
+   mZ2_run = mZ2_mZ
+   mW2_run = mZ2_mZ * (1._dp - sinW2_DR)
+   vev = 2._dp * Sqrt(mW2_run) / gSU2
+   !---------------------------------------
+   ! recalculation, using running masses
+   !---------------------------------------
+   Call PiZZT1_SM(mZ2, gSU2, sinW2_DR, mZ2_mZ, mW2_run, mH2, mf_l2 &
+                 & , mf_u2, mf_d2, dmZ2)
+   mZ2_mZ = Real(dmZ2+mZ2,dp)
+   If (mZ2_mZ.Lt.0._dp) Then
+    Iname = Iname - 1
+    kont = -407
+    Return
+   End If
+   mZ2_run = mZ2_mZ
+   mW2_run = mZ2_mZ * (1._dp - sinW2_DR)
+
+   Call PiWWT1_SM(mW2, gSU2, sinW2_DR, mH2, mf_l2, mf_u2, mf_d2 &
+         & , CKM, mZ2_mZ, mW2_run, dmW2)
+
+   Call PiWWT1_SM(0._dp, gSU2, sinW2_DR, mH2, mf_l2, mf_u2, mf_d2 &
+         & , CKM, mZ2_mZ, mW2_run, dmW2_0)
+
+   rho = (1._dp + Real(dmZ2,dp)/mZ2) / (1._dp + Real(dmW2,dp) / mW2)
+   delta_rho = 1._dp - 1._dp / rho
+
+   CosW2SinW2 = (1._dp - sinW2_DR) * sinW2_DR
+
+   Call delta_VB_SM(gSU2, sinW2, sinW2_DR, rho, delta)
+
+   delta = delta + delta_VB_BSM  ! adding contribution from dim-6 operator 
+   delta_r = rho*Real(dmW2_0,dp)/mW2 - Real(dmZ2,dp) / mZ2 + delta
+   rho = 1._dp /  (1._dp - delta_rho - fac(2) / sinW2_DR - xt2)
+   delta_r = rho*Real(dmW2_0,dp)/mW2 - Real(dmZ2,dp) / mZ2 + delta   &
+         & + fac(1) / CosW2SinW2 - xt2 * (1-delta_r) * rho
+   CosW2SinW2 = pi * alphamZ / (sqrt2 * mZ2 * G_F * (1-delta_r) )
+   sinW2_DR = 0.5_dp - Sqrt(0.25_dp - CosW2SinW2)
+
+   If (sinW2_DR.Lt.0._dp) Then
+    kont = -412
+    Iname = Iname -1
+    Return
+   End If
+
+   If (Abs(sinW2_DR-sinW2_old).Lt. 0.1_dp*delta0) Exit
+    sinW2_old = sinW2_DR
+    delta_rw = delta_rho*(1._dp-delta_r) + delta_r
+    If ((0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))).Lt.0._dp) Then
+    kont = -406
+    If (Errorlevel.Ge.0) Then
+     Write(Errcan,*) "Problem in subroutine "//NameofUnit(Iname)
+     Write(Errcan,*) "In the calculation of mW", &
+          & 0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))
+     Write(errcan,*) "mf_l_mZ, vevSM"
+     Write(errcan,*) mf_l_mZ,vevSM
+     Write(errcan,*) "mZ2_mZ, dmW2, dmW2_0, rho, delta_rho, sinW2_DR"
+     Write(errcan,*) mZ2_mZ, dmW2, dmW2_0, rho, delta_rho, sinW2_DR
+     Write(ErrCan,*) "delta_r, cosW2SinW2, delta_rw"
+     Write(ErrCan,*) delta_r, cosW2SinW2, delta_rw
+    End If
+    kont = -411
+    Iname = Iname - 1
+    Return
+   End If
+   mW2 = mZ2 * rho * ( 0.5_dp &
+      &         +Sqrt(0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))))
+
+   cosW2 = mW2 / mZ2
+   sinW2 = 1._dp - cosW2
+  End Do
+  !--------------------------------------------------------------------------
+  ! recalcuating m_W and sin^2_W, the formula for m_W is base on Eq.25 of
+  ! G.Degrassi et al., NPB351, 49 (1991)
+  !--------------------------------------------------------------------------
+  delta_rw = delta_rho*(1._dp-delta_r) + delta_r
+  mW2 = mZ2 * rho * ( 0.5_dp &
+      &         +Sqrt(0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))))
+  mW = Sqrt(mW2)
+  cosW2 = mW2 / mZ2
+  sinW2 = 1._dp - cosW2
+  !---------------------------
+  ! gauge couplings and vevs
+  !---------------------------
+  gauge(1) = Sqrt( 4._dp*pi*alphamZ/(1._dp-sinW2_DR) )
+  gauge(2) = Sqrt( 4._dp*pi*alphamZ/sinW2_DR)
+  gauge(3) = Sqrt( 4._dp*pi*alpha3)
+  vev2 =  mZ2_mZ * CosW2SinW2 / (pi * alphamZ)
+  vev = Sqrt(vev2)
+
+  !-------------------------------------
+  ! Initialize fermion mixing matrices
+  !-------------------------------------
+  uU_L = id3C
+  uU_R = id3C
+  uD_L = id3C
+  uD_R = id3C
+  If (GenerationMixing) Then
+   Call Adjungate(CKM, adCKM)
+   If (YukawaScheme.Eq.1) Then
+    uU_L = CKM
+   Else
+    uD_L = adCKM
+   End If
+  End If
+
+   !-----------------------
+   ! Yukawa couplings
+   !-----------------------
+   mf_l_DR_SM = mf_l_mZ ! relic of old routine, orginally MS -> DR 
+   mf_d_DR_SM = mf_d_mZ ! relic of old routine, orginally MS -> DR 
+   mf_u_DR_SM = mf_u_mZ ! relic of old routine, orginally MS -> DR 
+   logQ = Log(mZ2/mf_u2(3))
+   mf_u_DR_SM(3) = mf_u(3)                                                   &
+               & * (1._dp - (alpha3 -alphaMZ/3._dp) * (4._dp + 3._dp * LogQ) &
+               &             / (3._dp*pi)                                    &
+               &   - oo16pi2 * alpha3**2 / 18._dp                            &
+               &     * (2821._dp + 2028._dp * logQ + 396._dp*logQ**2         &
+               &       + 16._dp*Pi2*(1._dp+2._dp*Log(2._dp)) - 48._dp*Zeta3 ) )
+
+   Y_d = 0._dp
+   Y_u = 0._dp
+   Y_l = 0._dp
+   Forall(i1=1:3) Y_u(i1,i1) = sqrt2 * mf_u_DR_SM(i1) / vev
+   Forall(i1=1:3) Y_d(i1,i1) = sqrt2 * mf_d_DR_SM(i1) / vev
+   Forall(i1=1:3) Y_l(i1,i1) = sqrt2 * mf_l_DR_SM(i1) / vev
+
+   If (GenerationMixing) Then
+    If (YukawaScheme.Eq.1) Then
+     Y_u = Matmul(Transpose(uU_L),Y_u)
+    Else
+     Y_d = Matmul(Transpose(uD_L),Y_d)
+    End If
+   End If
+   !--------------------------------------------
+   ! the starting point of the tree-level mixing
+   !--------------------------------------------
+   uU_L_T = uU_L
+   uU_R_T = uU_R
+   uD_L_T = uD_L
+   uD_R_T = uD_R
+   uL_L_T = uL_L
+   uL_R_T = uL_R
+
+  converge = .False.
+
+  Y_l_old = Y_l
+  Y_d_old = Y_d
+  Y_u_old = Y_u
+  !------------------------------
+  ! now the iteration
+  !------------------------------
+  Do i_loop =1,100 ! should be sufficient
+   yuk_b = Y_d(3,3)! for checking of convergence
+   yuk_t = Y_u(3,3)
+   yuk_tau = Y_l(3,3)
+    Call Sigma_Fermion3_SM(mf_l_DR, Y_l, id3C, id3C, gSU2, sinW2_DR &
+        & , T3_d, e_e, mf_nu, id3C, mH2, mZ2_run, mW2_run     &
+        & , SigS_l, SigL_l, SigR_l)
+
+    Call Yukawas(mf_l_DR_SM, vev, id3C, id3C, SigS_l, SigL_l, SigR_l, Y_l)
+
+    If (kont.Ne.0) Then
+     Iname = Iname - 1
+     Return
+    End If
+
+    Call Sigma_Fermion3_SM(mf_u_DR, Y_u, uU_L_T, uU_R_T, gSU2, sinW2_DR &
+        & , T3_u, e_u, mf_d_DR, uD_L_T, mH2, mZ2_run, mW2_run    &
+        & , SigS_u, SigL_u, SigR_u)
+
+    Call Yukawas(mf_u_DR_SM, vev, uU_L, uU_R, SigS_u, SigL_u, SigR_u, Y_u)
+
+    If (kont.Ne.0) Then
+     Iname = Iname - 1
+     Return
+    End If
+
+    Call Sigma_Fermion3_SM(mf_d_DR, Y_d, uD_L_T, uD_R_T, gSU2, sinW2_DR &
+        & , T3_d, e_d, mf_u_DR, uU_L_T, mH2, mZ2_run, mW2_run    &
+        & , SigS_d, SigL_d, SigR_d)
+    Call Yukawas(mf_d_DR_SM, vev, uD_L, uD_R, SigS_d, SigL_d, SigR_d, Y_d)
+
+    If (kont.Ne.0) Then
+     Iname = Iname - 1
+     Return
+    End If
+
+    !----------------------------------------------------------------
+    ! I am only interested in the mixing matrices
+    !----------------------------------------------------------------
+    Call FermionMass(Y_l,vev,mf_l_DR,uL_L_T,uL_R_T,kont)
+    Call FermionMass(Y_d,vev,mf_d_DR,uD_L_T,uD_R_T,kont)
+    Call FermionMass(Y_u,vev,mf_u_DR,uU_L_T,uU_R_T,kont)
+
+    converge = .True.
+    D_mat = Abs(Abs(Y_l) - Abs(Y_l_old))
+    Where (Abs(Y_l).Ne.0._dp) D_mat = D_mat / Abs(Y_l)
+    Do i1=1,3
+     If (D_mat(i1,i1).Gt.0.1_dp*delta0) converge = .False.
+     Do i2=i1+1,3
+      If (D_mat(i1,i2).Gt.delta0) converge = .False.
+      If (D_mat(i2,i1).Gt.delta0) converge = .False.
+     End Do
+    End Do
+    D_mat = Abs(Abs(Y_d) - Abs(Y_d_old))
+    Where (Abs(Y_d).Ne.0._dp) D_mat = D_mat / Abs(Y_d)
+    Do i1=1,3
+     If (D_mat(i1,i1).Gt.0.1_dp*delta0) converge = .False.
+     Do i2=i1+1,3
+      If (D_mat(i1,i2).Gt.10._dp*delta0) converge = .False.
+      If (D_mat(i2,i1).Gt.10._dp*delta0) converge = .False.
+     End Do
+    End Do
+    D_mat = Abs(Abs(Y_u) - Abs(Y_u_old))
+    Where (Abs(Y_u).Ne.0._dp) D_mat = D_mat / Abs(Y_u)
+    Do i1=1,3
+     If (D_mat(i1,i1).Gt.0.1_dp*delta0) converge = .False.
+     Do i2=i1+1,3
+      If (D_mat(i1,i2).Gt.10._dp*delta0) converge = .False.
+      If (D_mat(i2,i1).Gt.10._dp*delta0) converge = .False.
+     End Do
+    End Do
+
+    If (converge) Exit
+
+    Y_l_old = Y_l
+    Y_u_old = Y_u
+    Y_d_old = Y_d
+
+  End Do ! i_loop
+
+  If (.Not.converge) Then
+   Write (ErrCan,*) 'Problem in subroutine BoundarySM!!'
+   Write (ErrCan,*) "After",i_loop-1,"iterations no convergence of Yukawas"
+   Write (ErrCan,*) 'yuk_tau,yuk_l(3,3)',yuk_tau,y_l(3,3)
+   Write (ErrCan,*) 'yuk_b,yuk_d(3,3)',yuk_b,y_d(3,3)
+   Write (ErrCan,*) 'yuk_t,yuk_u(3,3)',yuk_t,y_u(3,3)
+  End If
+
+  !----------------------------------------------------------------
+  ! the RGE paper defines the Yukawas transposed to my conventions
+  !----------------------------------------------------------------
+  Yl_mZ = Y_l
+  Yd_mZ = Y_d
+  Yu_mZ = Y_u
+  Y_u = Transpose(Y_u)
+  Y_d = Transpose(Y_d)
+  Y_l = Transpose(Y_l)
+  sinW2_DR_mZ = sinW2_DR
+  gauge_mZ = gauge
+  gauge(1) = Sqrt( 5._dp/3._dp) * gauge(1)
+
+  Call  CouplingsToG(gauge, y_l, y_d, y_u, g1)
+
+  !----------------------------------------------
+  ! resetting scale
+  !----------------------------------------------
+  test = SetRenormalizationScale(test)
+
+  Iname = Iname - 1
+
+ Contains
+
+  Real(dp) Function rho_2(r)
+  Implicit None
+   Real(dp), Intent(in) :: r
+   Real(dp) :: r2, r3
+   r2 = r*r
+   r3 = r2*r
+   rho_2 = 19._dp - 16.5_dp * r + 43._dp * r2 / 12._dp             &
+       & + 7._dp * r3 / 120._dp                                    &
+       & - Pi * Sqrt(r) * (4._dp - 1.5_dp * r + 3._dp * r2/32._dp  &
+       &                  + r3/256._dp)                             &
+       & - Pi2 * (2._dp - 2._dp * r + 0.5_dp * r2)                 &
+       & - Log(r) * (3._dp * r - 0.5_dp * r2)
+  End  Function rho_2
+
+  Subroutine Yukawas(mf, vev, uL, uR, SigS, SigL, SigR, Y)
+  !--------------------------------------------------------
+  ! solves the matrix equation for Y by a transformation to
+  ! a linear system of 9 equations in 9 unknowns
+  ! written by Werner Porod, 19.03.03
+  !--------------------------------------------------------
+  Implicit None
+   Real(dp), Intent(in) :: mf(3), vev
+   Complex(dp), Dimension(3,3), Intent(in) :: uL, uR, SigS, SigL, SigR
+   Complex(dp), Intent(inout) :: Y(3,3)
+
+   Integer :: i1
+   Complex(dp), Dimension(3,3) :: mass, uLa, uRa
+
+   !-------------------------------------
+   ! first the mass matrix in DR scheme
+   !-------------------------------------
+   Call Adjungate(uL, uLa)
+   Call Adjungate(uR, uRa)
+   mass = ZeroC
+   Do i1=1,3
+    mass(i1,i1) = mf(i1)
+   End Do
+   mass = Matmul( Transpose(uL), Matmul(mass, uR) )
+   !----------------------------------------
+   ! setting up the equations
+   !----------------------------------------
+   Y = Y * vev * oosqrt2
+
+   Y = mass + SigS + Matmul(Transpose(SigL),Y) + Matmul(Y,SigR)
+
+   Y = sqrt2 * Y / vev
+
+   Call chop(y)
+
+  End Subroutine Yukawas
+
+ End Subroutine BoundarySM
+
+  Subroutine Boundary_SUSY(Q, gi_SM, Yl_SM_in, Yd_SM_in, Yu_SM_in, tanb, Mi   &
+     & , mu ,M2_E_in, M2_L_in, Tl_in, M2_D_in, M2_Q_in, M2_U_in, Td_in, Tu_in &
+     & , M2_H, B, gi, Yl, Yd, Yu, kont, GenerationMixing, vev)
+  !-------------------------------------------------
+  ! calculates the shift from SM gauge and Yukawa couplings to their
+  ! SUSY counterparts
+  ! written by Werner Porod, 02.11.2015
+  ! 16.02.2017: adding shift to super CKM basis
+  !-------------------------------------------------
+  Implicit None
+   Real(dp), Intent(in) :: Q, gi_SM(3), tanb, M2_H(2), vev
+   Complex(dp), Intent(in) :: Mi(3), mu, B
+   Complex(dp), Intent(in), Dimension(3,3) :: Yl_SM_in, Yd_SM_in, Yu_SM_in &
+     & , M2_E_in, M2_L_in, M2_D_in, M2_Q_in, M2_U_in, Tl_in, Td_in, Tu_in
+   Logical, Intent(in) :: GenerationMixing
+
+   ! output variables
+   Integer, Intent(inout) :: kont
+   Real(dp), Intent(out) :: gi(3)
+   Complex(dp), Intent(out), Dimension(3,3) :: Yl, Yd, Yu
+   !local variables
+   Integer :: i1, i2, i3, i4
+   Real(dp) :: cosb, sinb, Q2, m_b, m_b2, m_w, m_w2, m_g, m_g2 &
+     & , m_Hino, m_Hino2, mH2, C0m, gi2_SM(3), gi2(3), cos2b, vev2
+   Real(dp), Dimension(3) :: mSe, mSe2, mSl, mSl2, mSd, mSd2, mSu, mSu2 &
+     & , mSq, mSq2, Dalpha, Yi
+   Complex(dp) :: muC, cR, phi, fakt
+   Complex(dp), Dimension(3,3) :: RSe, RSl, RSd, RSu, RSq, dYu_hol, dYu_ahol &
+     & , dYd_hol, dYd_ahol, dYl_hol, dYl_ahol, V0, Yl_SM, Yd_SM, Yu_SM, M2_E &
+     & , M2_L, Tl, M2_D, M2_Q, M2_U, Td, Tu, uU_L, uU_R, uD_L, uD_R, uL_L    &
+     & , uL_R, V0RSq
+   Complex(dp) :: cHSeSl(2,3,3), cHSdSq(2,3,3),cHSuSq(2,3,3)
+   Real(dp), Save :: gi_s(3)=0._dp
+   Complex(dp), Save :: Yu_s(3,3)=ZeroC
+
+   Iname = Iname + 1
+   NameOfUnit(Iname) = "Boundary_SUSY"
+   !------------------------------------
+   ! some initialisation
+   !------------------------------------
+   cosb = 1._dp / Sqrt(1._dp + tanb**2)
+   sinb = cosb * tanb
+   Q2 = Q**2 ! square of the scale where parameters are defined
+   if (gi_s(1).eq.0._dp) gi_s = gi_SM
+   If (Yu_s(3,3).Eq.ZeroC) Yu_s = Yu_SM_in
+   !--------------------------------------------
+   ! SUSY masses in the SU(2)_L x U(1)_Y limit
+   !--------------------------------------------
+   ! fermions
+   !----------
+   m_b = Abs(Mi(1)) ! mass of the bino
+   m_b2 = m_b**2
+   m_w = Abs(Mi(2)) ! mass of the winos
+   m_w2 = m_w**2
+   m_g = Abs(Mi(3)) ! mass of the gluino
+   m_g2 = m_g**2
+   m_Hino = Abs(mu) ! mass of the higgsino
+   m_Hino2 = m_Hino**2
+   !-------------
+   ! scalars
+   !-------------
+    cos2b = (1._dp - tanb**2) / (1._dp + tanb**2)
+    vev2 = 0.125_dp * (gi_s(1)*vev)**2 * cos2b
+    If (GenerationMixing) Then
+     !sleptons 
+     Call Switch_to_superPMNS(Yl_SM_in, id3C, Tl_in, M2_E_in, M2_L_in &
+          & , Tl, M2_E, M2_L, .False.)
+     Call SfermionMasses(M2_L , mSl , mSl2 , RSl , kont)
+     Call SfermionMasses(M2_E , mSe , mSe2 , RSe , kont)
+     Call FermionMass(Yl_SM_in, sqrt2, Yi, uL_L, uL_R, kont)
+     Yl_SM = 0._dp
+     Forall(i1=1:3) Yl_SM(i1,i1) =  Yi(i1)
+     !Squarks
+     Call Switch_to_superCKM(Yd_SM_in, Yu_SM_in, Td_in, Tu_in, M2_D_in &
+           & , M2_Q_in, M2_U_in, Td, Tu, M2_D, M2_Q, M2_U, .False., CKM_out=V0)
+     Call SfermionMasses(M2_D , mSd , mSd2 , RSd , kont)
+     Call SfermionMasses(M2_U , mSu , mSu2 , RSu , kont)
+     Call SfermionMasses(M2_Q , mSq , mSq2 , RSq , kont)
+     V0RSq = Matmul(V0,RSq)
+     Call FermionMass(Yu_SM_in, sqrt2, Yi, uU_L, uU_R, kont)
+     Yu_SM = 0._dp
+     Forall(i1=1:3) Yu_SM(i1,i1) =  Yi(i1)
+     Call FermionMass(Yd_SM_in, sqrt2, Yi, uD_L, uD_R, kont)
+     Yd_SM = 0._dp
+     Forall(i1=1:3) Yd_SM(i1,i1) =  Yi(i1)
+
+    Else ! no generation mixing
+     Do i1=1,3
+      mSl2(i1) = Real(M2_L_in(i1,i1),dp) + vev2 
+      mSe2(i1) = Real(M2_E_in(i1,i1),dp) - 2._dp * vev2
+      mSd2(i1) = Real(M2_D_in(i1,i1),dp) - 2._dp * vev2 / 3._dp
+      mSu2(i1) = Real(M2_U_in(i1,i1),dp) + 4._dp * vev2 / 3._dp
+      mSq2(i1) = Real(M2_Q_in(i1,i1),dp) - vev2 / 3._dp
+     End Do
+     mSu2(3) = mSu2(3) + 0.5_dp * Abs(Yu_s(3,3)*vev*sinb)**2
+     mSq2(3) = mSq2(3) + 0.5_dp * Abs(Yu_s(3,3)*vev*sinb)**2
+     RSl = id3C
+     RSe = id3C
+     RSd = id3C
+     RSu = id3C
+     RSq = id3C
+     V0RSq = id3C
+     Yu_SM = Yu_SM_in
+     Yd_SM = Yd_SM_in
+     Yl_SM = Yl_SM_in
+     Tu = Tu_in
+     Td = Td_in
+     Tl = Tl_in
+    End If
+    ! heavy Higgs doublet
+    mH2 = 0.5_dp * ( M2_H(1) + M2_H(2) + 2*Abs(mu)**2 &
+        &          + Sqrt( (M2_H(1)-M2_H(2))**2 + 4 * Abs(B)**2) ) &
+        & + vev2 ! this works better in case 
+                 ! of low energy spectra
+                 ! as this catches the D-Term contribution
+
+    If (mH2.Lt.0._dp) then
+     kont = -1234  ! need new number
+     Write(ErrCan,*) "Problem in routine Boundary_SUSY"
+     Write(ErrCan,*) "Heavy Higgs boson is tachyonic, m_H^2=",mH2
+    End If
+    If (kont.Ne.0) Then
+     Iname = Iname - 1
+     Return
+    End If
+   !----------------------------------------------------------
+   ! thresholds to gauge couplings, including shift to DRbar
+   !----------------------------------------------------------
+   Dalpha(1) = Sum(Log(mSl2/Q2)) / 12._dp + Sum(Log(mSe2/Q2)) / 6._dp   &
+           & + Sum(Log(mSq2/Q2)) / 36._dp + Sum(Log(mSd2/Q2)) / 18._dp  &
+           & + 2._dp * Sum(Log(mSu2/Q2)) / 9._dp + Log(mH2/Q2) / 12._dp &
+           & + Log(m_Hino2/Q2) / 3._dp
+
+   Dalpha(2) = Sum(Log(mSl2/Q2)) / 12._dp + Sum(Log(mSq2/Q2)) / 4._dp &
+           & + Log(mH2/Q2) / 12._dp + 2._dp * Log(m_W2/Q2) / 3._dp    &
+           & + Log(m_Hino2/Q2) / 3._dp - 1._dp/3._dp
+
+   Dalpha(3) = Sum(Log(mSq2/Q2)) / 6._dp + Sum(Log(mSd2/Q2)) / 12._dp  &
+           & + Sum(Log(mSu2/Q2)) / 12._dp + Log(m_g2/Q2) - 0.5_dp
+
+   gi2_SM =  gi_SM**2
+   gi2 = gi2_SM / (1._dp + oo8pi2 * Dalpha * gi2_SM)
+   gi = Sqrt(gi2) 
+ 
+   !------------------------------------
+   ! thresholds to Yukawa couplings  
+   !------------------------------------
+   Yl = Yl_SM / cosb  ! tree-level part
+   Yd = Yd_SM / cosb  ! strictly speaking I should substract here the SM part
+   Yu = Yu_SM / sinb  ! but this is effectively a 2-loop effect
+   !------------------------------------
+   ! shift to DRbar
+   !------------------------------------
+   Yl = Yl * (1._dp - 3._dp * (gi2(1) - gi2(2)) /(128._dp * Pi2) )
+   Yd = Yd *  (1._dp - gi2(3) / (12._dp*pi2)                         &
+         &           - 43._dp * gi(3)**4 * oo16Pi2 / (144._dp * Pi2 ) &
+         &           + oo8pi2 * 3._dp * gi2(2) / 16._dp              &
+         &           - oo8pi2 * 13._dp * gi2(1) / 144._dp  )
+   Yu = Yu *  (1._dp - gi2(3) / (12._dp*pi2)                  &
+         &           - 43._dp * gi(3)**4 * oo16Pi2 / (144._dp * Pi2 ) &
+         &           + oo8pi2 * 3._dp * gi2(2) / 16._dp              &
+         &           - oo8pi2 * 7._dp * gi2(1) / 144._dp  )
+
+   dYu_hol = 0._dp
+   dYu_ahol = 0._dp
+   dYd_hol = 0._dp
+   dYd_ahol = 0._dp
+   dYl_hol = 0._dp
+   dYl_ahol = 0._dp
+
+   muC = Conjg(mu)
+
+   cHSeSl = 0._dp
+   cHSdSq = 0._dp
+   cHSuSq = 0._dp
+   If (GenerationMixing) Then
+    Do i1=1,3
+     Do i2=1,3
+      Do i3=1,3
+       cHSeSl(2,i1,i2) = cHSeSl(2,i1,i2) &
+                     & + Yl(i3,i3) * RSe(i1,i3) * Conjg( RSl(i2,i3) )
+       cHSdSq(2,i1,i2) = cHSdSq(2,i1,i2) &
+                     & + Yd(i3,i3) * RSd(i1,i3) * Conjg( RSq(i2,i3) )
+       cHSuSq(1,i1,i2) = cHSuSq(1,i1,i2) &
+                     & + Yu(i3,i3) * RSu(i1,i3) * Conjg( V0RSq(i2,i3) )
+       Do i4=1,3
+        cHSeSl(1,i1,i2) = cHSeSl(1,i1,i2) &
+                      & + Tl(i4,i3) * RSe(i1,i4) * Conjg( RSl(i2,i3) )
+        cHSdSq(1,i1,i2) = cHSdSq(1,i1,i2) &
+                      & + Td(i4,i3) * RSd(i1,i4) * Conjg( RSq(i2,i3) )
+        cHSuSq(2,i1,i2) = cHSuSq(2,i1,i2) &
+                      & + Tu(i4,i3) * RSu(i1,i4) * Conjg( V0RSq(i2,i3) )  
+       End Do
+      End Do
+     End Do
+    End Do
+    cHSeSl(2,:,:) = muC * cHSeSl(2,:,:)
+    cHSdSq(2,:,:) = muC * cHSdSq(2,:,:)
+    cHSuSq(1,:,:) = muC * cHSuSq(1,:,:)
+   End If
+   !------------------------------------
+   ! gluino contributions
+   !------------------------------------
+   phi = Mi(3) / Abs(Mi(3))
+   fakt = -gi(3)**2 * Conjg(phi) * 8._dp * m_g / 3._dp
+   If (GenerationMixing) Then
+    Do i1=1,3
+     Do i2=1,3
+      Do i3=1,3
+       Do i4=1,3
+        cR = fakt * V0RSq(i2,i3) * Conjg(RSu(i1,i4))
+        C0m = C0_3m(m_g2, mSu2(i4), mSq2(i3))
+        dYu_hol(i1,i2) = dYu_hol(i1,i2) - cHSuSq(2,i4,i3) * cR * C0m 
+        dYu_ahol(i1,i2) = dYu_ahol(i1,i2) + cHSuSq(1,i4,i3) * cR * C0m 
+
+        cR = fakt * RSq(i2,i3) * Conjg(RSd(i1,i4))
+        C0m = C0_3m(m_g2, mSd2(i4), mSq2(i3))
+        dYd_hol(i1,i2) = dYd_hol(i1,i2) - cHSdSq(1,i4,i3) * cR * C0m 
+        dYd_ahol(i1,i2) = dYd_ahol(i1,i2) + cHSdSq(2,i4,i3) * cR * C0m 
+       End Do
+      End Do
+     End Do
+    End Do
+
+   Else
+    ! product of the gluino couplings to L- and R-squarks
+    cR = - 8._dp * m_g * gi(3)**2 * Conjg(phi)/ 3._dp
+    Do i1=1,3
+     C0m = C0_3m(m_g2, mSu2(i1), mSq2(i1))
+     dYu_hol(i1,i1) = - Tu(i1,i1) * cR * C0m 
+     dYu_ahol(i1,i1) = muC * Yu(i1,i1) * cR * C0m
+
+     C0m = C0_3m(m_g2, mSd2(i1), mSq2(i1))
+     dYd_hol(i1,i1) = - Td(i1,i1) * cR * C0m
+     dYd_ahol(i1,i1) = muC * Yd(i1,i1) * cR * C0m
+    End Do
+   End If
+
+   !------------------------------------
+   ! single bino contributions
+   !------------------------------------
+   phi = Mi(1) / Abs(Mi(1))
+   fakt = -2._dp * gi(1)**2 * Conjg(phi) * m_b 
+   If (GenerationMixing) Then
+    Do i1=1,3
+     Do i2=1,3
+      Do i3=1,3
+       Do i4=1,3
+        cR = fakt * V0RSq(i2,i3) * Conjg(RSu(i1,i4)) / 9._dp
+        C0m = C0_3m(m_b2, mSu2(i4), mSq2(i3))
+        dYu_hol(i1,i2) = dYu_hol(i1,i2) - cHSuSq(2,i4,i3) * cR * C0m 
+        dYu_ahol(i1,i2) = dYu_ahol(i1,i2) + cHSuSq(1,i4,i3) * cR * C0m 
+
+        cR = - fakt * RSq(i2,i3) * Conjg(RSd(i1,i4)) / 18._dp
+        C0m = C0_3m(m_b2, mSd2(i4), mSq2(i3))
+        dYd_hol(i1,i2) = dYd_hol(i1,i2) - cHSdSq(1,i4,i3) * cR * C0m 
+        dYd_ahol(i1,i2) = dYd_ahol(i1,i2) + cHSdSq(2,i4,i3) * cR * C0m 
+
+        cR = - fakt * RSl(i2,i3) * Conjg(RSe(i1,i4)) / 2._dp
+        C0m = C0_3m(m_b2, mSe2(i4), mSl2(i3))
+        dYl_hol(i1,i2) = dYl_hol(i1,i2) - cHSeSl(1,i4,i3) * cR * C0m 
+        dYl_ahol(i1,i2) = dYl_ahol(i1,i2) + cHSeSl(2,i4,i3) * cR * C0m 
+       End Do
+      End Do
+     End Do
+    End Do
+
+   Else
+    cR = - 2._dp * m_b * gi(2)**2 * Conjg(phi)
+    Do i1=1,3
+     C0m = C0_3m(m_b2, mSu2(i1), mSq2(i1)) / 9._dp
+     dYu_hol(i1,i1) = dYu_hol(i1,i1) - Tu(i1,i1) * cR * C0m 
+     dYu_ahol(i1,i1) = dYu_ahol(i1,i1) + muC * Yu(i1,i1) * cR * C0m
+
+     C0m = - C0_3m(m_b2, mSd2(i1), mSq2(i1)) / 18._dp
+     dYd_hol(i1,i1) = dYd_hol(i1,i1) - Td(i1,i1) * cR * C0m
+     dYd_ahol(i1,i1) = dYd_ahol(i1,i1) + muC * Yd(i1,i1) * cR * C0m
+
+     C0m =  C0_3m(m_b2, mSe2(i1), mSl2(i1)) / 2._dp
+     dYl_hol(i1,i1) = dYl_hol(i1,i1) - Tl(i1,i1) * cR * C0m
+     dYl_ahol(i1,i1) = dYl_ahol(i1,i1) + muC * Yl(i1,i1) * cR * C0m
+    End Do
+   End If
+
+   !------------------------------------------------
+   ! single higgsino contributions, ~Hd and ~Hu mix
+   !----------------------------------------------
+   phi = mu / Abs(mu)
+   fakt = - Conjg(phi) * m_Hino
+   If (GenerationMixing) Then
+    Do i1=1,3
+     Do i2=1,3
+      Do i3=1,3
+       Do i4=1,3
+        cR = fakt * Yd(i2,i2) * Yu(i1,i1) * RSd(i2,i3) * Conjg(V0RSq(i1,i4))
+        C0m = C0_3m(m_Hino2, mSd2(i3), mSq2(i4))
+        dYu_hol(i1,i2) = dYu_hol(i1,i2) - Conjg(cHSdSq(2,i3,i4)) * cR * C0m 
+        dYu_ahol(i1,i2) = dYu_ahol(i1,i2) + Conjg(cHSdSq(1,i3,i4)) * cR * C0m
+
+        cR = fakt * Yu(i2,i2) * Yd(i1,i1) * RSu(i2,i3) * Conjg(RSq(i1,i4))
+        C0m = C0_3m(m_Hino2, mSu2(i3), mSq2(i4))
+        dYd_hol(i1,i2) = dYd_hol(i1,i2) - Conjg(cHSuSq(1,i3,i4)) * cR * C0m 
+        dYd_ahol(i1,i2) = dYd_ahol(i1,i2) + Conjg(cHSuSq(2,i3,i4)) * cR * C0m 
+
+       End Do
+      End Do
+     End Do
+    End Do
+
+   Else
+    cR = m_Hino * Conjg(phi)
+    Do i1=1,3
+     C0m = Y_u(i1,i1) * Y_d(i1,i1) * C0_3m(m_Hino2, mSd2(i1), mSq2(i1))
+     dYu_hol(i1,i1) = dYu_hol(i1,i1) + mu * Conjg(Yd(i1,i1)) * cR * C0m 
+     dYu_ahol(i1,i1) = dYu_ahol(i1,i1) - Conjg(Td(i1,i1)) * cR * C0m
+
+     C0m = Y_u(i1,i1) * Y_d(i1,i1) * C0_3m(m_Hino2, mSu2(i1), mSq2(i1))
+     dYd_hol(i1,i1) = dYd_hol(i1,i1) + mu * Conjg(Yu(i1,i1)) * cR * C0m
+     dYd_ahol(i1,i1) = dYd_ahol(i1,i1) - Conjg(Tu(i1,i1)) * cR * C0m
+
+    End Do
+   End If
+
+   !------------------------------------
+   ! mixed wino/higgsino contributions
+   !------------------------------------
+   phi = mu * mi(2) / Abs(mu*mi(2))
+   fakt = 0.75_dp * gi(2)**2 * Conjg(phi)
+   If (GenerationMixing) Then
+    Do i1=1,3
+     Do i2=1,3
+      Do i3=1,3
+       cR = fakt * Yu(i1,i1) * RSq(i2,i3) * Conjg(V0RSq(i1,i3))
+       C0m = C_2(m_Hino2, m_w2, mSq2(i3))
+       dYu_hol(i1,i2) = dYu_hol(i1,i2) - cR * C0m 
+       cR = fakt * Yd(i1,i1) * RSq(i2,i3) * Conjg(RSq(i1,i3))
+       dYd_hol(i1,i2) = dYd_hol(i1,i2) - cR * C0m 
+
+       C0m = m_w * m_Hino * C0_3m(m_Hino2, m_w2, mSq2(i3))
+       cR = fakt * Yu(i1,i1) * RSq(i2,i3) * Conjg(V0RSq(i1,i3))
+       dYu_ahol(i1,i2) = dYu_ahol(i1,i2) + cR * C0m 
+       cR = fakt * Yd(i1,i1) * RSq(i2,i3) * Conjg(RSq(i1,i3))
+       dYd_ahol(i1,i2) = dYd_ahol(i1,i2) + cR * C0m 
+
+       cR = fakt * Yl(i1,i1) * RSl(i2,i3) * Conjg(RSl(i1,i3))
+       C0m = C_2(m_Hino2, m_w2, mSl2(i3))
+       dYl_hol(i1,i2) = dYl_hol(i1,i2) - cR * C0m
+       C0m = m_w * m_Hino * C0_3m(m_Hino2, m_w2, mSl2(i3))
+       dYl_ahol(i1,i2) = dYl_ahol(i1,i2) + cR * C0m
+      End Do
+     End Do
+    End Do
+
+   Else
+    Do i1=1,3
+     cR = fakt * Yu(i1,i1)
+     C0m = C_2(m_Hino2, m_w2, mSq2(i1))
+     dYu_hol(i1,i1) = dYu_hol(i1,i1) - cR * C0m 
+     cR = fakt * Yd(i1,i1)
+     dYd_hol(i1,i1) = dYd_hol(i1,i1) - cR * C0m 
+
+     C0m = m_w * m_Hino * C0_3m(m_Hino2, m_w2, mSq2(i1))
+     cR = fakt * Yu(i1,i1)
+     dYu_ahol(i1,i1) = dYu_ahol(i1,i1) + cR * C0m 
+     cR = fakt * Yd(i1,i1)
+     dYd_ahol(i1,i1) = dYd_ahol(i1,i1) + cR * C0m 
+
+     cR = fakt * Yl(i1,i1)
+     C0m = C_2(m_Hino2, m_w2, mSl2(i1))
+     dYl_hol(i1,i1) = dYl_hol(i1,i1) - cR * C0m
+     C0m = m_w * m_Hino * C0_3m(m_Hino2, m_w2, mSl2(i1)) 
+     dYl_ahol(i1,i1) = dYl_ahol(i1,i1) + cR * C0m
+    End Do
+   End If
+
+   !------------------------------------
+   ! mixed bino/higgsino contributions
+   !------------------------------------
+   phi = mu * mi(1) / Abs(mu*mi(1))
+   fakt = gi(1)**2 * Conjg(phi)
+   If (GenerationMixing) Then
+    Do i1=1,3
+     Do i2=1,3
+      Do i3=1,3
+       ! L-squarks
+       cR = fakt * Yu(i1,i1) * RSq(i2,i3) * Conjg(V0RSq(i1,i3)) / 6._dp
+       C0m = C_2(m_Hino2, m_b2, mSq2(i3))
+       dYu_hol(i1,i2) = dYu_hol(i1,i2) - cR * C0m 
+       cR = fakt * Yd(i1,i1) * RSq(i2,i3) * Conjg(RSq(i1,i3)) / 6._dp 
+       dYd_hol(i1,i2) = dYd_hol(i1,i2) + cR * C0m 
+
+       cR = fakt * Yu(i1,i1) * RSq(i2,i3) * Conjg(V0RSq(i1,i3)) / 6._dp 
+       C0m = C_2(m_Hino2, m_b2, mSq2(i3))
+       dYu_ahol(i1,i2) = dYu_ahol(i1,i2) - cR * C0m 
+       cR = fakt * Yd(i1,i1) * RSq(i2,i3) * Conjg(RSq(i1,i3)) / 6._dp 
+       dYd_ahol(i1,i2) = dYd_ahol(i1,i2) + cR * C0m 
+
+       ! R-squarks
+       cR = 2._dp * fakt * Yu(i1,i1) * RSu(i2,i3) * Conjg(RSu(i1,i3)) / 3._dp
+       C0m = C_2(m_Hino2, m_b2, mSu2(i3))
+       dYu_hol(i1,i2) = dYu_hol(i1,i2) - cR * C0m 
+       C0m = m_b * m_Hino * C0_3m(m_Hino2, m_b2, mSu2(i3)) 
+       dYu_ahol(i1,i2) = dYu_ahol(i1,i2) + cR * C0m 
+
+       cR = - fakt * Yd(i1,i1) * RSd(i2,i3) * Conjg(RSd(i1,i3)) / 3._dp 
+       C0m = C_2(m_Hino2, m_b2, mSd2(i3))
+       dYd_hol(i1,i2) = dYd_hol(i1,i2) - cR * C0m 
+       C0m = m_b * m_Hino * C0_3m(m_Hino2, m_b2, mSd2(i3))
+       dYd_ahol(i1,i2) = dYd_ahol(i1,i2) + cR * C0m 
+
+       ! L-sleptons
+       cR = -0.5_dp * fakt * Yl(i1,i1) * RSl(i2,i3) * Conjg(RSl(i1,i3))
+       C0m = C_2(m_Hino2, m_b2, mSl2(i3))
+       dYl_hol(i1,i2) = dYl_hol(i1,i2) - cR * C0m
+       C0m = m_b * m_Hino * C0_3m(m_Hino2, m_b2, mSl2(i3)) 
+       dYl_ahol(i1,i2) = dYl_ahol(i1,i2) + cR * C0m
+
+       ! R-sleptons
+       cR = fakt * Yl(i1,i1) * RSe(i2,i3) * Conjg(RSe(i1,i3))
+       C0m = C_2(m_Hino2, m_b2, mSe2(i3))
+       dYl_hol(i1,i2) = dYl_hol(i1,i2) - cR * C0m
+       C0m = m_b * m_Hino * C0_3m(m_Hino2, m_b2, mSe2(i3))
+       dYl_hol(i1,i2) = dYl_hol(i1,i2) + cR * C0m
+      End Do
+     End Do
+    End Do
+
+   Else
+    Do i1=1,3
+     ! L-squarks
+     cR = fakt * Yu(i1,i1) / 6._dp
+     C0m = C_2(m_Hino2, m_b2, mSq2(i1))
+     dYu_hol(i1,i1) = dYu_hol(i1,i1) - cR * C0m 
+     cR = fakt * Yd(i1,i1) / 6._dp 
+     dYd_hol(i1,i1) = dYd_hol(i1,i1) + cR * C0m 
+
+     C0m = m_b * m_Hino * C0_3m(m_Hino2, m_b2, mSq2(i1))
+     cR = fakt * Yu(i1,i1) / 6._dp
+     dYu_ahol(i1,i1) = dYu_ahol(i1,i1) - cR * C0m 
+     cR = fakt * Yd(i1,i1) / 6._dp 
+     dYd_ahol(i1,i1) = dYd_ahol(i1,i1) + cR * C0m 
+
+     ! R-squarks
+     cR = 2._dp * fakt * Yu(i1,i1) / 3._dp
+     C0m = C_2(m_Hino2, m_b2, mSu2(i1))
+     dYu_hol(i1,i1) = dYu_hol(i1,i1) - cR * C0m 
+     C0m = m_b * m_Hino * C0_3m(m_Hino2, m_b2, mSu2(i1))
+     dYu_ahol(i1,i1) = dYu_ahol(i1,i1) + cR * C0m 
+
+     cR = -fakt * Yd(i1,i1) / 3._dp 
+     C0m = C_2(m_Hino2, m_b2, mSd2(i1))
+     dYd_hol(i1,i1) = dYd_hol(i1,i1) - cR * C0m 
+     C0m = m_b * m_Hino * C0_3m(m_Hino2, m_b2, mSd2(i1)) 
+     dYd_ahol(i1,i1) = dYd_ahol(i1,i1) + cR * C0m 
+
+     ! L-sleptons
+     cR = -0.5_dp * fakt * Yl(i1,i1)
+     C0m = C_2(m_Hino2, m_b2, mSl2(i1))
+     dYl_hol(i1,i1) = dYl_hol(i1,i1) - cR * C0m
+     C0m = m_b * m_Hino * C0_3m(m_Hino2, m_b2, mSl2(i1))
+     dYl_ahol(i1,i1) = dYl_ahol(i1,i1) + cR * C0m
+
+     ! R-sleptons
+     cR =  fakt * Yl(i1,i1)
+     C0m = C_2(m_Hino2, m_b2, mSe2(i1))
+     dYl_hol(i1,i1) = dYl_hol(i1,i1) - cR * C0m
+     C0m = m_b * m_Hino * C0_3m(m_Hino2, m_b2, mSe2(i1))
+     dYl_ahol(i1,i1) = dYl_ahol(i1,i1) + cR * C0m
+    End Do
+   End If
+
+   !----------------------------------------------------------------------------
+   ! double Higgs contributions vanishes in the limit that the internal fermions
+   ! are massless; in case of single Higgs contribution only the C_2 part
+   ! contributes, as m^2_f C0(m^2_f, m_h^2, m_H^2) -> 0 for m_f -> 0
+   !----------------------------------------------------------------------------
+   C0m = C_2(0._dp, 0._dp, mH2)
+   fakt = cosb**2
+   ! u-quarks
+   Do i1=1,3
+     cR = Yu(i1,i1)**3 * fakt !* cosb
+     dYu_hol(i1,i1) = dYu_hol(i1,i1) + cR * C0m
+   End Do
+
+   fakt = 1._dp - fakt ! exchanging the role of up-type and down-type fermions
+   Do i1=1,3
+     ! d-quarks
+     cR = Yd(i1,i1)**3 * fakt !* sinb
+     dYd_hol(i1,i1) = dYd_hol(i1,i1) + cR * C0m
+
+     ! leptons
+     cR = Yl(i1,i1)**3 * fakt !* sinb
+     dYl_hol(i1,i1) = dYl_hol(i1,i1) + cR * C0m
+   End Do
+   !-----------------------------------
+   ! adding missing 1/(16 pi^2) factor
+   !-----------------------------------
+   dYl_hol  = oo16Pi2 * dYl_hol 
+   dYl_ahol = oo16Pi2 * dYl_ahol 
+   dYd_hol  = oo16Pi2 * dYd_hol 
+   dYd_ahol = oo16Pi2 * dYd_ahol 
+   dYu_hol  = oo16Pi2 * dYu_hol 
+   dYu_ahol = oo16Pi2 * dYu_ahol 
+
+   !---------------------------------------------
+   ! resummation
+   !---------------------------------------------
+   ! Yl = (Yl_SM - dYl_ahol*sinb) / cosb - dYl_hol ! not resummed
+   Do i1=1,3
+    Yl(i1,i1) = Yl_SM(i1,i1) / ( 1 + dYl_ahol(i1,i1)*sinb /Yl_SM(i1,i1)) / cosb &
+               & - dYl_hol(i1,i1)
+    If ( (Abs(Yl(i1,i1)*cosb/Yl_SM(i1,i1)).Lt.0.5_dp) &
+       & .or.(Abs(Yl(i1,i1)*cosb/Yl_SM(i1,i1)).Gt.2._dp) ) then 
+     Iname = Iname - 1  ! more than 100% loop corrections
+     kont = -421
+     Call AddError(421)
+     Return
+    end if 
+    Do i2=1,3
+     If (i1.Ne.i2) Then
+      Yl(i1,i2) = (Yl_SM(i1,i2) - dYl_ahol(i1,i2)*sinb) / cosb - dYl_hol(i1,i2)
+     End If
+    End Do
+   End Do
+   !---------------------------------------------
+   ! resummation
+   !---------------------------------------------
+   ! Yd = (Yd_SM - dYd_ahol*sinb) / cosb - dYd_hol ! not resummed
+   Do i1=1,3
+    Yd(i1,i1) = Yd_SM(i1,i1) / ( 1 + dYd_ahol(i1,i1)*sinb /Yd_SM(i1,i1)) / cosb &
+              & - dYd_hol(i1,i1)
+    If ( (Abs(Yd(i1,i1)*cosb/Yd_SM(i1,i1)).Lt.0.5_dp) &
+       & .or.(Abs(Yd(i1,i1)*cosb/Yd_SM(i1,i1)).Gt.2._dp) ) then 
+     Iname = Iname - 1  ! more than 100% loop corrections
+     kont = -421
+     Call AddError(421)
+     Return
+    end if 
+    Do i2=1,3
+     If (i1.Ne.i2) Then
+      Yd(i1,i2) = (Yd_SM(i1,i2) - dYd_ahol(i1,i2)*sinb) / cosb - dYd_hol(i1,i2)
+     End If
+    End Do
+   End Do
+
+   Yu = (Yu_SM - dYu_ahol*cosb) / sinb - dYu_hol
+   Do i1=1,3
+    If ( (Abs(Yu(i1,i1)*sinb/Yu_SM(i1,i1)).Lt.0.5_dp) &
+       & .or.(Abs(Yu(i1,i1)*sinb/Yu_SM(i1,i1)).Gt.2._dp) ) then 
+     Iname = Iname - 1  ! more than 100% loop corrections
+     kont = -421
+     Call AddError(421)
+     Return
+    end if 
+   End Do
+
+   !----------------------------------------------------------------
+   ! in case of Generationmixig, I need to rotate back from super CKM
+   ! and super PMNS basis, respectively
+   !----------------------------------------------------------------
+   If (GenerationMixing) then
+    dYu_hol = Yu
+    Yu = Matmul(Matmul(Transpose(uU_L),dYu_hol),uU_R)
+    dYd_hol = Yd
+    Yd = Matmul(Matmul(Transpose(uD_L),dYd_hol),uD_R)
+    dYl_hol = Yl
+    Yl = Matmul(Matmul(Transpose(uL_L),dYl_hol),uL_R)
+   End If
+   Yu_s = Yu
+   gi_s = gi
+    
+   Iname = Iname - 1
+
+  Contains
+
+   Subroutine SfermionMasses(M2in, mSf, mSf2, Rsf, kont)
+    Implicit None
+    Complex(dp), Intent(in) :: M2in(3,3)
+    Complex(dp), Intent(out) :: Rsf(3,3)
+    Real(dp), Intent(out) :: mSf(3), mSf2(3)
+    Integer, Intent(inout) :: kont
+
+    Real(dp) :: test(2)
+    Integer :: i1
+
+    Iname = Iname + 1
+    NameOfUnit(Iname) = "SfermionMasses"
+
+    kont = 0
+    Call ComplexEigenSystem(M2in, mSf2, Rsf, kont, test)
+
+    If (kont.Eq.-14) Then
+     Write(ErrCan,*) "Possible numerical problem in "//NameOfUnit(Iname)
+     Write(ErrCan,*) "test =",test
+     Write(ErrCan,*) " "
+     If (ErrorLevel.Eq.2) Call TerminateProgram
+     kont = 0
+    End If
+
+    If (kont.Ne.0) Then
+     Write (ErrCan,*) 'Problems with the diagonalization of sneutrinos'
+     Write (ErrCan,*) 'in routine ',NameOfUnit(Iname),' kont = ',kont
+    Else
+     Do i1=1,3
+      If (mSf2(i1).Ge.0._dp) Then
+       mSf(i1) = Sqrt( mSf2(i1) )
+      Else
+       If (ErrorLevel.Ge.0) Then
+        Write (ErrCan,*) 'Warning from ',NameOfUnit(Iname),' mSf2 ',i1
+        Write (ErrCan,*) '< 0, : ',mSf2(i1),'is set to its modulus '
+       End If
+       mSf2(i1) = Abs(mSf2(i1))
+       mSf(i1) = Sqrt( mSf2(i1) )
+       kont = -233
+       Call AddError(233)
+       If (ErrorLevel.Eq.2) Call TerminateProgram
+      End If
+     Enddo
+    End If
+
+    Iname = Iname - 1
+
+   End Subroutine SfermionMasses
+ 
+  End Subroutine Boundary_SUSY
+
+
+ Subroutine Sugra_SM_decoupling(delta, vevSM, mC, U, V, mN, N, mS0, mS02, RS0 &
+    & , mP0, mP02,RP0, mSpm, mSpm2, RSpm, mDsquark, mDsquark2, RDsquark       &
+    & , mUsquark, mUsquark2, RUsquark, mSlepton, mSlepton2, RSlepton          &
+    & , mSneutrino, mSneutrino2 , RSneutrino, mGlu, phase_glu, gauge          &
+    & , uL_L, uL_R, uD_L, uD_R, uU_L , uU_R, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+    & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, lamR, mGUT                 &
+    & , kont, WriteComment, niter)
+ !-----------------------------------------------------------------------
+ ! Computes RGE's of the the SUSY parameters
+ ! Uses Runge-Kutta method to integrate RGE's from M_Z to M_GUT
+ ! and back, putting in correct thresholds. For the first iteration
+ ! only the first 6 couplings are included and a common threshold
+ ! is used.
+ ! written by Werner Porod, 4.8.1999
+ ! 24.09.01: portation to f90
+ !           taking masses as input to see whether situation improves
+ !           in principal they can be zero, but this in general requires
+ !           one additional run. therefore a good educated guess is
+ !           useful. The parameters might be generated with the help
+ !           of the routine FirstGuess which are then plugged into
+ !           TreeMasses
+ !         - Contrary to the old version I put now the calculation of the
+ !           tree level masses to the routine LoopMasses
+ ! 16.11.01: including logical variable WriteComment to get a better control
+ !           on the various steps
+ ! 16.09.02: the electroweak scale is now put here, except it has already
+ !           been fixed in the main program
+ ! 05.01.04: calculating now gauge and Yukawa couplings at m_Z using
+ !           running masses, more Yukawa couplings from the previous run
+ !           are taken as starting point for the next run
+ !-----------------------------------------------------------------------
+ Implicit None
+
+  Logical, Intent(in) ::  WriteComment
+  Integer, Intent(in) :: niter
+  Integer, Intent(inout) :: kont
+  Real(dp), Intent(in) :: delta
+  Real(dp), Intent(inout) :: vevSM(2)
+  Real(dp), Intent(out) :: mGUT
+  Real(dp), Intent(inout) :: mC(:), mN(:), mS0(:), mP0(:), mSpm(:) &
+    & , mUsquark(:), mDsquark(:), mSlepton(:), mSneutrino(:)       &
+    & , mUsquark2(:), mDsquark2(:), mSlepton2(:), mSneutrino2(:)   &
+    & , mS02(:), mP02(:), mSpm2(:), RP0(:,:), RS0(:,:), mglu
+  Complex(dp), Intent(inout) :: U(:,:), V(:,:), N(:,:), RSpm(:,:)      &
+    & , RDsquark(:,:), RUsquark(:,:), RSlepton(:,:), RSneutrino(:,:)   &
+    & , phase_Glu
+  Real(dp), Intent(inout) :: gauge(3), M2_H(2)
+  Real(dp), Intent(out)::  lamR
+  Complex(dp), Dimension(3,3), Intent(inout) :: Y_l, Y_d, Y_u, A_l, A_d, A_u &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, uL_L, uL_R, uU_L, uU_R, uD_L, uD_R
+  Complex(dp), Intent(inout) :: Mi(3), mu, B
+
+  !-----------------
+  ! local variables
+  !-----------------
+  Real(dp) :: v_mZ, v_mt, v_mSUSY, ln_v
+
+  Real(dp) :: deltag0, tanb, g0(213), g4(59), t1, t2, mZ2_run, mW2_run, g1(57) &
+    & , mc2(2), mn2(4), mudim, tz, dt, gaugeSM(3), g4a(59)
+  Integer :: j, n_C, n_N, n_S0, n_P0, n_Spm, n_Su, n_Sd, n_Sl &
+    & , n_Sn, n_tot
+  Real(dp) :: mf_nu(3), g58(58), g2(213), tanbQ,mH_SM, mH_SM2   &
+    & , mH_SM2_tree, Q_in
+  Complex(dp), Dimension(3,3) :: Y_u_SM, Y_d_SM, Y_l_SM
+
+  Logical :: FoundResult, UseFixedScale_save
+  Real(dp) :: Yd(3), Yl(3), Yu(3), delta_VB_MSSM, sinW2_DR
+  Integer :: k1, k2, k3
+  Real(dp), Allocatable :: mass_new(:), mass_old(:), diff_m(:)
+
+  Iname = Iname + 1
+  NameOfUnit(Iname) = 'Sugra_SM_decoupling'
+  !-----------------
+  ! Inititalization
+  !-----------------
+  kont = 0
+  FoundResult = .False.
+  tanb = vevSM(2) / vevSM(1)
+  !--------------------------------------------------------------------
+  ! saving masses for checking + creation of corresponding variables
+  !-------------------------------------------------------------------
+  n_C = Size( mC )
+  n_N = Size( mN )
+  n_S0 = Size( mS0 )
+  n_P0 = Size( mP0 )
+  n_Spm = Size( mSpm )
+  n_Su = Size( mUsquark )
+  n_Sd = Size( mDsquark )
+  n_Sl = Size( mSlepton )
+  n_Sn = Size( mSneutrino )
+  n_tot = 1 + n_C + n_N + n_S0 + n_P0 + n_Spm + n_Su + n_Sd + n_Sl + n_Sn
+  Allocate( mass_old( n_tot ), mass_new( n_tot ), diff_m( n_tot) )
+  mass_old(1) = mGlu
+  n_tot = 1
+  mass_old(n_tot+1:n_tot+n_C) = mC
+  n_tot = n_tot + n_C
+  mass_old(n_tot+1:n_tot+n_N) = mN
+  n_tot = n_tot + n_N
+  mass_old(n_tot+1:n_tot+n_S0) = mS0
+  n_tot = n_tot + n_S0
+  mass_old(n_tot+1:n_tot+n_P0) = mP0
+  n_tot = n_tot + n_P0
+  mass_old(n_tot+1:n_tot+n_Spm) = mSpm
+  n_tot = n_tot + n_Spm
+  mass_old(n_tot+1:n_tot+n_Su) = mUsquark
+  n_tot = n_tot + n_Su
+  mass_old(n_tot+1:n_tot+n_Sd) = mDsquark
+  n_tot = n_tot + n_Sd
+  mass_old(n_tot+1:n_tot+n_Sl) = mSlepton
+  n_tot = n_tot + n_Sl
+  mass_old(n_tot+1:n_tot+n_Sn) = mSneutrino
+
+  !-----------------------------------------------------------------
+  ! first setting of renormalization scale, if it is not yet fixed
+  ! somewhere else
+  ! I take here the geometric mean of the stop masses
+  !-----------------------------------------------------------------
+  If (.Not.UseFixedScale) Then
+   If (UseNewScale) Then
+    mudim = CalcScale_from_Stops(Real(M2_U(3,3),dp), Real(M2_Q(3,3),dp)   &
+               & , Y_u(3,3), A_u(3,3), vevSM, mu, gauge(2), gauge(1) )
+    If (mudim.Lt.mZ**2) mudim = mZ**2
+   Else
+    mudim = Max(mZ**2 &
+         &    , product_stop_masses(mUSquark, RUSquark, GenerationMixing))
+   End If
+   Call SetRGEScale(mudim)
+   UseFixedScale = .False.
+  End If
+  !-----------------------------------------------------
+  ! running of RGEs
+  ! iterate entire process
+  !-----------------------------------------------------
+  A_l_mZ = A_l
+  A_d_mZ = A_d
+  A_u_mZ = A_u
+  M2_E_mZ = M2_E
+  M2_L_mZ = M2_L
+  M2_D_mZ = M2_D
+  M2_Q_mZ = M2_D
+  M2_U_mZ = M2_U
+  Mi_mZ = Mi
+  mu_mZ = mu
+  Y_l_mZ = Y_l
+  Y_d_mZ = Y_d
+  Y_u_mZ = Y_u
+  tanb_mZ = tanb ! starting point, will be changed later
+
+  delta_VB_MSSM = 0._dp ! as starting point
+  lamR = 0.26_dp        ! as starting point
+  tanbQ = tanb          ! as starting point
+  mH_SM2_tree = 126._dp**2  ! as starting point
+  Do j=1,niter
+   !-------------------------------------
+   ! boundary condition at the EW-scale
+   !-------------------------------------
+   If (WriteComment) Write(*,*) "Sugra",j
+   Call Cpu_time(t1)
+
+   !--------------------------------------------------------------
+   ! neutrino mixings, if the dim-5 operator has non-zero entries
+   !--------------------------------------------------------------
+   If (Maxval(Abs(MnuL5)).Gt.0._dp) Then
+    Call NeutrinoMasses(MnuL5, mf_nu, Unu, kont)
+    If (kont.Ne.0) Then
+     Iname = Iname - 1
+     Deallocate(mass_old, mass_new, diff_m  )
+     Return
+    End If
+   Else
+    Unu = id3C
+   End If
+
+   !---------------------------------------------------------------
+   ! delta_VB_BSM is 0 in the first iteration and then calculated
+   ! at M_SUSY but without the running
+   !---------------------------------------------------------------
+   Call BoundarySM(j, mH_SM2_tree, 0._dp, mZ2_run, mW2_run &
+                 & , 0.1_dp*delta, g1, kont)
+   If (kont.Ne.0) Then
+    Iname = Iname - 1
+    Deallocate(mass_old, mass_new, diff_m  )
+    Return
+   End If
+
+   Call Cpu_time(t2)
+   If (WriteComment) Write(*,*) "BoundarySM",t2-t1
+   t1 = t2
+   !-------------------------------------------------------------------
+   ! now the running, in the first iteration we set lambda and mu such
+   ! that we get 125 GeV for the Higgs mass; will be replaced in the
+   ! 2nd iteration by the SUSY boundaray conditions
+   !-------------------------------------------------------------------
+   v_mZ = 2._dp * Sqrt(mW2_run) / g1(2)
+   Call GToCouplings(g1, gaugeSM, Y_l_SM, Y_d_SM, Y_u_SM)
+
+
+#ifdef DEBUGINFO
+Write(*,*) "m_Z"
+Write(*,*) "gauge",gauge
+Write(*,*) Real(Y_l_SM(3,3)),  Real(Y_d_SM(3,3)),  Real(Y_u_SM(3,3))
+#endif
+   ln_v = Log(v_mZ)
+   Call ParametersToG59(gaugeSM, lamR, Y_u_SM, Y_d_SM, Y_l_SM,ln_v ,g4)
+
+   If (l_mt_3loop) Then
+    tz = Log(mf_u(3)/mZ)
+    dt = tz / 50._dp
+    Call odeint(g4, 59,0._dp, tz, 0.1_dp * delta, dt, 0._dp, rge59a, kont)
+
+    Call GToParameters59(g4, gaugeSM, lamR, Y_u_SM, Y_d_SM, Y_l_SM, ln_v)
+    gaugeSM(1) = Sqrt(3._dp/5._dp) * gaugeSM(1)
+   !---------------------------------------------------------------
+   ! replace g_s and Y_t including higher order corrections taken
+   ! from D.Buttazzo et al, 1307.3536, eqs. (57) and (60)
+   !---------------------------------------------------------------
+   ! in case that flavour violation has been included
+    If (GenerationMixing) Then
+    ! replace (3,3) entry of Y_u in the CKM-basis;
+    ! sqrt2 for the vev, because the mass is Y v / sqrt(2)
+     Call FermionMass(Y_u_SM, sqrt2, Yu, Uu_L, Uu_R, kont)
+     Yu(3) = 0.9369_dp + 0.00556_dp* (mf_u(3) - 173.34_dp)  &
+          & - 0.6_dp * (alphaS_mZ-0.1184_dp)
+     Do k1=1,3
+      Do k2=1,3
+       Y_u_SM(k1,k2) = 0._dp
+       Do k3=1,3
+        Y_u_SM(k1,k2) = Y_u_SM(k1,k2) + Uu_L(k3,k1)*Yu(k3)*Uu_R(k3,k2)
+       End Do
+      End Do
+     End Do
+
+    Else
+     Y_u_SM(3,3) = 0.9369_dp + 0.00556_dp* (mf_u(3) - 173.34_dp)  &
+              & - 0.6_dp * (alphaS_mZ-0.1184_dp)
+    End If
+!   gaugeSM(1) = 0.35830_dp + 1.1e-4_dp * (mf_u(3) - 173.34_dp)  &
+!             & - 2.e-4_dp * (mW-80.384_dp) / 1.4e-2_dp
+!   gaugeSM(2) = 0.64779_dp + 4.e-5_dp * (mf_u(3) - 173.34_dp)  &
+!             & + 1.1e-4_dp * (mW-80.384_dp) / 1.4e-2_dp
+    gaugeSM(3) = 1.1666_dp + 0.00314_dp*(alphaS_mZ-0.1184_dp)/0.0007_dp &
+            & - 0.00046_dp * (mf_u(3) - 173.34_dp)  
+
+    gaugeSM(1) = Sqrt(5._dp/3._dp) * gaugeSM(1)
+    Call ParametersToG59(gaugeSM, lamR, Y_u_SM, Y_d_SM, Y_l_SM, ln_v,g4)
+
+    mudim = Sqrt(GetRenormalizationScale())
+
+    tz = Log(mudim/mf_u(3))
+    dt = tz / 50._dp
+    Call odeint(g4, 59,0._dp, tz, 0.1_dp * delta, dt, 0._dp, rge59a, kont)
+
+   Else ! .not. l_mt_3loop
+    mudim = Sqrt(GetRenormalizationScale())
+
+    tz = Log(mudim/mZ)
+    dt = tz / 50._dp
+    Call odeint(g4, 59,0._dp, tz, 0.1_dp * delta, dt, 0._dp, rge59a, kont)
+
+   End If
+
+   Call GToParameters59(g4, gaugeSM, lamR, Y_u_SM, Y_d_SM, Y_l_SM, ln_v)
+   v_mSUSY = Exp(ln_v)
+   gaugeSM(1) = Sqrt(3._dp/5._dp) * gaugeSM(1)
+
+   Call Cpu_time(t2)
+   If (WriteComment) Write(*,*) "SM running",t2-t1
+   t1 = t2
+   !--------------------------------------------
+   ! calculating boundary conditions at m_SUSY 
+   !--------------------------------------------
+   ! including SUSY particles
+   !--------------------------
+    Call Boundary_SUSY(mudim, gaugeSM, Y_l_SM, Y_d_SM, Y_u_SM, tanbQ  &
+         &  , Mi, mu, M2_E, M2_L, A_l, M2_D, M2_Q, M2_U, A_d, A_u     &
+         &  , M2_H, B, gauge, Y_l, Y_d, Y_u, kont, GenerationMixing, v_mSUSY)
+    Call Cpu_time(t2)
+    If (WriteComment) Write(*,*) "Boundary SUSY",t2-t1,kont
+    t1 = t2
+
+   !---------------------------------------------------
+   ! now the running, if necessary recalculate tresholds
+   !---------------------------------------------------
+   If ( (Sum(in_extpar(0,:)).Gt.0) .And. &
+      & ((Sum(in_extpar(1:3,:))+Sum(in_extpar(21:24,:)) &
+      &  +Sum(in_extpar(26,:))).Gt.0) ) Then  ! some low scale parameters 
+
+    If (InputScale.Lt.0._dp) Then ! use sqrt(stop-masses) for the input scale
+     Q_in = mudim
+    Else
+     Q_in = InputScale
+    End If
+
+    If (mudim.ne.Q_in) then
+     tz = Log(mudim/Q_in)
+     If (mudim.Gt.Q_in) tz = -tz
+
+     dt = tz / 50._dp
+
+     gauge(1) = Sqrt(5._dp/3._dp) * gauge(1)
+     Call ParametersToG(gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, g2)
+     g1 = g2(1:57)
+     Call odeint(g2, 213, 0._dp, tz,  0.1_dp * delta , dt, 0._dp, rge213, kont)
+
+     Call GToParameters(g2, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B)
+
+     gauge(1) = Sqrt(3._dp/5._dp) * gauge(1)
+
+    !-------------------------------
+    ! need tanb at different scales
+    !-------------------------------
+     If (tanb_in_at_Q) Then
+      g58(1:57) = g1
+      g58(58) = Log( tanb_Q )
+
+      tz = Log(Q_in/mudim)
+      If (Q_in.Lt.mudim) tz = -tz
+      dt = tz / 50._dp
+      Call odeint(g58, 58, 0._dp, tz,  0.1_dp * delta , dt, 0._dp, rge58, kont)
+      tanbQ = Exp( g58(58) )
+ 
+     Else
+      gauge(1) = Sqrt(5._dp/3._dp) * gauge(1)
+      Call CouplingsToG(gauge, Y_l, Y_d, Y_u, g1)
+      gauge(1) = Sqrt(3._dp/5._dp) * gauge(1)
+
+      tz = - Log(Q_in/mZ)
+      dt = tz / 50._dp
+      Call odeint(g1, 57,0._dp, tz, 0.1_dp * delta, dt, 0._dp, rge57, kont)
+
+      g58(1:57) = g1
+      g58(58) = Log( tanb )
+
+      tz = Log(Q_in/mZ)
+      dt = tz / 50._dp
+      Call odeint(g58, 58, 0._dp, tz,  0.1_dp * delta , dt, 0._dp, rge58, kont)
+      tanbQ = Exp( g58(58) )
+      tanb_Q = tanbQ
+     End If
+    End If
+   !---------------------------------------------------------------
+   ! set parameters that are defined at the input scale
+   !---------------------------------------------------------------
+    If (Sum(in_extpar(1,:)).Gt.0) Mi(1) = Cmplx(r_extpar(1),i_extpar(1),dp)
+    If (Sum(in_extpar(2,:)).Gt.0) Mi(2) = Cmplx(r_extpar(2),i_extpar(2),dp)
+    If (Sum(in_extpar(3,:)).Gt.0) Mi(3) = Cmplx(r_extpar(3),i_extpar(3),dp)
+
+    If (Sum(in_extpar(21,:)).Gt.0) M2_H(1) = r_extpar(21)
+    If (Sum(in_extpar(22,:)).Gt.0) M2_H(2) = r_extpar(22)
+    If (Sum(in_extpar(23,:)).Gt.0) mu = Cmplx(r_extpar(23),i_extpar(23),dp)
+
+    If (Sum(in_extpar(24,:)).Gt.0) &
+     & Call Calcualte_MH2(delta, tanbQ, Q_in, gauge, Y_l, Y_d, Y_u, Mi  &
+                      & , A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu &
+                      & , mP02(2), .False., M2_H, B, kont)
+
+    If (Sum(in_extpar(26,:)).Gt.0) &
+     & Call Calcualte_MH2(delta, tanbQ, Q_in, gauge, Y_l, Y_d, Y_u, Mi, A_l  &
+                     & , A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu, P0(2)%m2 &
+                     & , .True., M2_H, B, kont) 
+
+    If (kont.Ne.0) Then
+     Iname = Iname - 1
+     Deallocate(mass_old, mass_new, diff_m  )
+     Return
+    End If
+
+    If (mudim.ne.Q_in) then
+     tz = Log(Q_in/mudim)
+     If (mudim.lt.Q_in) tz = -tz
+
+     dt = tz / 50._dp
+
+     gauge(1) = Sqrt(5._dp/3._dp) * gauge(1)
+     Call ParametersToG(gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, g2)
+
+     Call odeint(g2, 213, 0._dp, tz,  0.1_dp * delta , dt, 0._dp, rge213, kont)
+ 
+     Call GToParameters(g2, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B)
+     gauge(1) = Sqrt(3._dp/5._dp) * gauge(1)
+
+    !-------------------------------
+    ! need tanb at different scales
+    !-------------------------------
+     If (tanb_in_at_Q) Then
+      tanbQ = tanb_Q
+     Else
+      gauge(1) = Sqrt(5._dp/3._dp) * gauge(1)
+      Call CouplingsToG(gauge, Y_l, Y_d, Y_u, g1)
+      gauge(1) = Sqrt(3._dp/5._dp) * gauge(1)
+
+      tz = - Log(mudim/mZ)
+      dt = tz / 50._dp
+      Call odeint(g1, 57,0._dp, tz, 0.1_dp * delta, dt, 0._dp, rge57, kont)
+
+      g58(1:57) = g1
+      g58(58) = Log( tanb )
+
+      tz = Log(mudim/mZ)
+      dt = tz / 50._dp
+      Call odeint(g58, 58, 0._dp, tz,  0.1_dp * delta , dt, 0._dp, rge58, kont)
+      tanbQ = Exp( g58(58) )
+      tanb_Q = tanbQ
+     End If
+
+    End If
+
+    !--------------------------
+    ! recalculate thresholds
+    !--------------------------
+    Call Boundary_SUSY(mudim, gaugeSM, Y_l_SM, Y_d_SM, Y_u_SM, tanbQ  &
+         &  , Mi, mu, M2_E, M2_L, A_l, M2_D, M2_Q, M2_U, A_d, A_u     &
+         &  , M2_H, B, gauge, Y_l, Y_d, Y_u, kont, GenerationMixing, v_mSUSY)
+    Call Cpu_time(t2)
+    If (WriteComment) Write(*,*) "Boundary SUSY 2",t2-t1,kont
+    t1 = t2
+
+    If (kont.ne.0) then
+     Iname = Iname -1
+     return
+    end if
+    gauge(1) = Sqrt(5._dp/3._dp) * gauge(1)
+
+    Call ParametersToG(gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+          & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, g0)
+
+    Call RunRGE_2_boundaries(kont, j+1, 0.1_dp*delta, mudim, g0, g2, mGUT)
+    Call Cpu_time(t1)
+    If (WriteComment) Write(*,*) "RunRGE2",t1-t2
+
+   Else ! everything defined at the high scale
+    gauge(1) = Sqrt(5._dp/3._dp) * gauge(1)
+
+    Call CouplingsToG(gauge, Y_l, Y_d, Y_u, g1)
+
+ 
+    Call RunRGE_from_Msusy(kont, delta, vevSM, mudim, g1, g2, mGUT)
+    Call Cpu_time(t2)
+    If (WriteComment) Write(*,*) "RunRGE_from_Msusy",t2-t1,kont
+    t1 = t2
+   End If ! check at which scales the parameters are defined
+
+   Call GToParameters(g2, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+                  & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B)
+
+   Y_u = Transpose(Y_u)
+   Y_d = Transpose(Y_d)
+   Y_l = Transpose(Y_l)
+   A_u = Transpose(A_u)
+   A_d = Transpose(A_d)
+   A_l = Transpose(A_l)
+
+   gauge(1) = Sqrt(3._dp / 5._dp ) * gauge(1)
+
+   If (Sum(in_extpar(26,:)).Gt.0) Then
+    mp0(2) = P0(2)%m
+    mp02(2) = P0(2)%m2
+    Call LoopMassesMSSM_2(0.1_dp*delta, tanb_mZ, tanbQ, gauge, Y_l, Y_d, Y_u &
+       & , Mi, A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu               &
+       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP02, RP0, mSpm        &
+       & , mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2   &
+       & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2  &
+       & , RSneutrino, mGlu, phase_glu, M2_H, B, kont)
+    If (.not.tanb_in_at_Q) tanb_Q = tanbQ
+
+    mu_loop = mu
+    B_loop = B
+    Call Cpu_time(t2)
+    If (WriteComment) Write(*,*) "LoopMassesMSSM_2",t2-t1
+    !--------------------------------------------------------------
+    ! replace already here the m_H2 by the improved values, speeds
+    ! up the process by up to a factor 2
+    !--------------------------------------------------------------
+    gauge(1) = Sqrt(5._dp / 3._dp ) * gauge(1)
+    Call ParametersToG(gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+                  & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, g0)
+    gauge(1) = Sqrt(3._dp / 5._dp ) * gauge(1)
+
+   Else If (Sum(in_extpar(24,:)).Gt.0) Then
+    Call LoopMassesMSSM_3(tanb_mZ, tanbQ, gauge, Y_l, Y_d, Y_u, Mi, A_l     &
+       & , A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu, B, 0.1_dp*delta      &
+       & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0, mSpm  &
+       & , mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2  &
+       & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2 &
+       & , RSneutrino, mGlu, phase_glu, M2_H, kont)
+    If (.not.tanb_in_at_Q) tanb_Q = tanbQ
+    mu_loop = mu
+    B_loop = B
+    Call Cpu_time(t2)
+    If (WriteComment) Write(*,*) "LoopMassesMSSM_3",t2-t1
+
+   Else
+    Call LoopMassesMSSM(0.1_dp*delta, tanb_mZ, tanb, gauge, Y_l, Y_d, Y_u &
+     & , Mi, A_l, A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, phase_mu  &
+     & , mu, B, j, uU_L, uU_R, uD_L, uD_R, uL_L, uL_R                     &
+     & , mC, mC2, U, V, mN, mN2, N, mS0, mS02, RS0, mP0, mP02, RP0, mSpm  &
+     & , mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2  &
+     & , RUsquark, mSlepton, mSlepton2, RSlepton, mSneutrino, mSneutrino2 &
+     & , RSneutrino, mGlu, phase_glu, kont, v_mSUSY)
+    tanb_Q = tanb
+   End If
+
+   sinW2_DR = gauge(1)**2/(gauge(1)**2+gauge(2)**2)
+   ! setting rho to 1 as this contribute only to the SM-part which is excluded
+   ! here, for the very same reason also sinW2 is fixed to 0.23 as it has no effect
+   ! still need to include the effect of PMNS, is currently set to the identity
+   Call delta_VB(gauge(2), 0.23_dp, sinW2_DR, 1._dp, mC, mC2, U, V, mN, mN2, N &
+     & , Y_l, UL_L, UL_R, mSlepton2, Rslepton, mSneutrino2, RSneutrino, id3c   &
+     & , delta_VB_MSSM, .True.)
+   Call Cpu_time(t2)
+   If (WriteComment) Write(*,*) "LoopMassesMSSM",t2-t1,kont
+   t1 = t2
+
+   !------------------------------------------
+   ! matching quartic coupling to m_H
+   !------------------------------------------
+   Call Match_lambda_SM(mS02(1), gaugeSM, Y_l_SM, Y_d_SM, Y_u_SM, delta &
+         & , lamR, kont, v_mSUSY)
+
+   gaugeSM(1) = Sqrt(5._dp / 3._dp ) * gaugeSM(1)
+   Call ParametersToG59(gaugeSM, lamR, Y_u_SM, Y_d_SM , Y_l_SM, ln_v, g4)
+   g4a = g4
+   tz = Log(mf_u(3)/mudim)
+   dt = tz / 50._dp
+   Call odeint(g4a, 59, 0._dp, tz, 0.1_dp * delta, dt, 0._dp, rge59a, kont)
+                  ! TwoLoopRGE=.True.
+   Call GToParameters59(g4a, gaugeSM, lamR, Y_u_SM, Y_d_SM, Y_l_SM, ln_v)
+   v_mt = Exp(ln_v)
+
+   gaugeSM(1) = Sqrt(3._dp/5._dp)*gaugeSM(1)
+   mH_SM2_tree=lamR*v_mt**2
+      Y_u_SM = Transpose(Y_u_SM)
+      Y_d_SM = Transpose(Y_d_SM)
+      Y_l_SM = Transpose(Y_l_SM)
+
+  UseFixedScale_save = UseFixedScale
+  Call SetRGEScale(mf_U2(3))
+  UseFixedScale = UseFixedScale_save
+
+   If (GenerationMixing) Then 
+    Call FermionMass(Y_l_SM, sqrt2, Yl, UL_L,UL_R,kont)
+    Call FermionMass(Y_d_SM, sqrt2, Yd, UD_L,UD_R,kont)
+    Call FermionMass(Y_u_SM, sqrt2, Yu, UU_L,UU_R,kont)
+   Else
+    Do k1=1,3
+     Yl(k1) = Y_l_SM(k1,k1)
+     Yd(k1) = Y_d_SM(k1,k1)
+     Yu(k1) = Y_u_SM(k1,k1)
+    End Do
+   End If
+
+   Call HiggsMass_Loop_SM(mZ2_run, mW2_run , gaugeSM(1), gaugeSM(2), gaugeSM(3) &
+         & , Yl, Yd, Yu, lamR, v_mt, .True., .False., mH_SM, mH_SM2, kont)
+
+#ifdef DEBUGINFO
+ mH_SM2_tree=lamR*v_mt**2
+ Open(56,file="Higgs.inf",status="unknown")
+ Write(56,*) mS0(1),mH_SM,Sqrt(mH_SM2_tree)
+ Close(56)
+#endif
+
+   tz = Log(mZ/mudim)
+   dt = tz / 50._dp
+   Call odeint(g4, 59, 0._dp, tz, 0.1_dp * delta, dt, 0._dp, rge59a, kont)
+                  ! TwoLoopRGE=.True.
+   Call GToParameters59(g4, gaugeSM, lamR, Y_u_SM, Y_d_SM, Y_l_SM, ln_v)
+
+   gaugeSM(1) = Sqrt(3._dp/5._dp)*gaugeSM(1)
+   mH_SM2_tree=lamR*v_mZ**2
+   Y_u_SM = Transpose(Y_u_SM)
+   Y_d_SM = Transpose(Y_d_SM)
+   Y_l_SM = Transpose(Y_l_SM)
+
+   If (GenerationMixing) Then 
+    Call FermionMass(Y_l_SM, sqrt2, Yl, UL_L,UL_R,kont)
+    Call FermionMass(Y_d_SM, sqrt2, Yd, UD_L,UD_R,kont)
+    Call FermionMass(Y_u_SM, sqrt2, Yu, UU_L,UU_R,kont)
+   Else
+    Do k1=1,3
+     Yl(k1) = Y_l_SM(k1,k1)
+     Yd(k1) = Y_d_SM(k1,k1)
+     Yu(k1) = Y_u_SM(k1,k1)
+    End Do
+   End If
+
+   mS0(1) = mH_SM 
+   mS02(1) = mH_SM2 
+
+   If (kont.Ne.0) Then
+    Iname = Iname - 1
+    Deallocate(mass_old, mass_new, diff_m  )
+    Return
+   End If
+
+   !-------------------
+   ! comparing masses
+   !-------------------
+   mass_new(1) = mGlu
+   n_tot = 1
+   mass_new(n_tot+1:n_tot+n_C) = mC
+   n_tot = n_tot + n_C
+   mass_new(n_tot+1:n_tot+n_N) = mN
+   n_tot = n_tot + n_N
+   mass_new(n_tot+1:n_tot+n_S0) = mS0
+   n_tot = n_tot + n_S0
+   mass_new(n_tot+1:n_tot+n_P0) = mP0
+   n_tot = n_tot + n_P0
+   mass_new(n_tot+1:n_tot+n_Spm) = mSpm
+   n_tot = n_tot + n_Spm
+   mass_new(n_tot+1:n_tot+n_Su) = mUsquark
+   n_tot = n_tot + n_Su
+   mass_new(n_tot+1:n_tot+n_Sd) = mDsquark
+   n_tot = n_tot + n_Sd
+   mass_new(n_tot+1:n_tot+n_Sl) = mSlepton
+   n_tot = n_tot + n_Sl
+   mass_new(n_tot+1:n_tot+n_Sn) = mSneutrino
+
+   diff_m = Abs(mass_new - mass_old)
+   Where (Abs(mass_old).Gt.0._dp) diff_m = diff_m / Abs(mass_old)
+
+   deltag0 = Maxval( diff_m )
+
+   If (WriteComment) Write(*,*) "Sugra,Comparing",deltag0
+
+   If (.Not.UseFixedScale) Then
+    If (UseNewScale) Then
+     mudim = CalcScale_from_Stops(Real(M2_U(3,3),dp), Real(M2_Q(3,3),dp)   &
+                 & , Y_u(3,3), A_u(3,3), vevSM, mu, gauge(2), gauge(1) )
+     If (mudim.Lt.mZ**2) mudim = mZ**2
+    Else
+     mudim = Max(mZ**2 &
+           &    , product_stop_masses(mUSquark, RUSquark, GenerationMixing))
+    End If
+    Call SetRGEScale(mudim)
+    UseFixedScale = .False.
+   End If
+
+   If ((deltag0.Lt.delta).And.(j.Gt.1)) Then ! require at least two iterations
+    FoundResult = .True.
+    B = B_loop
+    mu = mu_loop
+    Exit
+   Else
+    mass_old = mass_new
+   End If
+
+  End Do ! j
+
+  If (.Not. FoundResult ) Then
+   Write (ErrCan,*) 'Warning from subroutine Sugra, no convergence has'
+   Write (ErrCan,*) 'has been found after',niter,' iterations.'
+   Write (ErrCan,*) 'required delta',delta
+   Write (ErrCan,*) 'found delta',deltag0
+   kont = -412
+   Call AddError(412)
+  End If
+
+  Deallocate( mass_old, mass_new, diff_m )
+
+  Iname = Iname - 1
+
+ End Subroutine Sugra_SM_decoupling
+
+
 
  Subroutine Sugra(delta, vevSM, mC, U, V, mN, N, mS0, mS02, RS0, mP0, mP02,RP0&
     & , mSpm, mSpm2, RSpm, mDsquark, mDsquark2, RDsquark, mUsquark, mUsquark2 &
@@ -8335,7 +12008,7 @@ Contains
   Real(dp) :: deltag0, tanb, g0(213), t1, t2, mZ2_run, mW2_run, g1(57) &
     & , mc2(2), mn2(4), mudim, tz, dt, mc2_T(2), mn2_T(4), vev
   Integer :: j, n_C, n_N, n_S0, n_P0, n_Spm, n_Su, n_Sd, n_Sl &
-    & , n_Sn, i1, n_tot
+    & , n_Sn, n_tot
   Real(dp) :: mC_T(2), mN_T(4), mS0_T(2), mP0_T(2), mSpm_T(2)              &
     & , mUsquark_T(6), mDsquark_T(6), mSlepton_T(6), mSneutrino_T(3)       &
     & , mUsquark2_T(6), mDsquark2_T(6), mSlepton2_T(6), mSneutrino2_T(3)   &
@@ -8453,10 +12126,10 @@ Contains
     Call Switch_to_superCKM(Y_d_mZ, Y_u_mZ, A_d_mZ, A_u_mZ, M2_D_mZ, M2_Q_mZ, M2_U_mZ &
                & , Ad_s, Au_s, M2D_s, M2Q_s, M2U_s, .False.,ckm_out=uU_L )
     If (Maxval(Abs(MatNu)).Gt.0._dp) Then
-     Call Switch_from_superPMNS(Y_l_mZ, A_l_mZ, M2_E_mZ, M2_L_mZ, MatNu &
+     Call Switch_to_superPMNS(Y_l_mZ, MatNu, A_l_mZ, M2_E_mZ, M2_L_mZ &
                & , Al_s, M2E_s, M2L_s, .False. )
     Else
-     Call Switch_from_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
+     Call Switch_to_superPMNS(Y_l_mZ, id3C, A_l_mZ, M2_E_mZ, M2_L_mZ &
                & , Al_s, M2E_s, M2L_s, .False. )
     End If
    Else
@@ -8504,7 +12177,7 @@ Contains
     Call ParametersToG(gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
           & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, g2)
     
-    mudim = Sqrt(GetRenormalizationScale())
+    Call GetInputScale(mudim)
 
     tz = Log(mudim/mZ)
     dt = tz / 50._dp
@@ -8537,14 +12210,14 @@ Contains
     gauge(1) = Sqrt(3._dp/5._dp) * gauge(1)
 
     If (Sum(in_extpar(24,:)).Gt.0) &
-     & Call Calcualte_MH2(delta, tanbQ, mudim, gauge, Y_l, Y_d, Y_u, Mi, A_l    &
-                        & , A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu, mP02(2) &
-                        & , .False., M2_H, B, kont)
+     & Call Calcualte_MH2(delta, tanbQ, mudim, gauge, Y_l, Y_d, Y_u, Mi, A_l  &
+                      & , A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu, mP02(2) &
+                      & , .False., M2_H, B, kont)
 
     If (Sum(in_extpar(26,:)).Gt.0) &
-     & Call Calcualte_MH2(delta, tanbQ, mudim, gauge, Y_l, Y_d, Y_u, Mi, A_l    &
-                       & , A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu, P0(2)%m2 &
-                       & , .True., M2_H, B, kont) 
+     & Call Calcualte_MH2(delta, tanbQ, mudim, gauge, Y_l, Y_d, Y_u, Mi, A_l  &
+                     & , A_d, A_u, M2_E, M2_L, M2_D, M2_Q, M2_U, mu, P0(2)%m2 &
+                     & , .True., M2_H, B, kont) 
 
     If (kont.Ne.0) Then
      Iname = Iname - 1
@@ -8600,6 +12273,14 @@ Contains
     B_loop = B
     Call Cpu_time(t2)
     If (WriteComment) Write(*,*) "LoopMassesMSSM_2",t2-t1
+    !--------------------------------------------------------------
+    ! replace already here the m_H2 by the improved values, speeds
+    ! up the process by up to a factor 2
+    !--------------------------------------------------------------
+    gauge(1) = Sqrt(5._dp / 3._dp ) * gauge(1)
+    Call ParametersToG(gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
+                  & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, mu, B, g0)
+    gauge(1) = Sqrt(3._dp / 5._dp ) * gauge(1)
 
    Else If (Sum(in_extpar(24,:)).Gt.0) Then
     Call LoopMassesMSSM_3(tanb_mZ, tanbQ, gauge, Y_l, Y_d, Y_u, Mi, A_l     &

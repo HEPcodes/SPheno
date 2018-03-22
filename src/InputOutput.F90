@@ -88,7 +88,7 @@ Contains
  !   - Fgmsb ................. the vev of the F-component in the GMSB model
  !--------------------------------------------------------------------
  Implicit None
-  Character(len=60) :: inFile
+  Character(len=120) :: inFile
   Integer, Intent(out) :: kont
   Real(dp), Intent(out) :: Fgmsb, Ecms(:), Pm(:), Pp(:)
   Character(len=15), Intent(out) :: HighScaleModel
@@ -872,6 +872,7 @@ Contains
       End If
      End If
      If ((i_model.Eq.3).And.(Sum(set_mod_par(1:4)).Eq.4)) kont = 0 ! AMSB
+     If ((i_model.Eq.4).And.(Sum(set_mod_par(3:4)).Eq.2)) kont = 0 ! Mirage
      If (kont.Ne.0) Call AddError(Abs(kont))
 
   Else If (i_particles.Eq.2) Then  ! MSSM + nu_R particle content
@@ -1805,7 +1806,7 @@ Contains
      If (i_test.Eq.1) Then
       i_particles = i_test
       i_model = i_mod
-      If ((i_mod.Lt.0).Or.(i_mod.Gt.3)) Then
+      If ((i_mod.Lt.0).Or.(i_mod.Gt.4)) Then
        Write(ErrCan,*) "Error in routine "//NameOfUnit(Iname)
        Write(ErrCan,*) "MSSM, Unknown entry for Block MODSEL ",i_mod
        kont = -302
@@ -1824,6 +1825,10 @@ Contains
       Else If (i_mod.Eq.3) Then
        HighScaleModel = "AMSB"
        check = SetHighScaleModel("AMSB")
+
+      Else If (i_mod.Eq.4) Then
+       HighScaleModel = "Mirage"
+       check = SetHighScaleModel("Mirage")
       End If
 
      Else If (i_test.Eq.3) Then
@@ -2235,10 +2240,14 @@ Contains
       If ((wert.Eq.1._dp).Or.(wert.Eq.2._dp)) i1 =  SetYukawaScheme(Int(wert))
 
      Case(38) ! set looplevel of RGEs
-      If (wert.Ne.2._dp) Then
-       TwoLoopRGE=.False.
-      Else
+      If (wert.eq.2._dp) Then
        TwoLoopRGE=.True.
+       ThreeLoopRGE=.False.
+      Else If (wert.eq.3._dp) Then
+       TwoLoopRGE=.True.
+       ThreeLoopRGE=.True.
+      Else
+       TwoLoopRGE=.False.
       End If
 
      Case(39) ! write additional SLHA1 file
@@ -2254,6 +2263,14 @@ Contains
      Case(42) ! W-boson width
       gamW = wert
 
+     Case(45) ! in case of large logs for m_h switch to 1-loop calculation
+      If (wert.Eq.1._dp) Switch_to_1_loop_mh = .True.
+
+     Case(48) ! switch on NNNL fit formula for m_t and alpha_s values at Q=m_t 
+      if (wert.eq.1._dp) l_mt_3loop = .True.
+
+     Case(49) ! switch on SM decoupling
+      if (wert.eq.1._dp) l_SM_decoupling = .False.
 
      Case(80) ! exit for sure with non-zero value if a problem occurs
       If (wert.Eq.1) Non_Zero_Exit = .True.      
@@ -2347,8 +2364,13 @@ Contains
      If ((i_par.Eq.0).And.(i_c.Eq.0)) Then
       n_extpar(0) = "scale for input parameters"
       If (i_model.Eq.0) Call SetRGEScale(wert**2)  ! in case of MSSM
-      If (i_model.Eq.1) Call SetGUTScale(wert)     ! Sugra
-      If (i_model.Eq.3) Call SetGUTScale(wert)     ! AMSB
+      If ((i_model.Eq.1).Or.(i_model.Ge.3)) Then ! SUGRA, AMSB or Mirage
+       If (wert.ge.1.e15_dp) Then ! this is a dirty hack to disthinguish
+        Call SetGUTScale(wert)    ! between setting GUT scale and EWSB input
+       Else
+        Call SetInputScale(wert)
+       End If
+      End If ! SUGRA or AMSB
      Else If (i_par.Eq.1) Then 
       n_extpar(1) = "M_1"
       If (i_c.Eq.0) Mi(1) = Cmplx(wert, Aimag(Mi(1)), dp) 
@@ -2410,7 +2432,7 @@ Contains
        If (i_c.Eq.0) mu = Cmplx(wert, Aimag(mu), dp)
        If (i_c.Eq.1) mu = Cmplx(Real(mu,dp), wert, dp)
        set_mod_par(9) = 1
-      Else If (i_model.Eq.1) Then
+      Else If ((i_model.Eq.1).or.(i_model.Eq.4)) Then
        If (i_c.Eq.0) mu = Cmplx(wert, Aimag(mu), dp)
        If (i_c.Eq.1) mu = Cmplx(Real(mu,dp), wert, dp)
        set_mod_par(9) = 1
@@ -2422,7 +2444,7 @@ Contains
 
      Else If ((i_par.Eq.24).And.(i_c.Eq.0)) Then 
       n_extpar(24) = "M^2_A(Q)"
-      If ((i_model.Eq.0).Or.(i_model.Eq.0)) Then 
+      If ((i_model.Eq.0).Or.(i_model.Eq.1).Or.(i_model.Eq.4)) Then 
        mP02(2) = wert
        If (mP02(2).Ge.0._dp) mP0(2) = Sqrt(mP02(2))
        set_mod_par(10) = 1
@@ -2448,7 +2470,7 @@ Contains
        mP0(2) = wert
        mP02(2) = wert**2
        set_mod_par(10) = 1
-      Else If (i_model.Eq.1) Then 
+      Else If ((i_model.Eq.1).or.(i_model.Eq.4)) Then 
        P0(2)%m = wert
        P0(2)%m2 = wert**2
 ! to be checked
@@ -2464,77 +2486,77 @@ Contains
       End If
 
      Else If ((i_par.Eq.31).And.(i_c.Eq.0)) Then 
-      n_extpar(31) = "M^2_L11"
+      n_extpar(31) = "M_L11"
       M2L_pmns(1,1) = wert**2
       M2L_0_pmns(1,1) = M2L_pmns(1,1)
       set_mod_par(11) = 1
      Else If ((i_par.Eq.32).And.(i_c.Eq.0)) Then 
-      n_extpar(32) = "M^2_L22"
+      n_extpar(32) = "M_L22"
       M2L_pmns(2,2) = wert**2
       M2L_0_pmns(2,2) = M2L_pmns(2,2)
       set_mod_par(12) = 1
      Else If ((i_par.Eq.33).And.(i_c.Eq.0)) Then 
-      n_extpar(33) = "M^2_L33"
+      n_extpar(33) = "M_L33"
       M2L_pmns(3,3) = wert**2
       M2L_0_pmns(3,3) = M2L_pmns(3,3)
       set_mod_par(13) = 1
      Else If ((i_par.Eq.34).And.(i_c.Eq.0)) Then 
-      n_extpar(34) = "M^2_E11"
+      n_extpar(34) = "M_E11"
       M2E_pmns(1,1) = wert**2
       M2E_0_pmns(1,1) = M2E_pmns(1,1)
       set_mod_par(14) = 1
      Else If ((i_par.Eq.35).And.(i_c.Eq.0)) Then 
-      n_extpar(35) = "M^2_E22"
+      n_extpar(35) = "M_E22"
       M2E_pmns(2,2) = wert**2
       M2E_0_pmns(2,2) = M2E_pmns(2,2)
       set_mod_par(15) = 1
      Else If ((i_par.Eq.36).And.(i_c.Eq.0)) Then 
-      n_extpar(36) = "M^2_E33"
+      n_extpar(36) = "M_E33"
       M2E_pmns(3,3) = wert**2
       M2E_0_pmns(3,3) = M2E_pmns(3,3)
       set_mod_par(16) = 1
      Else If ((i_par.Eq.41).And.(i_c.Eq.0)) Then 
-      n_extpar(41) = "M^2_Q11"
+      n_extpar(41) = "M_Q11"
       M2Q_sckm(1,1) = wert**2
       M2Q_0_sckm(1,1) = M2Q_sckm(1,1)
       set_mod_par(17) = 1
      Else If ((i_par.Eq.42).And.(i_c.Eq.0)) Then 
-      n_extpar(42) = "M^2_Q22"
+      n_extpar(42) = "M_Q22"
       M2Q_sckm(2,2) = wert**2
       M2Q_0_sckm(2,2) = M2Q_sckm(2,2)
       set_mod_par(18) = 1
      Else If ((i_par.Eq.43).And.(i_c.Eq.0)) Then 
-      n_extpar(43) = "M^2_Q33"
+      n_extpar(43) = "M_Q33"
       M2Q_sckm(3,3) = wert**2
       M2Q_0_sckm(3,3) = M2Q_sckm(3,3)
       set_mod_par(19) = 1
      Else If ((i_par.Eq.44).And.(i_c.Eq.0)) Then 
-      n_extpar(44) = "M^2_U11"
+      n_extpar(44) = "M_U11"
       M2U_sckm(1,1) = wert**2
       M2U_0_sckm(1,1) = M2U_sckm(1,1)
       set_mod_par(20) = 1
      Else If ((i_par.Eq.45).And.(i_c.Eq.0)) Then 
-      n_extpar(45) = "M^2_U22"
+      n_extpar(45) = "M_U22"
       M2U_sckm(2,2) = wert**2
       M2U_0_sckm(2,2) = M2U_sckm(2,2)
       set_mod_par(21) = 1
      Else If ((i_par.Eq.46).And.(i_c.Eq.0)) Then 
-      n_extpar(46) = "M^2_U33"
+      n_extpar(46) = "M_U33"
       M2U_sckm(3,3) = wert**2
       M2U_0_sckm(3,3) = M2U_sckm(3,3)
       set_mod_par(22) = 1
      Else If ((i_par.Eq.47).And.(i_c.Eq.0)) Then 
-      n_extpar(47) = "M^2_D11"
+      n_extpar(47) = "M_D11"
       M2D_sckm(1,1) = wert**2
       M2D_0_sckm(1,1) = M2D_sckm(1,1)
       set_mod_par(23) = 1
      Else If ((i_par.Eq.48).And.(i_c.Eq.0)) Then 
-      n_extpar(48) = "M^2_D22"
+      n_extpar(48) = "M_D22"
       M2D_sckm(2,2) = wert**2
       M2D_0_sckm(2,2) = M2D_sckm(2,2)
       set_mod_par(24) = 1
      Else If ((i_par.Eq.49).And.(i_c.Eq.0)) Then 
-      n_extpar(49) = "M^2_D33"
+      n_extpar(49) = "M_D33"
       M2D_sckm(3,3) = wert**2
       M2D_0_sckm(3,3) = M2D_sckm(3,3)
       set_mod_par(25) = 1
@@ -2680,6 +2702,34 @@ Contains
        If (i_c.Eq.0) Lambda2_gut = Cmplx(wert, Aimag(Lambda2_gut),dp)
        If (i_c.Eq.1) Lambda2_gut = Cmplx(Real(Lambda2_gut,dp), wert,dp)
        lam12_0(2) = Lambda2_gut
+!------------------------------------------
+! General mirage mediation, 1610.062505
+!------------------------------------------
+     Else if (i_par.eq.210) then
+      m32 = wert
+      l_m32_in = .True.
+      n_extpar(210) = "m_3/2"
+
+     Else if (i_par.eq.211) then
+      alpha_mir = wert
+      n_extpar(211) = "alpha"
+     
+     Else if (i_par.eq.212) then
+      a3_mir = wert
+      n_extpar(212) = "a_3"
+
+     Else if (i_par.eq.213) then
+      cm_mir = wert
+      n_extpar(213) = "c_m"
+
+     Else if (i_par.eq.214) then
+      cHu_mir = wert
+      n_extpar(214) = "c_Hu"
+
+     Else if (i_par.eq.215) then
+      cHd_mir = wert
+      n_extpar(215) = "c_Hd"
+
 
 ! Florian Staub, Seesaw II+III
 
@@ -2776,14 +2826,14 @@ Contains
       End If
 
      Else If ((i_par.Eq.3).And.(i_c.Eq.0)) Then 
-      If ((i_model.Ge.0).And.(i_model.Le.3)) Then ! MSSM, mSugra, GMSB, AMSB
+      If ((i_model.Ge.0).And.(i_model.Le.4)) Then ! MSSM, mSugra, GMSB, AMSB
        set_mod_par(3) = 1
        tanb = wert
        tanb_mZ = wert
       End If
 
      Else If (i_par.Eq.4) Then 
-      If ((i_model.Ge.0).And.(i_model.Le.3)) Then ! MSSM, mSugra, GMSB, AMSB, sign_mu
+      If ((i_model.Ge.0).And.(i_model.Le.4)) Then ! MSSM, mSugra, GMSB, AMSB, sign_mu
        set_mod_par(4) = 1
        If (i_c.Eq.0) phase_mu = Cmplx(wert, Aimag(phase_mu),dp)
        If (i_c.Eq.1) phase_mu = Cmplx(Real(phase_mu, dp),  wert, dp)
@@ -2943,13 +2993,13 @@ Contains
  End  Subroutine LesHouches_Input
 
 
- Subroutine LesHouches_Out(io_L, kont, id_p, names, HighScaleModel, M_GUT &
-      & , BRbtosgamma, Bs_ll, Bd_ll, DeltaMBd, DeltaMBs, BrBToSLL         &
-      & , BtoSNuNu, BR_Bu_TauNu, R_Bu_TauNu  &
+ Subroutine LesHouches_Out(io_L, kont, id_p, names, HighScaleModel, M_GUT  &
+      & , BRbtosgamma, Bs_ll, Bd_ll, DeltaMBd, DeltaMBs, BrBToSLL          &
+      & , BtoSNuNu, BR_Bu_TauNu, R_Bu_TauNu,d_N                            &
       & , a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMuToEGamma, BrTauToEGamma  &
       & , BrTauToMuGamma, BrMu3e, BrTau3e, BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau &
-      & , BR_Z_mu_tau, epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu  &
-      & , Rho_parameter, Ecms, Pm, Pp, ISR, SigSup, SigSdown, SigSle &
+      & , BR_Z_mu_tau, epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu             &
+      & , Rho_parameter, Ecms, Pm, Pp, ISR, SigSup, SigSdown, SigSle       &
       & , SigSn, SigChi0, SigC, SigS0, SigSP, SigHp, omega, f_name)
  !--------------------------------------------------------------------
  ! writes out data using the Les Houches standard as defined in 
@@ -2983,7 +3033,7 @@ Contains
       & , BtoSNuNu, a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMuToEGamma          &
       & , BrTauToEGamma, BrTauToMuGamma, BrMu3e, BrTau3e, BrTau3Mu, Bd_ll(3)  &
       & , BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau                                  &
-      & , epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu                             &
+      & , epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu, d_N(2)                     &
       & , R_Bu_TauNu, Rho_parameter, Ecms(:), Pm(:)                           &
       & , Pp(:), SigSup(:,:,:), SigSdown(:,:,:), SigSle(:,:,:), SigSn(:,:,:)  &
       & , SigChi0(:,:,:), SigC(:,:,:), SigS0(:,:), SigSP(:,:,:), SigHp(:,:,:)
@@ -3013,18 +3063,16 @@ Contains
       & , id_l(3) = (/ 11, 13, 15 /), id_nu(3) = (/ 12, 14, 16 /)        &
       & , id_u(3) = (/ 2, 4, 6 /), id_d(3) = (/ 1, 3, 5 /)               &
       & , id_grav = 1000039, id_glu = 1000021
-  Logical :: non_minimal ! checks if there is deviations from the minimal models
   Logical, Save :: l_open = .True. ! in case of a loop I want to open the
                                    ! output only once 
   !-------------------------------------------------------------------
   ! these variables are useful for the case of R-parity violation
   !------------------------------------------------------------------
   Integer :: i1_min
-  Logical :: file_exists,  use_new_RP
   !--------------------------------------------------------------------- 
   ! mixing matrices for shifts to super-CKM and super-PMNS basis 
   !--------------------------------------------------------------------- 
-  Integer :: ierr, i_errors(1100), id_check(2)
+  Integer :: i_errors(1100), id_check(2)
   Real(dp) :: Yu(3), Yd(3), Yl(3)
   Complex(dp), Dimension(3,3) :: CKM_Q, PMNS_Q, RSn_pmns
   Complex(dp), Dimension(6,6) :: RUsq_ckm, RDsq_ckm, RSl_pmns
@@ -3375,7 +3423,10 @@ Contains
    Write(io_L,100) "# SUSY Les Houches Accord 2 - MSSM spectrum + Decays"
    Write(io_L,100) "# SPheno "//version
    Write(io_L,100) &
-     & "# W. Porod, Comput. Phys. Commun. 153 (2003) 275-315, hep-ph/0301101"
+     & "# W. Porod, Comput. Phys. Commun. 153 (2003) 275-315, hep-ph/0301101;"
+   Write(io_L,100) &
+     & "# W. Porod, F.~Staub, Comput. Phys. Commun. 183 (2012) 2458"
+   Write(io_L,100) "#                     arXiv:1104.1573 [hep-ph] "
    Write(io_L,100) "# in case of problems send email to porod@physik.uni-wuerzburg.de"
    Write(io_L,100) "# Created: "//Datum(7:8)//"."//Datum(5:6)//"."//Datum(1:4) &
      & //",  "//Zeit(1:2)//":"//Zeit(3:4)
@@ -3386,6 +3437,17 @@ Contains
    ! check if somewhere a problem has had happened
    !-----------------------------------------------
    Call GetError(i_errors)
+   !---------------------------------------------------------------
+   ! large Higgs mass is a sign of large logs in DRbar calculation
+   !---------------------------------------------------------------
+   If (S0(1)%m.Gt.170._dp) Then
+     Write(io_L,100) &
+      & "     3               # problem with Higgs mass, large logs in DRbar scheme"
+   End If 
+   If (Switch_to_1_loop_mh.And.Only_1loop_Higgsmass) Then
+     Write(io_L,100) &
+      & "     3               # large logs in 2-loop calculation of m_h, taking only 1-loop contributions"
+   End If 
    !--------------------------------------
    ! a numerical problem might have happen
    !--------------------------------------
@@ -3402,17 +3464,21 @@ Contains
      "     4               # internal problem, see Messages.out for infos"
    Write(io_L,100) "#"
    Write(io_L,100) "Block SPhenoINFO     # SPheno specific information"
-   If (TwoLoopRGE) Then
+   If (ThreeLoopRGE) Then
+    Write(io_L,100) "    1      3         # using 2-loop SUSY RGEs + 3-loop SM RGEs"
+   Else If (TwoLoopRGE) Then
     Write(io_L,100) "    1      2         # using 2-loop RGEs"
    Else 
     Write(io_L,100) "    1      1         # using 1-loop RGEs"
    End If
-   If (YukScen.Eq.1) Then
-    Write(io_L,100) &
-     &"    2      1         # using running masses for boundary conditions at mZ"
-   Else
-    Write(io_L,100) &
+   If (.Not.l_SM_decoupling) Then
+    If (YukScen.Eq.1) Then
+     Write(io_L,100) &
+      &"    2      1         # using running masses for boundary conditions at mZ"
+    Else
+     Write(io_L,100) &
       &"    2      2         # using pole masses for boundary conditions at mZ"
+    End If
    End If
 
   If (kont.Ne.0) Then
@@ -3424,24 +3490,39 @@ Contains
    !--------------------------------------
    ! model information
    !--------------------------------------
-   If (HighScaleModel.Eq."mSugra") Then
-    non_minimal = .False.
+   If ((HighScaleModel.Eq."mSugra").Or.(HighScaleModel.Eq."Mirage")) Then
     Write(io_L,100) "Block MODSEL  # Model selection"
-    Write(io_L,100) "    1    1    # mSUGRA model"
-    If (i_cpv.Gt.0) Write(io_L,110) 5,i_cpv,"switching on CP violation"
-    If (GenerationMixing) Write(io_L,100) &
+    If (HighScaleModel.Eq."mSugra") Then
+     Write(io_L,100) "    1    1    # mSUGRA model"
+     If (i_cpv.Gt.0) Write(io_L,110) 5,i_cpv,"switching on CP violation"
+     If (GenerationMixing) Write(io_L,100) &
       &             "    6    3    # switching on flavour violation"
-    Write(io_L,100) "Block MINPAR  # Input parameters"
-    Write(io_L,101) 1,Sqrt(Real(M2_E_0(1,1),dp)),"# m0      "
-    Write(io_L,101) 2,Real(Mi_0(1),dp),"# m12     "
-    If (tanb_mZ.Ne.0._dp) Write(io_L,101) 3,tanb_mZ,"# tanb at m_Z   "
-    Write(io_L,101) 4, Real(phase_mu,dp),"# cos(phase_mu)"
-    Write(io_L,101) 5,Real(AoY_l_0(1,1),dp),"# A0"
-    Write(io_L,100) "#"
-    If ((Aimag(mu).Ne.0._dp).Or.(Aimag(AoY_l_0(1,1)).Ne.0._dp)) Then
-     Write(io_L,100) "Block IMMINPAR  # Input parameters, imaginary part"
-     Write(io_L,101) 4, Aimag(phase_mu),"# sin(phase_mu)"
-     Write(io_L,101) 5, Aimag(AoY_l_0(1,1)),"# Im(A0)"
+     Write(io_L,100) "Block MINPAR  # Input parameters"
+     Write(io_L,101) 1,Sqrt(Real(M2_E_0(1,1),dp)),"# m0      "
+     Write(io_L,101) 2,Real(Mi_0(1),dp),"# m12     "
+     If (tanb_mZ.Ne.0._dp) Write(io_L,101) 3,tanb_mZ,"# tanb at m_Z   "
+     Write(io_L,101) 4, Real(phase_mu,dp),"# cos(phase_mu)"
+     Write(io_L,101) 5,Real(AoY_l_0(1,1),dp),"# A0"
+     Write(io_L,100) "#"
+     If ((Aimag(mu).Ne.0._dp).Or.(Aimag(AoY_l_0(1,1)).Ne.0._dp)) Then
+      Write(io_L,100) "Block IMMINPAR  # Input parameters, imaginary part"
+      Write(io_L,101) 4, Aimag(phase_mu),"# sin(phase_mu)"
+      Write(io_L,101) 5, Aimag(AoY_l_0(1,1)),"# Im(A0)"
+     End If
+    Else
+
+     Write(io_L,100) "    1    4    # general mirage mediation "
+     If (i_cpv.Gt.0) Write(io_L,110) 5,i_cpv,"switching on CP violation"
+     If (GenerationMixing) Write(io_L,100) &
+      &             "    6    3    # switching on flavour violation"
+     Write(io_L,100) "Block MINPAR  # Input parameters"
+     If (tanb_mZ.Ne.0._dp) Write(io_L,101) 3,tanb_mZ,"# tanb at m_Z   "
+     Write(io_L,101) 4, Real(phase_mu,dp),"# cos(phase_mu)"
+     Write(io_L,100) "#"
+     If (Aimag(mu).Ne.0._dp) Then
+      Write(io_L,100) "Block IMMINPAR  # Input parameters, imaginary part"
+      Write(io_L,101) 4, Aimag(phase_mu),"# sin(phase_mu)"
+     End If
     End If
 
     Write(io_L,106) "Block gauge Q=",m_GUT,"# (GUT scale)"
@@ -3509,7 +3590,6 @@ Contains
 
    Else If ((HighScaleModel(1:5).Eq."SUGRA").Or.   &
           & (HighScaleModel(1:5).Eq."SEESA")) Then
-    non_minimal = .False.
     Write(io_L,100) "Block MODSEL  # Model selection"
     Write(io_L,100) "    1    1    # mSUGRA model"
     If (i_cpv.Gt.0) Write(io_L,111) 5,i_cpv,"switching on CP violation"
@@ -3724,7 +3804,6 @@ Contains
     End If ! Model_Suchita
 
    Else If (HighScaleModel.Eq."GMSB") Then
-    non_minimal = .False.
     Write(io_L,100) "Block MODSEL  # Model selection"
     Write(io_L,100) "    1    2    # mGMSB model"
     If (GenerationMixing) Write(io_L,100) &
@@ -3744,7 +3823,6 @@ Contains
     Write(io_L,104) 3,gauge_0(3),"# g3(Q)^DRbar"
     
    Else If (HighScaleModel.Eq."AMSB") Then
-    non_minimal = .False.
     Write(io_L,100) "Block MODSEL  # Model selection"
     Write(io_L,100) "    1    3    # mAMSB model"
     If (GenerationMixing) Write(io_L,100) &
@@ -3756,7 +3834,6 @@ Contains
     Write(io_L,101) 4, Real(phase_mu,dp),"# Sign(mu)"
 
    Else If (HighScaleModel.Eq."NMSSM") Then
-    non_minimal = .True.
     Write(io_L,100) "Block MODSEL  # Model selection"
     Write(io_L,100) "    3    1    # NMSSM model"
     Write(io_L,100) "Block MINPAR  # Input parameters"
@@ -3764,7 +3841,6 @@ Contains
     If (phase_mu.Ne.0._dp) Write(io_L,101) 4, Real(phase_mu,dp),"# Sign(mu)"
 
    Else If (HighScaleModel.Eq."RPexplicit") Then
-    non_minimal = .True.
     If (minpar_set) Then
      Write(io_L,100) "Block MODSEL  # Model selection"
      Write(io_L,100) "    1    1    # mSUGRA model"
@@ -3797,7 +3873,6 @@ Contains
     End If
 
    Else
-    non_minimal = .True.
 !    Write(io_L,100) "# Either the general MSSM or a model has been used"
 !    Write(io_L,100) &
 !      & "# which has not yet been implemented in the LesHouches standard"
@@ -3812,7 +3887,7 @@ Contains
 
    If (Sum(in_extpar(:,1)).Gt.0) Then
     Write(io_L,100) "Block EXTPAR  # non-universal input parameters"
-    Do i1=1,203
+    Do i1=0,215
      If (in_extpar(i1,1).Eq.1) &
         & Write(io_L,101) i1,r_extpar(i1) ,"# "//Trim(n_extpar(i1))
     End Do
@@ -3820,7 +3895,7 @@ Contains
 
    If (Sum(in_extpar(:,2)).Gt.0) Then
     Write(io_L,100) "Block IMEXTPAR  # non-universal input parameters"
-    Do i1=1,203
+    Do i1=0,215
      If (in_extpar(i1,2).Eq.1) &
         & Write(io_L,101) i1,i_extpar(i1) ,"# "//Trim(n_extpar(i1))
     End Do
@@ -4636,7 +4711,7 @@ Contains
 
     If (l_RP_Pythia) Then  ! Pythia only takes 4x4 matrix for neutralinos
                            ! and 2x2 for charginos
-     mNr(1:7) = Abs(Chi07(1:7)%m)
+     mNr(1:7) = Chi07(1:7)%m
      Do i1=1,4
       If (Sum(Abs(Real(N(i1,:)))).Lt.0.1_dp) Then
        nr(i1,1:4) = Aimag(n(i1,:))
@@ -4690,7 +4765,7 @@ Contains
     Write(io_L,102) 1000037,ChiPm(2)%m,"# ~chi_2+"
    End If
 
-   If ((HighScaleModel.Eq."GMSB").or.l_m32_in) &
+   If ((HighScaleModel.Eq."GMSB").Or.l_m32_in) &
      & Write(io_L,102) 1000039, m32,"# ~G"
 
    If (Maxval(MnuR).Gt.0._dp) Then
@@ -4849,14 +4924,14 @@ Contains
  ! before writing the decays and other information, the above information
  ! is given at different scales, if required
  !-------------------------------------------------------------------------
- If (l_Q_out) then ! need parameters and potentially also the masses at another scale
-  If (Qout.eq.0._dp) Qout=Q 
+ If (l_Q_out) Then ! need parameters and potentially also the masses at another scale
+  If (Qout.Eq.0._dp) Qout=Q 
   delta_Q = Exp( Log(Qout/mZ) / n_Q_out )
   Q_act = mZ
   Do i1=0,n_Q_out
-   if (i1.gt.0) Q_act = Q_act * delta_Q
+   If (i1.Gt.0) Q_act = Q_act * delta_Q
    Write(io_L,100) "###########################################################"
-   If (Calc_Mass) then
+   If (Calc_Mass) Then
     Write(io_L,301) Q_act
    Else
     Write(io_L,300) Q_act
@@ -4868,10 +4943,10 @@ Contains
                      ! to avoid this trick here
    Call WriteParametersAtQ(Q, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
           & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, tanb_Q, phase_mu      &
-          & , GenerationMixing, Q_act, 1.e-4_dp, io_L)
+          & , GenerationMixing, Q_act, 1.e-4_dp, io_L, mu, B)
    tanb_Q = tb_save 
    Write(io_L,100) "###########################################################"
-   If (Calc_Mass) then
+   If (Calc_Mass) Then
     Write(io_L,311) Q_act
    Else
     Write(io_L,310) Q_act
@@ -4881,10 +4956,10 @@ Contains
  End If
 
  Do i1=1,36 ! at the pol-masses of the differnt particles
-  Q_PDG_out = abs(Q_PDG_out) ! in case that a fermion mass is negative
+  Q_PDG_out = Abs(Q_PDG_out) ! in case that a fermion mass is negative
   If (l_PDG_out(i1)) Then
    Write(io_L,100) "###########################################################"
-   If (Calc_Mass) then
+   If (Calc_Mass) Then
     Write(io_L,301) Q_PDG_out(i1)
    Else
     Write(io_L,300) Q_PDG_out(i1)
@@ -4899,7 +4974,7 @@ Contains
           & , GenerationMixing, Q_PDG_out(i1), 1.e-4_dp, io_L)
    tanb_Q = tb_save 
    Write(io_L,100) "###########################################################"
-   If (Calc_Mass) then
+   If (Calc_Mass) Then
     Write(io_L,311) Q_PDG_out(i1)
    Else
     Write(io_L,310) Q_PDG_out(i1)
@@ -5451,7 +5526,8 @@ Contains
   Write(io_L,101) 11,R_Bu_TauNu," # BR(B_u -> tau nu)/BR(B_u -> tau nu)_SM"
   Write(io_L,101) 12,Abs(DeltaMbd)," # |Delta(M_Bd)| [ps^-1] "
   Write(io_L,101) 13,Abs(DeltaMbs)," # |Delta(M_Bs)| [ps^-1] "
-
+  Write(io_L,101) 14,d_N(1)," # neutron EDM according to the chiral quark model"    
+  Write(io_L,101) 15,d_N(2)," # neutron EDM according to the relativistic quark-parton model"    
   Write(io_L,101) 16, epsK       , " # epsilon_K" 
   Write(io_L,101) 17, DeltaMK    , " # Delta(M_K)" 
   Write(io_L,101) 18, K0toPi0NuNu, " # BR(K^0 -> pi^0 nu nu)" 
@@ -5561,15 +5637,11 @@ Contains
    End Do
 
    If (HighScaleModel.Eq."RPexplicit") Then
-    Call Calc_LHC_observables(Chi07(4:7)%m, N(1:4,1:4), ChiPm%m, U, V, mSle, Rslepton &
-      & , mSd, RSdown, mSu, RSup, Glu%m, PhaseGlu, S0%m, RS0, P0%m, RP0         &
-      & , Spm%m, RSpm, gauge, Y_u, Y_d, A_u, A_d, mu, vevSM, .False. & ! GenerationMixing &
+    Call Calc_LHC_observables(Chi07(4:7)%m, mSle, mSd, mSu, .False. & ! GenerationMixing &
       & , LHC_observ)
     n_min = 4
    Else ! conserved R-parity
-    Call Calc_LHC_observables(Chi0%m, N, ChiPm%m, U, V, mSle, Rslepton        &
-      & , mSd, RSdown, mSu, RSup, Glu%m, PhaseGlu, S0%m, RS0, P0%m, RP0     &
-      & , Spm%m, RSpm, gauge, Y_u, Y_d, A_u, A_d, mu, vevSM, .False. & ! GenerationMixing &
+    Call Calc_LHC_observables(Chi0%m, mSle, mSd, mSu, .False. & ! GenerationMixing &
       & , LHC_observ)
     n_min = 1
    End If ! R-parity
@@ -5787,76 +5859,6 @@ Contains
   102 Format(1x,i5,3x,1P,e16.8,2x,a)
 
  End Subroutine LesHouches_out_start
-
- Subroutine LH_Write_GY(io_L, Q, g, Yd, Yu, Yl, Ynu, YT)
- implicit none
-  Integer, intent(in) :: io_L
-  Real(dp), Intent(in) :: Q, g(3), Yd(3), Yu(3)
-  Complex(dp), Optional, Intent(in) :: Yl(3,3), Ynu(3,3), YT(3,3)
-
-  Integer :: i1, i2, ierr
-
-  Write(io_L,106) "Block gauge Q=",Q,"# (SUSY scale)"
-  Write(io_L,104) 1,g(1),"# g'(Q)^DRbar"
-  Write(io_L,104) 2,g(2),"# g(Q)^DRbar"
-  Write(io_L,104) 3,g(3),"# g3(Q)^DRbar"
-
-  Write(io_L,106) "Block Yu Q=",Q,"# (SUSY scale)"
-  Write(io_L,107) 1,1,Yu(1), "# Y_u(Q)^DRbar"
-  Write(io_L,107) 2,2,Yu(2), "# Y_c(Q)^DRbar"
-  Write(io_L,107) 3,3,Yu(3), "# Y_t(Q)^DRbar"
-
-  Write(io_L,106) "Block Yd Q=",Q,"# (SUSY scale)"
-  Write(io_L,107) 1,1,Yd(1), "# Y_d(Q)^DRbar"
-  Write(io_L,107) 2,2,Yd(2), "# Y_s(Q)^DRbar"
-  Write(io_L,107) 3,3,Yd(3), "# Y_b(Q)^DRbar"
-
-  Write(io_L,106) "Block Ye Q=",Q,"# (SUSY scale)"
-
-  ierr = 0
-  If (GenerationMixing) Then
-   !-------------------------------------------
-   ! check if any off-diagonal term is non-zero
-   !-------------------------------------------
-   Do i1=1,3
-    Do i2=1,3
-     If ((i1.Ne.i2).And.(Abs(yl(i2,i1)).Ne.0._dp)) ierr = ierr + 1
-    End Do
-   End Do
-  End If
-
-  If (ierr.Ne.0) Then
-   Do i1=1,3
-    Do i2=1,3
-     Write(io_L,105) i2,i1,Real(yl(i2,i1),dp),"# Y_(l,"//bu(i2)//bu(i1)//")"  
-    End Do
-   End Do
-  Else 
-   Write(io_L,107) 1,1,Real(Yl(1,1),dp), "# Y_e(Q)^DRbar"
-   Write(io_L,107) 2,2,Real(Yl(2,2),dp), "# Y_mu(Q)^DRbar"
-   Write(io_L,107) 3,3,Real(Yl(3,3),dp), "# Y_tau(Q)^DRbar"
-  End If
-  If (Maxval(Abs(Aimag(yl))).Gt.0._dp) Then
-   Write(io_L,106) "Block IMYe Q=",Q,"# (SUSY scale)"
-   If (GenerationMixing) Then
-    Do i1=1,3
-      Do i2=1,3
-      Write(io_L,105) i2,i1,Aimag(yl(i2,i1)),"# Im(Y_(l,"//bu(i2)//bu(i1)//"))"
-     End Do
-    End Do
-   Else 
-    Write(io_L,107) 1,1,Aimag(Yl(1,1)), "# Im(Y_e)(Q)^DRbar"
-    Write(io_L,107) 2,2,Aimag(Yl(2,2)), "# Im(Y_mu)(Q)^DRbar"
-    Write(io_L,107) 3,3,Aimag(Yl(3,3)), "# Im(Y_tau)(Q)^DRbar"
-   End If
-  End If
-
-104 Format(i4,2x,1P,e16.8,2x,a)
-105 Format(1x,2i3,3x,1P,e16.8,3x,a)
-106 Format(a,1P,e16.8,2x,a)
-107 Format(2i3,3x,1P,e16.8,4x,a)
-
- end Subroutine LH_Write_GY
 
  Subroutine LH_write_decays(io_L, io, n_c, n_n, n_sl, n_sn, n_sd, n_su, n_S0 &
           & , n_P0, n_Spm, id_l, id_nu, id_d, id_u, id_W, id_Z, id_ph, id_gl &
@@ -11271,10 +11273,13 @@ Contains
 
  Subroutine WriteParametersAtQ(Qin, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
           & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, tanb, phase_mu            &
-          & , GenerationMixing, Qout, delta, io_L)
+          & , GenerationMixing, Qout, delta, io_L, mu_in, B_in)
  !-----------------------------------------------------------------------
  ! runs the parameters given at a scale Qin to the scale Qout, calculates
  ! the masses within the MSSM and prints them out 
+ ! 23.10.2016: adding an option to write out mu and B, note however, that the
+ ! parameters entering the RGEs fullfill the loop-corrected tadpole equations
+ ! and not the tree-level tadpole equations
  !-----------------------------------------------------------------------
  Implicit None
   Integer, Intent(in) :: io_L
@@ -11283,6 +11288,7 @@ Contains
   Complex(dp), Intent(in) :: Mi(3), phase_mu
   Complex(dp), Intent(in), Dimension(3,3) :: Y_l, Y_d, Y_u, A_l, A_d, A_u &
     & , M2_E, M2_L, M2_D, M2_Q, M2_U
+  Complex(dp), Intent(in), Optional :: mu_in, B_in
 
   ! local variables
   Integer :: kont, i1, id_su(6), id_sd(6), id_sle(6), id_snu(3)
@@ -11307,8 +11313,16 @@ Contains
   tz = Log(Qin/Qout)
   dt = tz / 50._dp
 
-  B = ZeroC  ! will be calculated from tadpole equaitons
-  mu = ZeroC
+  If (Present(B_in)) Then
+   B = B_in
+  Else 
+   B = ZeroC  ! will be calculated from tadpole equaitons
+  End If
+  If (Present(mu_in)) Then
+   mu = mu_in
+  Else
+   mu = ZeroC  ! will be calculated from tadpole equaitons
+  End If
 
   Y_u_Q = Transpose(Y_u)
   Y_d_Q = Transpose(Y_d)
@@ -11539,6 +11553,19 @@ Contains
   End If
 
   If (.Not.(Calc_Mass.And.(kont.Eq.0))) Then ! return
+   If (Present(mu_in).Or.Present(B_in)) Then
+    Write(io_L,103) "Block Hmix Q=",Qout, "# Higgs mixing parameters"
+    If (Present(mu_in)) Write(io_L,104) 1,Real(mu,dp),"# mu"
+    Write(io_L,104) 2,tanb_Q,"# tan[beta](Q)"
+    If (Present(B_in)) Write(io_L,104) 4,Abs(B)*(1+tanb_Q**2)/tanb_Q,"# m^2_A(Q)"
+    If (Present(mu_in)) Then
+     If (Aimag(mu).Ne.0._dp) Then
+      Write(io_L,103) "Block IMHmix Q=",Qout, "# Higgs mixing parameters"
+      Write(io_L,104) 1,Aimag(mu),"# Im(mu)"
+     End If
+    End If
+   End If
+ 
    If (Calc_Mass) old_scale = SetRenormalizationScale(old_scale)
    Iname = Iname - 1
    Return

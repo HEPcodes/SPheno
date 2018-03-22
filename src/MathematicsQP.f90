@@ -9,18 +9,21 @@ Use Control
 ! interfaces
  Interface EigenSystemQP
   Module Procedure ComplexEigenSystem_DP, RealEigenSystem_DP   &
-      & , ComplexEigenSystem_QP, RealEigenSystem_QP
+      & , ComplexEigenSystem_QP, RealEigenSystem_QP            &
+      & , ComplexEigenSystem_DP1
  End Interface
 ! interfaces
 
 ! private variables
  Real(dp), Parameter, Private :: MinimalPrecision = 1.e-25_dp
  Private :: ComplexEigenSystem_DP, RealEigenSystem_DP   &
-      & , ComplexEigenSystem_QP, RealEigenSystem_QP,Tred2a_QP, Tqli_QP, Pythag_QP
+      & , ComplexEigenSystem_QP, RealEigenSystem_QP,Tred2a_QP &
+      & , ComplexEigenSystem_DP1, Tqli_QP, Pythag_QP    &
+      & , HTRIBK_QP, HTRIDI_QP
 ! private variables
 
  Real(qp), Private :: Zero=0._qp, One=1._qp, PointTwo=0.2_qp, PointFive=0.5_qp &
-    &  , Hundred=1.e2_qp, Two=2._qp,  MACHEP=Tiny(1._qp)
+    &  , Hundred=1.e2_qp
  Complex(qp), Private :: IOne = (0._qp,1._qp)
 
 Contains
@@ -443,6 +446,198 @@ Contains
   Iname = Iname - 1
 
  End Subroutine ComplexEigenSystem_QP
+
+
+ Subroutine ComplexEigenSystem_DP1(Matrix, EigenValues, EigenVectors, kont, test, ii)
+ !---------------------------------------------------------------------
+ ! Subroutine for diagonalization of complex hermitian matrices, based on the
+ ! Householder algorithm. Is a portation of  EISCH1 to F90
+ ! Input:
+ !  Matrix ..... n times n matrix
+ ! Output
+ !  EigenValues ..... n sorted EigenValues: |m_1| < |m_2| < .. < |m_n|
+ !  EigenVectors .... n times n matrix with the eigenvectors
+ ! written by Werner Porod, 10.11.2000
+ !---------------------------------------------------------------------
+ Implicit None
+  !-------
+  ! input
+  !-------
+  Complex(Dp), Intent(in) :: Matrix(:,:)
+  !--------
+  ! output
+  !--------
+  Complex(Dp), Intent(out) :: EigenVectors(:,:)
+  Real(Dp), Intent(out) :: EigenValues(:), test(:)
+  Integer, Intent(in) :: ii
+  Integer, Intent(inout) :: kont
+
+  !-----------------
+  ! local variables
+  !-----------------
+  Integer :: N1,N2,N3
+  Real(qp), Allocatable :: AR(:,:),AI(:,:), WR(:), ZR(:,:),  WORK(:)  &
+    & , work2(:,:), ZI(:,:)
+  Complex(qp), Allocatable :: Ctest(:,:), Ctest2(:,:), CtestA(:,:)
+  Logical :: l_complex = .False.
+
+  Iname = Iname + 1
+  NameOfUnit(Iname) = 'ComplexEigenSystem_DP1'
+
+  If (ii.Eq.1) Write(*,*) "ComplexEigenSystem_DP1"
+  N1 = Size(Matrix, Dim=1)
+  N2 = Size(EigenValues)
+  N3 = Size(EigenVectors, Dim=1)
+  If ((N1.Ne.N2).Or.(N1.Ne.N3)) Then
+   Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
+   Write(ErrCan,*) 'Dimensions to not match: ',N1,N2,N3
+   If (ErrorLevel.Ge.-1) Call TerminateProgram
+   kont = -13
+   Call AddError(13)
+   Iname = Iname - 1
+   Return
+  End If
+
+  If (Is_NaN(Real(Matrix,dp)).or.Is_NaN(Aimag(Matrix))) Then !  
+   Write(ErrCan,*) 'Error in Subroutine '//NameOfUnit(Iname)
+   Write(ErrCan,*) 'matrix contains NaN'
+   If (ErrorLevel.Ge.-1) Call TerminateProgram
+   kont = -31
+   Call AddError(31)
+   Iname = Iname - 1
+   Return 
+  End If
+
+  Allocate(AR(N1,N1)) 
+  Allocate(AI(N1,N1))
+  Allocate(Ctest(N1,N1))
+  Allocate(Ctest2(N1,N1))
+  Allocate(CtestA(N1,N1))
+
+  AR = Real( Matrix,qp )
+  AI = Aimag( Matrix )
+
+  Eigenvectors = ZeroC
+  Eigenvalues = 0._dp
+  test = 0._dp
+  !--------------------------------------------------------------------------
+  ! check first whether the matrix is really complex
+  ! if not, I use the only real diagonalization because it is more accurate
+  !--------------------------------------------------------------------------
+  If (Maxval( Abs(AI) ).Eq.0._qp) Then ! real matrix
+
+   Allocate(WR(N1))
+   Allocate(Work(N1))
+
+   Call Tred2A_QP(AR, WR, Work)
+   Call TQLi_QP(WR,WORK,AR,kont)
+
+   Do n2=1,n1-1
+    Do n3=n2+1,n1
+     If (wr(n2).Gt.wr(n3)) Then
+      work(1) = wr(n2) 
+      wr(n2) = wr(n3)
+      wr(n3) = work(1)
+      work = ar(:,n2)
+      ar(:,n2) = ar(:,n3)
+      ar(:,n3) = work
+     End If
+    End Do
+   End Do
+
+   EigenValues = WR
+   Ctest = Ar
+   EigenVectors = Transpose(AR) 
+
+  Else ! complex matrix
+   l_complex = .True.
+
+   Allocate(ZR(N1,N1))
+   Allocate(ZI(N1,N1))
+   Allocate(WR(N1))
+   Allocate(Work(N1))
+   Allocate(Work2(2,N1))
+
+   Call HTRIDI_QP(AR, AI, WR, Work, WORK2)
+   ZR = 0._qp
+   Do n2=1,n1
+    ZR(n2,n2) = 1._qp
+   End Do
+   Call TQLi_QP(WR,WORK,ZR,kont)
+   If(KONT/=0) Then
+    Iname = Iname - 1
+    Deallocate(AR,AI,WR,Work,Ctest)
+    Deallocate(ZR, zi, work2)
+    Return
+   End If
+   Call HTRIBK_QP(AR, AI, WORK2, ZR, ZI)
+   
+
+   Do n2=1,n1-1
+    Do n3=n2+1,n1
+     If (wr(n2).Gt.wr(n3)) Then
+      work(1) = wr(n2) 
+      wr(n2) = wr(n3)
+      wr(n3) = work(1)
+      work = zr(:,n2)
+      zr(:,n2) = zr(:,n3)
+      zr(:,n3) = work
+      work = zi(:,n2)
+      zi(:,n2) = zi(:,n3)
+      zi(:,n3) = work
+     End If
+    End Do
+   End Do
+
+   eigenvalues = wr
+   eigenvectors = Cmplx(zr,zi, dp)
+
+   Ctest = Cmplx(zr,zi, qp)
+   CtestA = Transpose(Ctest)
+   CtestA = Conjg(CtestA)
+   Eigenvectors = CtestA
+
+   Deallocate(ZR, zi, work2)
+
+  End If ! decision whether real or complex matrix
+
+  !----------------------------------
+  ! test of diagonalisation
+  !----------------------------------
+  Ctest2 = Matmul(Matrix, Ctest )
+  ! Ctest^\dagger = Transpose(Cmplx(zr,-zi, qp))
+  Ctest = Matmul( CtestA, Ctest2 )
+
+  test = 0._qp
+  Do n2=1,n1
+   Do n3=1,n1
+    If (n2.Eq.n3) Then
+     test(1) = Max(test(1), Abs( Ctest(n2,n3) ) )
+    Else
+     test(2) = Max(test(2), Abs( Ctest(n2,n3) ) )
+    End If
+   End Do
+  End Do
+  If (test(1).Gt.0._dp) Then
+   If (l_complex) Then
+    If ( (test(2)/test(1)).Gt.1.e5_qp*MinimalPrecision) then
+     kont = -14
+     Call AddError(14)
+    End If
+   Else 
+    If ( (test(2)/test(1)).Gt.MinimalPrecision) then
+     kont = -14
+     Call AddError(14)
+    End If
+   End If
+  End If
+
+  Deallocate(AR,AI,WR,Work,Ctest,Ctest2,CtestA)
+
+  Iname = Iname - 1
+
+ End Subroutine ComplexEigenSystem_DP1
+
 
  Subroutine JacobiQP(a,n,np,d,v,nrot)
  Implicit None
@@ -896,6 +1091,145 @@ Contains
   End Do
 
  End Subroutine tqli_QP
+
+  
+  Subroutine HTRIBK_QP(AR, AI, TAU, ZR, ZI)
+  Implicit None
+   Real(qp) :: AR(:,:), AI(:,:), TAU(:,:), ZR(:,:), ZI(:,:)
+
+   Integer :: n, m, k, j, i, l
+   Real(qp) :: s, si, h
+
+   n = Size(ar,2)
+   m = Size(zr,2)
+
+   Do K = 1, N
+    Do J = 1, M
+      ZI(K,J) = - ZR(K,J) * TAU(2,K)
+      ZR(K,J) = ZR(K,J) * TAU(1,K)
+    Enddo
+   Enddo
+   If (N == 1) Return
+  Do I = 2, N
+    L = I - 1
+    H = AI(I,I)
+    If (H == 0._qp) Cycle
+    Do J = 1, M
+      S = 0._qp
+      SI = 0._qp
+      Do K = 1, L
+        S = S + AR(I,K) * ZR(K,J) - AI(I,K) * ZI(K,J)
+        SI = SI + AR(I,K) * ZI(K,J) + AI(I,K) * ZR(K,J)
+      Enddo
+      S = S / H
+      SI = SI / H
+      Do K = 1, L
+        ZR(K,J) = ZR(K,J) - S * AR(I,K) - SI * AI(I,K)
+        ZI(K,J) = ZI(K,J) - SI * AR(I,K) + S * AI(I,K)
+      Enddo
+    Enddo
+  End Do
+
+  End Subroutine HTRIBK_QP
+
+
+
+  Subroutine HTRIDI_QP(AR, AI, D, E, TAU)
+  Implicit None
+   Real(qp) :: AR(:,:), AI(:,:), D(:), E(:), TAU(:,:)
+
+   Integer :: n, i, ii, l, k, j, jp1
+   Real(qp) :: scalei, h, g, f, si, hh, fi, gi
+
+   n = Size(ar,2)
+
+   TAU(1,N) = 1._qp
+   TAU(2,N) = 0._qp
+   Do I = 1, N
+    D(I) = AR(I,I)
+   End Do
+
+   Do II = 1, N
+    I = N + 1 - II
+    L = I - 1
+    H = 0._qp
+    SCALEI = 0._qp
+    If (L < 1) GO TO 130
+    Do K = 1, L
+      SCALEI = SCALEI + Abs(AR(I,K)) + Abs(AI(I,K))
+    Enddo
+    If (SCALEI /= 0._qp) GO TO 140
+    TAU(1,L) = 1._qp
+    TAU(2,L) = 0._qp
+  130 E(I) = 0._qp
+    GO TO 290
+  140 Do K = 1, L
+      AR(I,K) = AR(I,K) / SCALEI
+      AI(I,K) = AI(I,K) / SCALEI
+      H = H + AR(I,K) * AR(I,K) + AI(I,K) * AI(I,K)
+    Enddo
+    G = Sqrt(H)
+    E(I) = SCALEI * G
+    F = Abs(Cmplx(AR(I,L),AI(I,L),qp))
+    If (F == 0._qp) GO TO 160
+    TAU(1,L) = (AI(I,L) * TAU(2,I) - AR(I,L) * TAU(1,I)) / F
+    SI = (AR(I,L) * TAU(2,I) + AI(I,L) * TAU(1,I)) / F
+    H = H + F * G
+    G = 1._qp + G / F
+    AR(I,L) = G * AR(I,L)
+    AI(I,L) = G * AI(I,L)
+    If (L == 1) GO TO 270
+    GO TO 170
+  160 TAU(1,L) = -TAU(1,I)
+    SI = TAU(2,I)
+    AR(I,L) = G
+  170 F = 0._qp
+    Do J = 1, L
+      G = 0._qp
+      GI = 0._qp
+      Do K = 1, J
+        G = G + AR(J,K) * AR(I,K) + AI(J,K) * AI(I,K)
+        GI = GI - AR(J,K) * AI(I,K) + AI(J,K) * AR(I,K)
+      Enddo
+      JP1 = J + 1
+      If (L < JP1) GO TO 220
+      Do K = JP1, L
+        G = G + AR(K,J) * AR(I,K) - AI(K,J) * AI(I,K)
+        GI = GI - AR(K,J) * AI(I,K) - AI(K,J) * AR(I,K)
+      Enddo
+  220 E(J) = G / H
+      TAU(2,J) = GI / H
+      F = F + E(J) * AR(I,J) - TAU(2,J) * AI(I,J)
+    Enddo
+    HH = F / (H + H)
+    Do J = 1, L
+      F = AR(I,J)
+      G = E(J) - HH * F
+      E(J) = G
+      FI = -AI(I,J)
+      GI = TAU(2,J) - HH * FI
+      TAU(2,J) = -GI
+      Do K = 1, J
+        AR(J,K) = AR(J,K) - F * E(K) - G * AR(I,K) &
+          + FI * TAU(2,K) + GI * AI(I,K)
+        AI(J,K) = AI(J,K) - F * TAU(2,K) - G * AI(I,K) &
+          - FI * E(K) - GI * AR(I,K)
+      Enddo
+    Enddo
+  270 Do K = 1, L
+      AR(I,K) = SCALEI * AR(I,K)
+      AI(I,K) = SCALEI * AI(I,K)
+    Enddo
+    TAU(2,L) = -SI
+  290 HH = D(I)
+    D(I) = AR(I,I)
+    AR(I,I) = HH
+    AI(I,I) = SCALEI * SCALEI * H
+  Enddo
+  Return
+
+  End Subroutine HTRIDI_QP
+
 
 
 End Module MathematicsQP

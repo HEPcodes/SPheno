@@ -62,12 +62,14 @@ Module RGEs
     &                          ,  0._dp,  1._dp,  6._dp /) &
     &              , Shape = (/3, 3/) )
 
- Logical, Save :: TwoLoopRGE=.True.
+ Logical, Save :: TwoLoopRGE=.True., ThreeLoopRGE=.False.
  Real(dp) :: M2S_GUT
  Complex(dp) :: Alam_GUT, Alamp_GUT
 ! global variables
 
 ! private variables
+! gauge parameter Xi in the R_xi gauge
+Real(dp), Private, Save :: Xi = 1._dp, Xip2 = 1._dp
 ! simplifies matrix multiplication in case of diagonal entries only
 Logical, Private, Save :: OnlyDiagonal
 ! fix to completely decouple heavy states
@@ -1390,95 +1392,6 @@ Contains
   End Subroutine rge6
 
 
- Subroutine rge7(len, T,GY,F)
- !-----------------------------------------------------------------
- !     Right hand side of truncated renormalization group equations
- !          dGY_i/dT = F_i(G)
- !     for the determination of M_GUT and the value of alpha_GUT
- !     and values of the Yukawas
- !  written by Werner Porod, 28.12.99
- !  10.01.00: including tan(beta)
- !  06.10.00: changing to f90
- !  27.07.13: adding gauge dependence as discussed in 1305.1548
- !            by Dominik Stoeckinger
- !-----------------------------------------------------------------
- Implicit None
-  Integer, Intent(in) :: len
-  Real(Dp), Intent(in) :: T, GY(len)
-  Real(Dp), Intent(out) :: F(len)
-
-  Integer :: j,i
-  Real(Dp) :: gy2(6), sumI, beta2(3), gamma1, gamma2, q
-
-  q = t
-
-  gy2 = gy(1:6)**2
-
-  If (TwoLoopRGE) Then
-   Do i=1,3       ! gauge couplings two loop
-    sumI = 0._dp
-    Do j=1,3
-     sumI = sumI + b_2(i,j) * gy2(j) - a_2(i,j) * gy2(3+j)
-    Enddo
-    f(i) = oo16pi2 * gy(i) * gy2(i) * ( b_1(i) + oo16pi2 * sumI )
-   Enddo
-
-   beta2(1) = ( 13.5_dp* gy2(1) + 1.8_dp * gy2(2) + 1.2_dp * gy2(4)  &
-   &         - 0.4_dp * gy2(5) ) * gy2(1)                            &
-   &       + (7.5_dp * gy2(2) + 6._dp * gy2(4) ) * gy2(2 )           &
-   &       + 16._dp * gy2(5) * gy2(3)                                &
-   &       - (10._dp * gy2(4) + 9._dp * gy2(5) ) * gy2(4)            &
-   &       - (9._dp * gy2(5) +  3._dp * gy2(6) ) * gy2(5)
-
-   beta2(2) = ( 287._dp * gy2(1) / 90._dp + gy2(2) + 8._dp * gy2(3) / 9._dp   &
-   &         + 1.2_dp * gy2(4) + 0.4_dp * gy2(5) + 0.8_dp * gy2(6) ) * gy2(1) &
-   &       + (7.5_dp * gy2(2) + 8._dp * gy2(3) + 6._dp * gy2(5) ) * gy2(2)    &
-   &       + 16._dp * (-gy2(3) / 9._dp + gy2(5) ) * gy2(3)                    &
-   &       - 3._dp * (gy2(4) + gy2(5) ) * gy2(4)                              &
-   &       - (22._dp * gy2(5) + 5._dp * gy2(6) ) * gy2(5)                     &
-   &       - 5._dp * gy2(6)**2
-
-   beta2(3) = ( 2743._dp * gy2(1) / 450._dp + gy2(2) +136._dp * gy2(3)/45._dp &
-   &         + 0.4_dp * gy2(5) + 1.2_dp * gy2(6) ) * gy2(1)                   &
-   &       + (7.5_dp * gy2(2) + 8._dp * gy2(3) + 6._dp * gy2(6) ) * gy2(2)    &
-   &       + 16._dp * (-gy2(3) / 9._dp + gy2(6) ) * gy2(3)                    &
-   &       - (gy2(4) + 5._dp * gy2(5) + 5._dp * gy2(6) ) * gy2(5)             &
-   &       - 22._dp * gy2(6)**2
-
-   Do i=1,3       ! yukawa couplings two loop
-    sumI = 0._dp
-    Do j=1,3
-     sumI = sumI + c1_1(i,j) * gy2(j)  + c2_1(j,i) * gy2(j+3) 
-    End Do
-    f(i+3) = oo16pi2 * gy(i+3) * (sumI + oo16pi2 * beta2(i) )
-   End Do
-  !---------------
-  ! Ln(tan(beta))
-  !---------------
-   gamma1 = 3._dp * (gy2(5) - gy2(6)) + gy2(4)
-
-   gamma2 = 0.75_dp * ( 3._dp * (gy2(6)**2 - gy2(5)**2) - gy2(4)**2)      &
-   &    - (1.9_dp * gy2(1) + 4.5_dp * gy2(2) + 20._dp * gy2(3) ) * gy2(6) &
-   &   + (0.4_dp * gy2(1) + 4.5_dp * gy2(2) + 20._dp * gy2(3) ) * gy2(5)  &
-   &   + (1.8_dp * gy2(1) + 1.5_dp * gy2(2) ) * gy2(4)                    &
-   &   + (0.3_dp * gy2(1) + 1.5_dp * gy2(2) ) * gamma1 ! gauge dependence
-   f(7) = oo16pi2 * (gamma1 + oo16pi2 * gamma2 ) 
-
-  Else ! Everything at 1-loop
-   f(1:3) = oo16pi2 * gy(1:3) * gy2(1:3) * b_1   ! gauge couplings
-   Do i=1,3       ! yukawa couplings one loop
-    sumI = 0._dp
-    Do j=1,3
-     sumI = sumI + c1_1(i,j) * gy2(j)  + c2_1(j,i) * gy2(j+3) 
-    End Do
-    f(i+3) = oo16pi2 * gy(i+3) * sumI 
-   End Do
-   f(7) = oo16pi2 * ( 3._dp * (gy2(5) - gy2(6)) + gy2(4) )
-  End If
-
-  End Subroutine rge7
-
-
  Subroutine rge8_NMSSM(len, T,GY,F)
  !-----------------------------------------------------------------
  !     Right hand side of truncated renormalization group equations
@@ -2179,6 +2092,958 @@ Contains
   Iname = Iname - 1
 
  End Subroutine rge58
+
+
+ Subroutine GToParameters59(g,gi,Lam,Yu,Yd,Ye,Mu)
+
+ Implicit None 
+  Real(dp), Intent(in) :: g(59) 
+  Real(dp),Intent(out) :: gi(3),Lam,Mu
+
+  Complex(dp),Intent(out) :: Yu(3,3),Yd(3,3),Ye(3,3)
+
+  Integer :: i1, i2, SumI 
+ 
+  Iname = Iname +1 
+  NameOfUnit(Iname) = 'GToParameters59' 
+ 
+  gi = g(1:3) 
+  Lam = g(4)
+  Do i1 = 1,3
+   Do i2 = 1,3
+    SumI = (i2-1) + (i1-1)*3
+    SumI = SumI*2 
+    Yu(i1,i2) = Cmplx( g(SumI+5), g(SumI+6), dp) 
+   End Do 
+  End Do 
+
+  Do i1 = 1,3
+   Do i2 = 1,3
+    SumI = (i2-1) + (i1-1)*3
+    SumI = SumI*2 
+    Yd(i1,i2) = Cmplx( g(SumI+23), g(SumI+24), dp) 
+   End Do 
+  End Do 
+ 
+  Do i1 = 1,3
+   Do i2 = 1,3
+    SumI = (i2-1) + (i1-1)*3
+    SumI = SumI*2 
+    Ye(i1,i2) = Cmplx( g(SumI+41), g(SumI+42), dp) 
+   End Do 
+  End Do 
+ 
+  Mu= g(59) ! or ln(v)
+
+  Do i1=1,59 
+   If (g(i1).ne.g(i1)) Then 
+    Write(*,*) "NaN appearing in ",NameOfUnit(Iname) 
+    Write(*,*) "At position ", i1 
+    Call TerminateProgram 
+   End if 
+  End do
+ 
+  Iname = Iname - 1 
+ 
+ 
+ End Subroutine GToParameters59
+
+ Subroutine ParametersToG59(gi,Lam,Yu,Yd,Ye,Mu,g)
+
+ Implicit None 
+  Real(dp), Intent(out) :: g(59) 
+  Real(dp), Intent(in) :: Lam,gi(3),Mu
+
+  Complex(dp), Intent(in) :: Yu(3,3),Yd(3,3),Ye(3,3)
+
+  Integer :: i1, i2, SumI 
+ 
+  Iname = Iname +1 
+  NameOfUnit(Iname) = 'ParametersToG59' 
+ 
+  g(1:3) = gi  
+  g(4) = Lam
+
+  Do i1 = 1,3
+   Do i2 = 1,3
+    SumI = (i2-1) + (i1-1)*3
+    SumI = SumI*2 
+    g(SumI+5) = Real(Yu(i1,i2), dp) 
+    g(SumI+6) = Aimag(Yu(i1,i2)) 
+   End Do 
+  End Do 
+
+  Do i1 = 1,3
+   Do i2 = 1,3
+    SumI = (i2-1) + (i1-1)*3
+    SumI = SumI*2 
+    g(SumI+23) = Real(Yd(i1,i2), dp) 
+    g(SumI+24) = Aimag(Yd(i1,i2)) 
+   End Do 
+  End Do 
+
+  Do i1 = 1,3
+   Do i2 = 1,3
+    SumI = (i2-1) + (i1-1)*3
+    SumI = SumI*2 
+    g(SumI+41) = Real(Ye(i1,i2), dp) 
+    g(SumI+42) = Aimag(Ye(i1,i2)) 
+   End Do 
+  End Do 
+
+  g(59) = Mu ! or ln(v)
+
+  Iname = Iname - 1 
+ 
+ End Subroutine ParametersToG59
+
+
+ Subroutine rge59(len, T, GY, F) 
+ Implicit None 
+  Integer, Intent(in) :: len 
+  Real(dp), Intent(in) :: T, GY(len) 
+  Real(dp), Intent(out) :: F(len) 
+  Integer :: i2
+  Real(dp) :: q 
+  Real(dp) :: g1,betag11,betag12,Dg1,g2,betag21,betag22,Dg2,g3,betag31,betag32
+  Real(dp) :: Lam,betaLam1,betaLam2,DLam,Mu,betaMu1,betaMu2,DMu,Dg3, Dgi(3)
+  Complex(dp) :: Yu(3,3),betaYu1(3,3),betaYu2(3,3)           & 
+   & ,DYu(3,3),adjYu(3,3),Yd(3,3),betaYd1(3,3),betaYd2(3,3),DYd(3,3),adjYd(3,3) & 
+   & ,Ye(3,3),betaYe1(3,3),betaYe2(3,3),DYe(3,3),adjYe(3,3)
+  Complex(dp) :: YdadjYd(3,3),YeadjYe(3,3),YuadjYu(3,3),adjYdYd(3,3) &
+   & , adjYuYu(3,3), YdadjYdYd(3,3),YdadjYuYu(3,3),YeadjYeYe(3,3)    &
+   & , YuadjYuYu(3,3), adjYdYdadjYd(3,3),adjYeYeadjYe(3,3)           &
+   & , YdadjYdYdadjYd(3,3), YeadjYeYeadjYe(3,3),YuadjYuYuadjYu(3,3)  &
+   & , adjYeYe(3,3), YuadjYdYd(3,3), adjYuYuadjYu(3,3) 
+
+  Complex(dp) :: YuadjYd(3,3),adjYuYuadjYd(3,3),YdadjYuYuadjYd(3,3)        &
+   &  , YuadjYdYdadjYd(3,3), YuadjYuYuadjYd(3,3),adjYdYdadjYdYd(3,3)       &
+   &  , adjYdYdadjYuYu(3,3),adjYeYeadjYeYe(3,3), adjYuYuadjYdYd(3,3)       &
+   &  , adjYuYuadjYuYu(3,3),YdadjYdYdadjYdYd(3,3),YdadjYdYdadjYuYu(3,3)    &
+   &  , YdadjYuYuadjYdYd(3,3),YdadjYuYuadjYuYu(3,3),YeadjYeYeadjYeYe(3,3)  &
+   &  , YuadjYdYdadjYdYd(3,3), YuadjYdYdadjYuYu(3,3),YuadjYuYuadjYdYd(3,3) &
+   &  , YuadjYuYuadjYuYu(3,3),adjYdYdadjYdYdadjYd(3,3)                     & 
+   &  , adjYdYdadjYuYuadjYd(3,3),adjYeYeadjYeYeadjYe(3,3)                  &
+   &  , adjYuYuadjYdYdadjYd(3,3),  adjYuYuadjYuYuadjYd(3,3)                &
+   &  , adjYuYuadjYuYuadjYu(3,3),YdadjYdYdadjYdYdadjYd(3,3)                & 
+   &  , YdadjYdYdadjYuYuadjYd(3,3),YdadjYuYuadjYdYdadjYd(3,3)              &
+   &  , YdadjYuYuadjYuYuadjYd(3,3), YeadjYeYeadjYeYeadjYe(3,3)             &
+   &  , YuadjYuYuadjYuYuadjYu(3,3)
+
+  Complex(dp) :: TrYdadjYd,TrYeadjYe,TrYuadjYu,TrYdadjYdYdadjYd &
+   & ,TrYeadjYeYeadjYe,TrYuadjYuYuadjYu
+
+  Complex(dp) :: TrYdadjYuYuadjYd,TrYdadjYdYdadjYdYdadjYd       &
+   & , TrYdadjYdYdadjYuYuadjYd,TrYdadjYuYuadjYdYdadjYd          & 
+   & , TrYdadjYuYuadjYuYuadjYd,TrYeadjYeYeadjYeYeadjYe          &
+   & , TrYuadjYuYuadjYuYuadjYu
+
+  Real(dp) :: g1p2,g1p3,g1p4,g2p2,g2p3,g2p4,g3p2,g3p3, Lamp2
+
+  Real(dp) :: g1p5,g1p6,g2p5,g2p6,g3p4,g3p5, Lamp3, gi(3)
+
+  Iname = Iname +1 
+  NameOfUnit(Iname) = 'rge59' 
+   
+  OnlyDiagonal = .Not.GenerationMixing 
+  q = t 
+   
+  Call GToParameters59(gy,gi,Lam,Yu,Yd,Ye,Mu)
+  g1 = gi(1)
+  g2 = gi(2)
+  g3 = gi(3)
+  !Write(*,*) gy(60), gy(61)
+
+  Call Adjungate(Yu,adjYu)
+  Call Adjungate(Yd,adjYd)
+  Call Adjungate(Ye,adjYe)
+   YdadjYd = Matmul(Yd,adjYd) 
+  Forall(i2=1:3)  YdadjYd(i2,i2) =  Real(YdadjYd(i2,i2),dp) 
+   YeadjYe = Matmul(Ye,adjYe) 
+  Forall(i2=1:3)  YeadjYe(i2,i2) =  Real(YeadjYe(i2,i2),dp) 
+   YuadjYu = Matmul(Yu,adjYu) 
+  Forall(i2=1:3)  YuadjYu(i2,i2) =  Real(YuadjYu(i2,i2),dp) 
+   adjYdYd = Matmul(adjYd,Yd) 
+  Forall(i2=1:3)  adjYdYd(i2,i2) =  Real(adjYdYd(i2,i2),dp) 
+   adjYeYe = Matmul(adjYe,Ye) 
+  Forall(i2=1:3)  adjYeYe(i2,i2) =  Real(adjYeYe(i2,i2),dp) 
+   adjYuYu = Matmul(adjYu,Yu) 
+  Forall(i2=1:3)  adjYuYu(i2,i2) =  Real(adjYuYu(i2,i2),dp) 
+   YdadjYdYd = Matmul(Yd,adjYdYd) 
+   YdadjYuYu = Matmul(Yd,adjYuYu) 
+   YeadjYeYe = Matmul(Ye,adjYeYe) 
+   YuadjYdYd = Matmul(Yu,adjYdYd) 
+   YuadjYuYu = Matmul(Yu,adjYuYu) 
+   adjYdYdadjYd = Matmul(adjYd,YdadjYd) 
+   adjYeYeadjYe = Matmul(adjYe,YeadjYe) 
+   adjYuYuadjYu = Matmul(adjYu,YuadjYu) 
+   YdadjYdYdadjYd = Matmul(Yd,adjYdYdadjYd) 
+   Forall(i2=1:3)  YdadjYdYdadjYd(i2,i2) =  Real(YdadjYdYdadjYd(i2,i2),dp)
+   YeadjYeYeadjYe = Matmul(Ye,adjYeYeadjYe) 
+   Forall(i2=1:3)  YeadjYeYeadjYe(i2,i2) =  Real(YeadjYeYeadjYe(i2,i2),dp) 
+   YuadjYuYuadjYu = Matmul(Yu,adjYuYuadjYu) 
+   Forall(i2=1:3)  YuadjYuYuadjYu(i2,i2) =  Real(YuadjYuYuadjYu(i2,i2),dp) 
+   TrYdadjYd = Real(cTrace(YdadjYd),dp) 
+   TrYeadjYe = Real(cTrace(YeadjYe),dp) 
+   TrYuadjYu = Real(cTrace(YuadjYu),dp) 
+   TrYdadjYdYdadjYd = Real(cTrace(YdadjYdYdadjYd),dp) 
+   TrYeadjYeYeadjYe = Real(cTrace(YeadjYeYeadjYe),dp) 
+   TrYuadjYuYuadjYu = Real(cTrace(YuadjYuYuadjYu),dp) 
+   g1p2 =g1**2 
+   g1p3 =g1**3 
+   g1p4 =g1**4 
+   g2p2 =g2**2 
+   g2p3 =g2**3 
+   g2p4 =g2**4 
+   g3p2 =g3**2 
+   g3p3 =g3**3 
+   Lamp2 =Lam**2 
+   g1p5 =g1**5 
+   g1p6 =g1**6 
+   g2p5 =g2**5 
+   g2p6 =g2**6 
+   g3p4 =g3**4 
+   g3p5 =g3**5 
+   Lamp3 =Lam**3 
+
+
+  If (TwoLoopRGE) Then 
+   YuadjYd = Matmul(Yu,adjYd) 
+   adjYuYuadjYd = Matmul(adjYu,YuadjYd) 
+   YdadjYuYuadjYd = Matmul(Yd,adjYuYuadjYd) 
+  Forall(i2=1:3)  YdadjYuYuadjYd(i2,i2) =  Real(YdadjYuYuadjYd(i2,i2),dp) 
+   YuadjYdYdadjYd = Matmul(Yu,adjYdYdadjYd) 
+   YuadjYuYuadjYd = Matmul(Yu,adjYuYuadjYd) 
+   adjYdYdadjYdYd = Matmul(adjYd,YdadjYdYd) 
+  Forall(i2=1:3)  adjYdYdadjYdYd(i2,i2) =  Real(adjYdYdadjYdYd(i2,i2),dp) 
+   adjYdYdadjYuYu = Matmul(adjYd,YdadjYuYu) 
+   adjYeYeadjYeYe = Matmul(adjYe,YeadjYeYe) 
+  Forall(i2=1:3)  adjYeYeadjYeYe(i2,i2) =  Real(adjYeYeadjYeYe(i2,i2),dp) 
+   adjYuYuadjYdYd = Matmul(adjYu,YuadjYdYd) 
+   adjYuYuadjYuYu = Matmul(adjYu,YuadjYuYu) 
+  Forall(i2=1:3)  adjYuYuadjYuYu(i2,i2) =  Real(adjYuYuadjYuYu(i2,i2),dp) 
+   YdadjYdYdadjYdYd = Matmul(Yd,adjYdYdadjYdYd) 
+   YdadjYdYdadjYuYu = Matmul(Yd,adjYdYdadjYuYu) 
+   YdadjYuYuadjYdYd = Matmul(Yd,adjYuYuadjYdYd) 
+   YdadjYuYuadjYuYu = Matmul(Yd,adjYuYuadjYuYu) 
+   YeadjYeYeadjYeYe = Matmul(Ye,adjYeYeadjYeYe) 
+   YuadjYdYdadjYdYd = Matmul(Yu,adjYdYdadjYdYd) 
+   YuadjYdYdadjYuYu = Matmul(Yu,adjYdYdadjYuYu) 
+   YuadjYuYuadjYdYd = Matmul(Yu,adjYuYuadjYdYd) 
+   YuadjYuYuadjYuYu = Matmul(Yu,adjYuYuadjYuYu) 
+   adjYdYdadjYdYdadjYd = Matmul(adjYd,YdadjYdYdadjYd) 
+   adjYdYdadjYuYuadjYd = Matmul(adjYd,YdadjYuYuadjYd) 
+   adjYeYeadjYeYeadjYe = Matmul(adjYe,YeadjYeYeadjYe) 
+   adjYuYuadjYdYdadjYd = Matmul(adjYu,YuadjYdYdadjYd) 
+   adjYuYuadjYuYuadjYd = Matmul(adjYu,YuadjYuYuadjYd) 
+   adjYuYuadjYuYuadjYu = Matmul(adjYu,YuadjYuYuadjYu) 
+   YdadjYdYdadjYdYdadjYd = Matmul(Yd,adjYdYdadjYdYdadjYd) 
+   Forall(i2=1:3)  YdadjYdYdadjYdYdadjYd(i2,i2) =  &
+                       &     Real(YdadjYdYdadjYdYdadjYd(i2,i2),dp) 
+   YdadjYdYdadjYuYuadjYd = Matmul(Yd,adjYdYdadjYuYuadjYd) 
+   YdadjYuYuadjYdYdadjYd = Matmul(Yd,adjYuYuadjYdYdadjYd) 
+   YdadjYuYuadjYuYuadjYd = Matmul(Yd,adjYuYuadjYuYuadjYd) 
+   Forall(i2=1:3)  YdadjYuYuadjYuYuadjYd(i2,i2) =  &
+                       &    Real(YdadjYuYuadjYuYuadjYd(i2,i2),dp) 
+   YeadjYeYeadjYeYeadjYe = Matmul(Ye,adjYeYeadjYeYeadjYe) 
+   Forall(i2=1:3)  YeadjYeYeadjYeYeadjYe(i2,i2) =  &
+                       &   Real(YeadjYeYeadjYeYeadjYe(i2,i2),dp) 
+   YuadjYuYuadjYuYuadjYu = Matmul(Yu,adjYuYuadjYuYuadjYu) 
+   Forall(i2=1:3)  YuadjYuYuadjYuYuadjYu(i2,i2) =  &
+                       &   Real(YuadjYuYuadjYuYuadjYu(i2,i2),dp) 
+   TrYdadjYuYuadjYd = cTrace(YdadjYuYuadjYd) 
+   TrYdadjYdYdadjYdYdadjYd = cTrace(YdadjYdYdadjYdYdadjYd) 
+   TrYdadjYdYdadjYuYuadjYd = cTrace(YdadjYdYdadjYuYuadjYd) 
+   TrYdadjYuYuadjYdYdadjYd = cTrace(YdadjYuYuadjYdYdadjYd) 
+   TrYdadjYuYuadjYuYuadjYd = cTrace(YdadjYuYuadjYuYuadjYd) 
+   TrYeadjYeYeadjYeYeadjYe = cTrace(YeadjYeYeadjYeYeadjYe) 
+   TrYuadjYuYuadjYuYuadjYu = cTrace(YuadjYuYuadjYuYuadjYu) 
+   g1p5 =g1**5 
+   g1p6 =g1**6 
+   g2p5 =g2**5 
+   g2p6 =g2**6 
+   g3p4 =g3**4 
+   g3p5 =g3**5 
+   Lamp3 =Lam**3 
+  End If 
+   
+   
+  !-------------------- 
+  ! g1 
+  !-------------------- 
+   
+  betag11  = 41._dp*(g1p3)/10._dp
+
+  
+  If (TwoLoopRGE) Then 
+   betag12 = 199._dp*(g1p5)/50._dp + (27*g1p3*g2p2)/10._dp &
+         & + (44*g1p3*g3p2)/5._dp - (g1p3*TrYdadjYd)/2._dp & 
+         & - (3*g1p3*TrYeadjYe)/2._dp - (17*g1p3*TrYuadjYu)/10._dp
+ 
+   Dg1 = oo16pi2*( betag11 + oo16pi2 * betag12 ) 
+   
+  Else 
+   Dg1 = oo16pi2* betag11 
+  End If 
+
+  !-------------------- 
+  ! g2 
+  !-------------------- 
+   
+  betag21  = -19._dp*(g2p3)/6._dp
+   
+  If (TwoLoopRGE) Then 
+   betag22 = (9*g1p2*g2p3)/10._dp + 35._dp*(g2p5)/6._dp + 12*g2p3*g3p2 &
+         & - (3*g2p3*TrYdadjYd)/2._dp - (g2p3*TrYeadjYe)/2._dp         &
+         & - (3*g2p3*TrYuadjYu)/2._dp
+
+   
+  Dg2 = oo16pi2*( betag21 + oo16pi2 * betag22 ) 
+
+  Else 
+   Dg2 = oo16pi2* betag21 
+  End If 
+  
+  !-------------------- 
+  ! g3 
+  !-------------------- 
+   
+  betag31  = -7._dp*(g3p3)
+   
+  If (TwoLoopRGE) Then 
+   betag32 = (11*g1p2*g3p3)/10._dp + (9*g2p2*g3p3)/2._dp - 26._dp*(g3p5) &
+          & - 2*g3p3*TrYdadjYd - 2*g3p3*TrYuadjYu
+
+   Dg3 = oo16pi2*( betag31 + oo16pi2 * betag32 ) 
+
+  Else 
+   Dg3 = oo16pi2* betag31 
+  End If 
+   
+   
+  !-------------------- 
+  ! Lam 
+  !-------------------- 
+   
+  betaLam1  = 27._dp*(g1p4)/100._dp + (9*g1p2*g2p2)/10._dp + 9._dp*(g2p4)/4._dp & 
+     &  + 12._dp*(Lamp2) - 12._dp*(TrYdadjYdYdadjYd) - 4._dp*(TrYeadjYeYeadjYe) & 
+     &  - 12._dp*(TrYuadjYuYuadjYu) - (9*g1p2*Lam)/5._dp - 9*g2p2*Lam           &
+     &  + 12*TrYdadjYd*Lam + 4*TrYeadjYe*Lam + 12*TrYuadjYu*Lam
+   
+  If (TwoLoopRGE) Then 
+   betaLam2 = -3411._dp*(g1p6)/1000._dp - (1677*g1p4*g2p2)/200._dp           & 
+     & - (289*g1p2*g2p4)/40._dp + 305._dp*(g2p6)/8._dp                       & 
+     & + (54*g1p2*Lamp2)/5._dp + 54*g2p2*Lamp2 - 78._dp*(Lamp3)              & 
+     & + (9*g1p4*TrYdadjYd)/10._dp + (27*g1p2*g2p2*TrYdadjYd)/5._dp          & 
+     & - (9*g2p4*TrYdadjYd)/2._dp - 72*Lamp2*TrYdadjYd                       & 
+     & + (8*g1p2*TrYdadjYdYdadjYd)/5._dp - 64*g3p2*TrYdadjYdYdadjYd          & 
+     & + 60._dp*(TrYdadjYdYdadjYdYdadjYd) + 12._dp*(TrYdadjYdYdadjYuYuadjYd) & 
+     & - 24._dp*(TrYdadjYuYuadjYdYdadjYd) - 12._dp*(TrYdadjYuYuadjYuYuadjYd) & 
+     & - (9*g1p4*TrYeadjYe)/2._dp + (33*g1p2*g2p2*TrYeadjYe)/5._dp           & 
+     & - (3*g2p4*TrYeadjYe)/2._dp - 24*Lamp2*TrYeadjYe                       & 
+     & - (24*g1p2*TrYeadjYeYeadjYe)/5._dp + 20._dp*(TrYeadjYeYeadjYeYeadjYe) & 
+     & - (171*g1p4*TrYuadjYu)/50._dp + (63*g1p2*g2p2*TrYuadjYu)/5._dp        & 
+     & - (9*g2p4*TrYuadjYu)/2._dp - 72*Lamp2*TrYuadjYu                       & 
+     & - (16*g1p2*TrYuadjYuYuadjYu)/5._dp - 64*g3p2*TrYuadjYuYuadjYu         & 
+     & + 60._dp*(TrYuadjYuYuadjYuYuadjYu) + (1887*g1p4*Lam)/200._dp          & 
+     & + (117*g1p2*g2p2*Lam)/20._dp - (73*g2p4*Lam)/8._dp                    & 
+     & + (5*g1p2*TrYdadjYd*Lam)/2._dp + (45*g2p2*TrYdadjYd*Lam)/2._dp        & 
+     & + 80*g3p2*TrYdadjYd*Lam - 3*TrYdadjYdYdadjYd*Lam                      & 
+     & - 42*TrYdadjYuYuadjYd*Lam + (15*g1p2*TrYeadjYe*Lam)/2._dp             & 
+     & + (15*g2p2*TrYeadjYe*Lam)/2._dp - TrYeadjYeYeadjYe*Lam                & 
+     & + (17*g1p2*TrYuadjYu*Lam)/2._dp + (45*g2p2*TrYuadjYu*Lam)/2._dp       & 
+     & + 80*g3p2*TrYuadjYu*Lam - 3*TrYuadjYuYuadjYu*Lam
+
+   DLam = oo16pi2*( betaLam1 + oo16pi2 * betaLam2 ) 
+  
+  Else 
+   DLam = oo16pi2* betaLam1 
+  End If 
+   
+  !-------------------- 
+  ! Yu 
+  !-------------------- 
+   
+  betaYu1  = (-17*g1p2*Yu)/20._dp - (9*g2p2*Yu)/4._dp - 8*g3p2*Yu + 3*TrYdadjYd*Yu +    & 
+  &  TrYeadjYe*Yu + 3*TrYuadjYu*Yu - 3._dp*(YuadjYdYd)/2._dp + 3._dp*(YuadjYuYu)/2._dp
+
+   
+   
+  If (TwoLoopRGE) Then 
+  betaYu2 = (1187*g1p4*Yu)/600._dp - (9*g1p2*g2p2*Yu)/20._dp - (23*g2p4*Yu)/4._dp +               & 
+  &  (19*g1p2*g3p2*Yu)/15._dp + 9*g2p2*g3p2*Yu - 108*g3p4*Yu + (3*Lamp2*Yu)/2._dp +        & 
+  &  (5*g1p2*TrYdadjYd*Yu)/8._dp + (45*g2p2*TrYdadjYd*Yu)/8._dp + 20*g3p2*TrYdadjYd*Yu -   & 
+  &  (27*TrYdadjYdYdadjYd*Yu)/4._dp + (3*TrYdadjYuYuadjYd*Yu)/2._dp + (15*g1p2*TrYeadjYe*Yu)/8._dp +& 
+  &  (15*g2p2*TrYeadjYe*Yu)/8._dp - (9*TrYeadjYeYeadjYe*Yu)/4._dp + (17*g1p2*TrYuadjYu*Yu)/8._dp +& 
+  &  (45*g2p2*TrYuadjYu*Yu)/8._dp + 20*g3p2*TrYuadjYu*Yu - (27*TrYuadjYuYuadjYu*Yu)/4._dp -& 
+  &  (43*g1p2*YuadjYdYd)/80._dp + (9*g2p2*YuadjYdYd)/16._dp - 16*g3p2*YuadjYdYd +          & 
+  &  (15*TrYdadjYd*YuadjYdYd)/4._dp + (5*TrYeadjYe*YuadjYdYd)/4._dp + (15*TrYuadjYu*YuadjYdYd)/4._dp +& 
+  &  11._dp*(YuadjYdYdadjYdYd)/4._dp - YuadjYdYdadjYuYu/4._dp + (223*g1p2*YuadjYuYu)/80._dp +& 
+  &  (135*g2p2*YuadjYuYu)/16._dp + 16*g3p2*YuadjYuYu - (27*TrYdadjYd*YuadjYuYu)/4._dp -    & 
+  &  (9*TrYeadjYe*YuadjYuYu)/4._dp - (27*TrYuadjYu*YuadjYuYu)/4._dp - YuadjYuYuadjYdYd +   & 
+  &  3._dp*(YuadjYuYuadjYuYu)/2._dp - 6*YuadjYuYu*Lam
+
+   
+  DYu = oo16pi2*( betaYu1 + oo16pi2 * betaYu2 ) 
+
+   
+  Else 
+  DYu = oo16pi2* betaYu1 
+  End If 
+   
+   
+  Call Chop(DYu) 
+
+  !-------------------- 
+  ! Yd 
+  !-------------------- 
+   
+  betaYd1  = -(g1p2*Yd)/4._dp - (9*g2p2*Yd)/4._dp - 8*g3p2*Yd + 3*TrYdadjYd*Yd +        & 
+  &  TrYeadjYe*Yd + 3*TrYuadjYu*Yd + 3._dp*(YdadjYdYd)/2._dp - 3._dp*(YdadjYuYu)/2._dp
+
+   
+   
+  If (TwoLoopRGE) Then 
+  betaYd2 = (-127*g1p4*Yd)/600._dp - (27*g1p2*g2p2*Yd)/20._dp - (23*g2p4*Yd)/4._dp +              & 
+  &  (31*g1p2*g3p2*Yd)/15._dp + 9*g2p2*g3p2*Yd - 108*g3p4*Yd + (3*Lamp2*Yd)/2._dp +        & 
+  &  (5*g1p2*TrYdadjYd*Yd)/8._dp + (45*g2p2*TrYdadjYd*Yd)/8._dp + 20*g3p2*TrYdadjYd*Yd -   & 
+  &  (27*TrYdadjYdYdadjYd*Yd)/4._dp + (3*TrYdadjYuYuadjYd*Yd)/2._dp + (15*g1p2*TrYeadjYe*Yd)/8._dp +& 
+  &  (15*g2p2*TrYeadjYe*Yd)/8._dp - (9*TrYeadjYeYeadjYe*Yd)/4._dp + (17*g1p2*TrYuadjYu*Yd)/8._dp +& 
+  &  (45*g2p2*TrYuadjYu*Yd)/8._dp + 20*g3p2*TrYuadjYu*Yd - (27*TrYuadjYuYuadjYu*Yd)/4._dp +& 
+  &  (187*g1p2*YdadjYdYd)/80._dp + (135*g2p2*YdadjYdYd)/16._dp + 16*g3p2*YdadjYdYd -       & 
+  &  (27*TrYdadjYd*YdadjYdYd)/4._dp - (9*TrYeadjYe*YdadjYdYd)/4._dp - (27*TrYuadjYu*YdadjYdYd)/4._dp +& 
+  &  3._dp*(YdadjYdYdadjYdYd)/2._dp - YdadjYdYdadjYuYu - (79*g1p2*YdadjYuYu)/80._dp +      & 
+  &  (9*g2p2*YdadjYuYu)/16._dp - 16*g3p2*YdadjYuYu + (15*TrYdadjYd*YdadjYuYu)/4._dp +      & 
+  &  (5*TrYeadjYe*YdadjYuYu)/4._dp + (15*TrYuadjYu*YdadjYuYu)/4._dp - YdadjYuYuadjYdYd/4._dp +& 
+  &  11._dp*(YdadjYuYuadjYuYu)/4._dp - 6*YdadjYdYd*Lam
+
+   
+  DYd = oo16pi2*( betaYd1 + oo16pi2 * betaYd2 ) 
+
+   
+  Else 
+  DYd = oo16pi2* betaYd1 
+  End If 
+   
+   
+  Call Chop(DYd) 
+
+  !-------------------- 
+  ! Ye 
+  !-------------------- 
+   
+  betaYe1  = (-9*g1p2*Ye)/4._dp - (9*g2p2*Ye)/4._dp + 3*TrYdadjYd*Ye + TrYeadjYe*Ye +   & 
+  &  3*TrYuadjYu*Ye + 3._dp*(YeadjYeYe)/2._dp
+
+   
+   
+  If (TwoLoopRGE) Then 
+  betaYe2 = (1371*g1p4*Ye)/200._dp + (27*g1p2*g2p2*Ye)/20._dp - (23*g2p4*Ye)/4._dp +              & 
+  &  (3*Lamp2*Ye)/2._dp + (5*g1p2*TrYdadjYd*Ye)/8._dp + (45*g2p2*TrYdadjYd*Ye)/8._dp +     & 
+  &  20*g3p2*TrYdadjYd*Ye - (27*TrYdadjYdYdadjYd*Ye)/4._dp + (3*TrYdadjYuYuadjYd*Ye)/2._dp +& 
+  &  (15*g1p2*TrYeadjYe*Ye)/8._dp + (15*g2p2*TrYeadjYe*Ye)/8._dp - (9*TrYeadjYeYeadjYe*Ye)/4._dp +& 
+  &  (17*g1p2*TrYuadjYu*Ye)/8._dp + (45*g2p2*TrYuadjYu*Ye)/8._dp + 20*g3p2*TrYuadjYu*Ye -  & 
+  &  (27*TrYuadjYuYuadjYu*Ye)/4._dp + (387*g1p2*YeadjYeYe)/80._dp + (135*g2p2*YeadjYeYe)/16._dp -& 
+  &  (27*TrYdadjYd*YeadjYeYe)/4._dp - (9*TrYeadjYe*YeadjYeYe)/4._dp - (27*TrYuadjYu*YeadjYeYe)/4._dp +& 
+  &  3._dp*(YeadjYeYeadjYeYe)/2._dp - 6*YeadjYeYe*Lam
+
+
+
+   
+  DYe = oo16pi2*( betaYe1 + oo16pi2 * betaYe2 ) 
+
+   
+  Else 
+  DYe = oo16pi2* betaYe1 
+  End If 
+   
+   
+  Call Chop(DYe) 
+
+  !-------------------- 
+  ! Mu 
+  !-------------------- 
+   
+  betaMu1  = (-9*g1p2*Mu)/10._dp - (9*g2p2*Mu)/2._dp + 6*Mu*TrYdadjYd + 2*Mu*TrYeadjYe +& 
+  &  6*Mu*TrYuadjYu + 6*Mu*Lam
+
+   
+   
+  If (TwoLoopRGE) Then 
+  betaMu2 = (1671*g1p4*Mu)/400._dp + (9*g1p2*g2p2*Mu)/8._dp - (145*g2p4*Mu)/16._dp -              & 
+  &  15*Lamp2*Mu + (5*g1p2*Mu*TrYdadjYd)/4._dp + (45*g2p2*Mu*TrYdadjYd)/4._dp +            & 
+  &  40*g3p2*Mu*TrYdadjYd - (27*Mu*TrYdadjYdYdadjYd)/2._dp - 21*Mu*TrYdadjYuYuadjYd +      & 
+  &  (15*g1p2*Mu*TrYeadjYe)/4._dp + (15*g2p2*Mu*TrYeadjYe)/4._dp - (9*Mu*TrYeadjYeYeadjYe)/2._dp +& 
+  &  (17*g1p2*Mu*TrYuadjYu)/4._dp + (45*g2p2*Mu*TrYuadjYu)/4._dp + 40*g3p2*Mu*TrYuadjYu -  & 
+  &  (27*Mu*TrYuadjYuYuadjYu)/2._dp + (36*g1p2*Mu*Lam)/5._dp + 36*g2p2*Mu*Lam -            & 
+  &  36*Mu*TrYdadjYd*Lam - 12*Mu*TrYeadjYe*Lam - 36*Mu*TrYuadjYu*Lam
+
+   
+  DMu = oo16pi2*( betaMu1 + oo16pi2 * betaMu2 ) 
+
+   
+  Else 
+   DMu = oo16pi2* betaMu1 
+  End If 
+   Dgi(1) = Dg1   
+   Dgi(2) = Dg2   
+   Dgi(3) = Dg3   
+   Call ParametersToG59(Dgi,DLam,DYu,DYd,DYe,DMu,f)
+
+  Iname = Iname - 1 
+
+ End Subroutine rge59  
+
+
+ Subroutine rge59a(len, T, GY, F)
+ !---------------------------------------------------------------
+ ! taking the routine rge59 and replace the RGE for mu^2 by the
+ ! one for the vev 
+ ! 01.02.2017: adding the known 3-loop parts, thanks to Florian Staub
+ !             and Alexander Voigt
+ !---------------------------------------------------------------
+ Implicit None 
+  Integer, Intent(in) :: len 
+  Real(dp), Intent(in) :: T, GY(len) 
+  Real(dp), Intent(out) :: F(len) 
+  Integer :: i2
+  Real(dp) :: q 
+  Real(dp) :: g1,betag11,betag12,Dg1,g2,betag21,betag22,Dg2,g3,betag31,betag32
+  Real(dp) :: Lam,betaLam1,betaLam2,DLam,ln_v,betaVEV1,betaVEV2,Dln_v,Dg3, Dgi(3)
+  Complex(dp) :: Yu(3,3),betaYu1(3,3),betaYu2(3,3)           & 
+   & ,DYu(3,3),adjYu(3,3),Yd(3,3),betaYd1(3,3),betaYd2(3,3),DYd(3,3),adjYd(3,3) & 
+   & ,Ye(3,3),betaYe1(3,3),betaYe2(3,3),DYe(3,3),adjYe(3,3)
+  Complex(dp) :: YdadjYd(3,3),YeadjYe(3,3),YuadjYu(3,3),adjYdYd(3,3) &
+   & , adjYuYu(3,3), YdadjYdYd(3,3),YdadjYuYu(3,3),YeadjYeYe(3,3)    &
+   & , YuadjYuYu(3,3), adjYdYdadjYd(3,3),adjYeYeadjYe(3,3)           &
+   & , YdadjYdYdadjYd(3,3), YeadjYeYeadjYe(3,3),YuadjYuYuadjYu(3,3)  &
+   & , adjYeYe(3,3), YuadjYdYd(3,3), adjYuYuadjYu(3,3) 
+
+  Complex(dp) :: YuadjYd(3,3),adjYuYuadjYd(3,3),YdadjYuYuadjYd(3,3)        &
+   &  , YuadjYdYdadjYd(3,3), YuadjYuYuadjYd(3,3),adjYdYdadjYdYd(3,3)       &
+   &  , adjYdYdadjYuYu(3,3),adjYeYeadjYeYe(3,3), adjYuYuadjYdYd(3,3)       &
+   &  , adjYuYuadjYuYu(3,3),YdadjYdYdadjYdYd(3,3),YdadjYdYdadjYuYu(3,3)    &
+   &  , YdadjYuYuadjYdYd(3,3),YdadjYuYuadjYuYu(3,3),YeadjYeYeadjYeYe(3,3)  &
+   &  , YuadjYdYdadjYdYd(3,3), YuadjYdYdadjYuYu(3,3),YuadjYuYuadjYdYd(3,3) &
+   &  , YuadjYuYuadjYuYu(3,3),adjYdYdadjYdYdadjYd(3,3)                     & 
+   &  , adjYdYdadjYuYuadjYd(3,3),adjYeYeadjYeYeadjYe(3,3)                  &
+   &  , adjYuYuadjYdYdadjYd(3,3),  adjYuYuadjYuYuadjYd(3,3)                &
+   &  , adjYuYuadjYuYuadjYu(3,3),YdadjYdYdadjYdYdadjYd(3,3)                & 
+   &  , YdadjYdYdadjYuYuadjYd(3,3),YdadjYuYuadjYdYdadjYd(3,3)              &
+   &  , YdadjYuYuadjYuYuadjYd(3,3), YeadjYeYeadjYeYeadjYe(3,3)             &
+   &  , YuadjYuYuadjYuYuadjYu(3,3)
+
+  Complex(dp) :: TrYdadjYd,TrYeadjYe,TrYuadjYu,TrYdadjYdYdadjYd &
+   & ,TrYeadjYeYeadjYe,TrYuadjYuYuadjYu
+
+  Complex(dp) :: TrYdadjYuYuadjYd,TrYdadjYdYdadjYdYdadjYd       &
+   & , TrYdadjYdYdadjYuYuadjYd,TrYdadjYuYuadjYdYdadjYd          & 
+   & , TrYdadjYuYuadjYuYuadjYd,TrYeadjYeYeadjYeYeadjYe          &
+   & , TrYuadjYuYuadjYuYuadjYu, Yt
+
+  Real(dp) :: g1p2,g1p3,g1p4,g2p2,g2p3,g2p4,g3p2,g3p3, Lamp2
+
+  Real(dp) :: g1p5,g1p6,g2p5,g2p6,g3p4,g3p5, Lamp3, gi(3), chi4, Y4 &
+   & , betag33, Ytp2, Ytp4, betaLam3, betaYu3, Lamp4
+
+  Real(dp), Parameter :: Z3=1.2020569031595942366_dp
+
+  Iname = Iname +1 
+  NameOfUnit(Iname) = 'rge59a' 
+   
+  OnlyDiagonal = .Not.GenerationMixing 
+  q = t 
+   
+  Call GToParameters59(gy,gi,Lam,Yu,Yd,Ye,ln_v)
+  g1 = gi(1)
+  g2 = gi(2)
+  g3 = gi(3)
+  Yt = Yu(3,3)
+
+  Call Adjungate(Yu,adjYu)
+  Call Adjungate(Yd,adjYd)
+  Call Adjungate(Ye,adjYe)
+   YdadjYd = Matmul(Yd,adjYd) 
+  Forall(i2=1:3)  YdadjYd(i2,i2) =  Real(YdadjYd(i2,i2),dp) 
+   YeadjYe = Matmul(Ye,adjYe) 
+  Forall(i2=1:3)  YeadjYe(i2,i2) =  Real(YeadjYe(i2,i2),dp) 
+   YuadjYu = Matmul(Yu,adjYu) 
+  Forall(i2=1:3)  YuadjYu(i2,i2) =  Real(YuadjYu(i2,i2),dp) 
+   adjYdYd = Matmul(adjYd,Yd) 
+  Forall(i2=1:3)  adjYdYd(i2,i2) =  Real(adjYdYd(i2,i2),dp) 
+   adjYeYe = Matmul(adjYe,Ye) 
+  Forall(i2=1:3)  adjYeYe(i2,i2) =  Real(adjYeYe(i2,i2),dp) 
+   adjYuYu = Matmul(adjYu,Yu) 
+  Forall(i2=1:3)  adjYuYu(i2,i2) =  Real(adjYuYu(i2,i2),dp) 
+   YdadjYdYd = Matmul(Yd,adjYdYd) 
+   YdadjYuYu = Matmul(Yd,adjYuYu) 
+   YeadjYeYe = Matmul(Ye,adjYeYe) 
+   YuadjYdYd = Matmul(Yu,adjYdYd) 
+   YuadjYuYu = Matmul(Yu,adjYuYu) 
+   adjYdYdadjYd = Matmul(adjYd,YdadjYd) 
+   adjYeYeadjYe = Matmul(adjYe,YeadjYe) 
+   adjYuYuadjYu = Matmul(adjYu,YuadjYu) 
+   YdadjYdYdadjYd = Matmul(Yd,adjYdYdadjYd) 
+   Forall(i2=1:3)  YdadjYdYdadjYd(i2,i2) =  Real(YdadjYdYdadjYd(i2,i2),dp)
+   YeadjYeYeadjYe = Matmul(Ye,adjYeYeadjYe) 
+   Forall(i2=1:3)  YeadjYeYeadjYe(i2,i2) =  Real(YeadjYeYeadjYe(i2,i2),dp) 
+   YuadjYuYuadjYu = Matmul(Yu,adjYuYuadjYu) 
+   Forall(i2=1:3)  YuadjYuYuadjYu(i2,i2) =  Real(YuadjYuYuadjYu(i2,i2),dp) 
+   TrYdadjYd = Real(cTrace(YdadjYd),dp) 
+   TrYeadjYe = Real(cTrace(YeadjYe),dp) 
+   TrYuadjYu = Real(cTrace(YuadjYu),dp) 
+   TrYdadjYdYdadjYd = Real(cTrace(YdadjYdYdadjYd),dp) 
+   TrYeadjYeYeadjYe = Real(cTrace(YeadjYeYeadjYe),dp) 
+   TrYuadjYuYuadjYu = Real(cTrace(YuadjYuYuadjYu),dp) 
+   g1p2 =g1**2 
+   g1p3 =g1**3 
+   g1p4 =g1**4 
+   g2p2 =g2**2 
+   g2p3 =g2**3 
+   g2p4 =g2**4 
+   g3p2 =g3**2 
+   g3p3 =g3**3 
+   Lamp2 =Lam**2 
+   g1p5 =g1**5 
+   g1p6 =g1**6 
+   g2p5 =g2**5 
+   g2p6 =g2**6 
+   g3p4 =g3**4 
+   g3p5 =g3**5 
+   Lamp3 =Lam**3 
+
+
+  If (TwoLoopRGE) Then 
+   YuadjYd = Matmul(Yu,adjYd) 
+   adjYuYuadjYd = Matmul(adjYu,YuadjYd) 
+   YdadjYuYuadjYd = Matmul(Yd,adjYuYuadjYd) 
+  Forall(i2=1:3)  YdadjYuYuadjYd(i2,i2) =  Real(YdadjYuYuadjYd(i2,i2),dp) 
+   YuadjYdYdadjYd = Matmul(Yu,adjYdYdadjYd) 
+   YuadjYuYuadjYd = Matmul(Yu,adjYuYuadjYd) 
+   adjYdYdadjYdYd = Matmul(adjYd,YdadjYdYd) 
+  Forall(i2=1:3)  adjYdYdadjYdYd(i2,i2) =  Real(adjYdYdadjYdYd(i2,i2),dp) 
+   adjYdYdadjYuYu = Matmul(adjYd,YdadjYuYu) 
+   adjYeYeadjYeYe = Matmul(adjYe,YeadjYeYe) 
+  Forall(i2=1:3)  adjYeYeadjYeYe(i2,i2) =  Real(adjYeYeadjYeYe(i2,i2),dp) 
+   adjYuYuadjYdYd = Matmul(adjYu,YuadjYdYd) 
+   adjYuYuadjYuYu = Matmul(adjYu,YuadjYuYu) 
+  Forall(i2=1:3)  adjYuYuadjYuYu(i2,i2) =  Real(adjYuYuadjYuYu(i2,i2),dp) 
+   YdadjYdYdadjYdYd = Matmul(Yd,adjYdYdadjYdYd) 
+   YdadjYdYdadjYuYu = Matmul(Yd,adjYdYdadjYuYu) 
+   YdadjYuYuadjYdYd = Matmul(Yd,adjYuYuadjYdYd) 
+   YdadjYuYuadjYuYu = Matmul(Yd,adjYuYuadjYuYu) 
+   YeadjYeYeadjYeYe = Matmul(Ye,adjYeYeadjYeYe) 
+   YuadjYdYdadjYdYd = Matmul(Yu,adjYdYdadjYdYd) 
+   YuadjYdYdadjYuYu = Matmul(Yu,adjYdYdadjYuYu) 
+   YuadjYuYuadjYdYd = Matmul(Yu,adjYuYuadjYdYd) 
+   YuadjYuYuadjYuYu = Matmul(Yu,adjYuYuadjYuYu) 
+   adjYdYdadjYdYdadjYd = Matmul(adjYd,YdadjYdYdadjYd) 
+   adjYdYdadjYuYuadjYd = Matmul(adjYd,YdadjYuYuadjYd) 
+   adjYeYeadjYeYeadjYe = Matmul(adjYe,YeadjYeYeadjYe) 
+   adjYuYuadjYdYdadjYd = Matmul(adjYu,YuadjYdYdadjYd) 
+   adjYuYuadjYuYuadjYd = Matmul(adjYu,YuadjYuYuadjYd) 
+   adjYuYuadjYuYuadjYu = Matmul(adjYu,YuadjYuYuadjYu) 
+   YdadjYdYdadjYdYdadjYd = Matmul(Yd,adjYdYdadjYdYdadjYd) 
+   Forall(i2=1:3)  YdadjYdYdadjYdYdadjYd(i2,i2) =  &
+                       &     Real(YdadjYdYdadjYdYdadjYd(i2,i2),dp) 
+   YdadjYdYdadjYuYuadjYd = Matmul(Yd,adjYdYdadjYuYuadjYd) 
+   YdadjYuYuadjYdYdadjYd = Matmul(Yd,adjYuYuadjYdYdadjYd) 
+   YdadjYuYuadjYuYuadjYd = Matmul(Yd,adjYuYuadjYuYuadjYd) 
+   Forall(i2=1:3)  YdadjYuYuadjYuYuadjYd(i2,i2) =  &
+                       &    Real(YdadjYuYuadjYuYuadjYd(i2,i2),dp) 
+   YeadjYeYeadjYeYeadjYe = Matmul(Ye,adjYeYeadjYeYeadjYe) 
+   Forall(i2=1:3)  YeadjYeYeadjYeYeadjYe(i2,i2) =  &
+                       &   Real(YeadjYeYeadjYeYeadjYe(i2,i2),dp) 
+   YuadjYuYuadjYuYuadjYu = Matmul(Yu,adjYuYuadjYuYuadjYu) 
+   Forall(i2=1:3)  YuadjYuYuadjYuYuadjYu(i2,i2) =  &
+                       &   Real(YuadjYuYuadjYuYuadjYu(i2,i2),dp) 
+   TrYdadjYuYuadjYd = cTrace(YdadjYuYuadjYd) 
+   TrYdadjYdYdadjYdYdadjYd = cTrace(YdadjYdYdadjYdYdadjYd) 
+   TrYdadjYdYdadjYuYuadjYd = cTrace(YdadjYdYdadjYuYuadjYd) 
+   TrYdadjYuYuadjYdYdadjYd = cTrace(YdadjYuYuadjYdYdadjYd) 
+   TrYdadjYuYuadjYuYuadjYd = cTrace(YdadjYuYuadjYuYuadjYd) 
+   TrYeadjYeYeadjYeYeadjYe = cTrace(YeadjYeYeadjYeYeadjYe) 
+   TrYuadjYuYuadjYuYuadjYu = cTrace(YuadjYuYuadjYuYuadjYu) 
+   g1p5 =g1**5 
+   g1p6 =g1**6 
+   g2p5 =g2**5 
+   g2p6 =g2**6 
+   g3p4 =g3**4 
+   g3p5 =g3**5 
+   Lamp3 =Lam**3 
+   Lamp4 =Lam**4 
+
+   Ytp2 = Abs(Yt)**2
+   Ytp4 = Ytp2**2
+  End If 
+   
+   
+  !-------------------- 
+  ! g1 
+  !-------------------- 
+   
+  betag11  = 41._dp*(g1p3)/10._dp
+
+  
+  If (TwoLoopRGE) Then 
+   betag12 = 199._dp*(g1p5)/50._dp + (27*g1p3*g2p2)/10._dp &
+         & + (44*g1p3*g3p2)/5._dp - (g1p3*TrYdadjYd)/2._dp & 
+         & - (3*g1p3*TrYeadjYe)/2._dp - (17*g1p3*TrYuadjYu)/10._dp
+ 
+   Dg1 = oo16pi2*( betag11 + oo16pi2 * betag12 ) 
+   
+  Else 
+   Dg1 = oo16pi2* betag11 
+  End If 
+
+  !-------------------- 
+  ! g2 
+  !-------------------- 
+   
+  betag21  = -19._dp*(g2p3)/6._dp
+   
+  If (TwoLoopRGE) Then 
+   betag22 = (9*g1p2*g2p3)/10._dp + 35._dp*(g2p5)/6._dp + 12*g2p3*g3p2 &
+         & - (3*g2p3*TrYdadjYd)/2._dp - (g2p3*TrYeadjYe)/2._dp         &
+         & - (3*g2p3*TrYuadjYu)/2._dp
+
+   
+  Dg2 = oo16pi2*( betag21 + oo16pi2 * betag22 ) 
+
+  Else 
+   Dg2 = oo16pi2* betag21 
+  End If 
+  
+  !-------------------- 
+  ! g3 
+  !-------------------- 
+   
+  betag31  = -7._dp*(g3p3)
+   
+  If (TwoLoopRGE) Then 
+   betag32 = (11*g1p2*g3p3)/10._dp + (9*g2p2*g3p3)/2._dp - 26._dp*(g3p5) &
+          & - 2*g3p3*TrYdadjYd - 2*g3p3*TrYuadjYu
+
+!betag33 = (65._dp*g3**7)/2._dp - 40*g3**5*Yt**2 + 15*g3**3*Yt**4
+   If (ThreeLoopRGE) Then 
+    betag33 = (65._dp*g3p5*g3p2)/2._dp - g3p3 * Ytp2 * ( 40*g3p2 + 15*Ytp2)
+    Dg3 = oo16pi2*( betag31 + oo16pi2 * (betag32 + oo16pi2 * betag33) ) 
+   Else
+    Dg3 = oo16pi2*( betag31 + oo16pi2 * betag32 ) 
+   End If
+
+  Else 
+   Dg3 = oo16pi2* betag31 
+  End If 
+   
+   
+  !-------------------- 
+  ! Lam 
+  !-------------------- 
+   
+  betaLam1  = 27._dp*(g1p4)/100._dp + (9*g1p2*g2p2)/10._dp + 9._dp*(g2p4)/4._dp & 
+     &  + 12._dp*(Lamp2) - 12._dp*(TrYdadjYdYdadjYd) - 4._dp*(TrYeadjYeYeadjYe) & 
+     &  - 12._dp*(TrYuadjYuYuadjYu) - (9*g1p2*Lam)/5._dp - 9*g2p2*Lam           &
+     &  + 12*TrYdadjYd*Lam + 4*TrYeadjYe*Lam + 12*TrYuadjYu*Lam
+   
+  If (TwoLoopRGE) Then 
+   betaLam2 = -3411._dp*(g1p6)/1000._dp - (1677*g1p4*g2p2)/200._dp           & 
+     & - (289*g1p2*g2p4)/40._dp + 305._dp*(g2p6)/8._dp                       & 
+     & + (54*g1p2*Lamp2)/5._dp + 54*g2p2*Lamp2 - 78._dp*(Lamp3)              & 
+     & + (9*g1p4*TrYdadjYd)/10._dp + (27*g1p2*g2p2*TrYdadjYd)/5._dp          & 
+     & - (9*g2p4*TrYdadjYd)/2._dp - 72*Lamp2*TrYdadjYd                       & 
+     & + (8*g1p2*TrYdadjYdYdadjYd)/5._dp - 64*g3p2*TrYdadjYdYdadjYd          & 
+     & + 60._dp*(TrYdadjYdYdadjYdYdadjYd) + 12._dp*(TrYdadjYdYdadjYuYuadjYd) & 
+     & - 24._dp*(TrYdadjYuYuadjYdYdadjYd) - 12._dp*(TrYdadjYuYuadjYuYuadjYd) & 
+     & - (9*g1p4*TrYeadjYe)/2._dp + (33*g1p2*g2p2*TrYeadjYe)/5._dp           & 
+     & - (3*g2p4*TrYeadjYe)/2._dp - 24*Lamp2*TrYeadjYe                       & 
+     & - (24*g1p2*TrYeadjYeYeadjYe)/5._dp + 20._dp*(TrYeadjYeYeadjYeYeadjYe) & 
+     & - (171*g1p4*TrYuadjYu)/50._dp + (63*g1p2*g2p2*TrYuadjYu)/5._dp        & 
+     & - (9*g2p4*TrYuadjYu)/2._dp - 72*Lamp2*TrYuadjYu                       & 
+     & - (16*g1p2*TrYuadjYuYuadjYu)/5._dp - 64*g3p2*TrYuadjYuYuadjYu         & 
+     & + 60._dp*(TrYuadjYuYuadjYuYuadjYu) + (1887*g1p4*Lam)/200._dp          & 
+     & + (117*g1p2*g2p2*Lam)/20._dp - (73*g2p4*Lam)/8._dp                    & 
+     & + (5*g1p2*TrYdadjYd*Lam)/2._dp + (45*g2p2*TrYdadjYd*Lam)/2._dp        & 
+     & + 80*g3p2*TrYdadjYd*Lam - 3*TrYdadjYdYdadjYd*Lam                      & 
+     & - 42*TrYdadjYuYuadjYd*Lam + (15*g1p2*TrYeadjYe*Lam)/2._dp             & 
+     & + (15*g2p2*TrYeadjYe*Lam)/2._dp - TrYeadjYeYeadjYe*Lam                & 
+     & + (17*g1p2*TrYuadjYu*Lam)/2._dp + (45*g2p2*TrYuadjYu*Lam)/2._dp       & 
+     & + 80*g3p2*TrYuadjYu*Lam - 3*TrYuadjYuYuadjYu*Lam
+
+!betaLam3 =   (5238*Lam**3*Yt**2 + Lam*Yt**2*(24*g3**2*Yt**2*(895 - 1296*Z3) + 27*Yt**4*(13 - 176*Z3) &
+!& + 32*g3**4*(311 - 36*Z3)) + 36*Lam**4*(299 + 168*Z3) + &
+!& 2*Yt**4*(16*g3**4*(-133 + 48*Z3) - 9*Yt**4*(533 + 96*Z3) + 48*g3**2*Yt**2*(-19 + 120*Z3)) + &
+!& 54*Lam**2*Yt**2*(16*g3**2*(-17 + 16*Z3) + Yt**2*(191 + 168*Z3)))/48._dp
+   
+   If (ThreeLoopRGE) Then 
+    betaLam3 = (5238*Lamp3*Ytp2 + Lam*Ytp2*(24*g3p2*Ytp2*(895 - 1296*Z3)    &
+          &   + 27*Ytp4*(13 - 176*Z3) + 32*g3p4*(311 - 36*Z3))              &
+          &   + 36*Lamp4*(299 + 168*Z3) + 2*Ytp4*(16*g3p4*(-133 + 48*Z3)    &
+          &   - 9*Ytp4*(533 + 96*Z3) + 48*g3p2*Ytp2*(-19 + 120*Z3))         &
+          &   + 54*Lamp3*Ytp2*(16*g3p2*(-17 + 16*Z3) + Ytp2*(191 + 168*Z3)) &
+          &   ) / 48._dp
+
+    DLam = oo16pi2*( betaLam1 + oo16pi2 * (betaLam2 + oo16pi2 * betaLam3)) 
+   Else
+    DLam = oo16pi2*( betaLam1 + oo16pi2 * betaLam2 ) 
+   End If
+
+  
+  Else 
+   DLam = oo16pi2* betaLam1 
+  End If 
+   
+  !-------------------- 
+  ! Yu 
+  !-------------------- 
+   
+  betaYu1  = (-17*g1p2*Yu)/20._dp - (9*g2p2*Yu)/4._dp - 8*g3p2*Yu + 3*TrYdadjYd*Yu +    & 
+  &  TrYeadjYe*Yu + 3*TrYuadjYu*Yu - 3._dp*(YuadjYdYd)/2._dp + 3._dp*(YuadjYuYu)/2._dp
+
+   
+   
+  If (TwoLoopRGE) Then 
+  betaYu2 = (1187*g1p4*Yu)/600._dp - (9*g1p2*g2p2*Yu)/20._dp - (23*g2p4*Yu)/4._dp +               & 
+  &  (19*g1p2*g3p2*Yu)/15._dp + 9*g2p2*g3p2*Yu - 108*g3p4*Yu + (3*Lamp2*Yu)/2._dp +        & 
+  &  (5*g1p2*TrYdadjYd*Yu)/8._dp + (45*g2p2*TrYdadjYd*Yu)/8._dp + 20*g3p2*TrYdadjYd*Yu -   & 
+  &  (27*TrYdadjYdYdadjYd*Yu)/4._dp + (3*TrYdadjYuYuadjYd*Yu)/2._dp + (15*g1p2*TrYeadjYe*Yu)/8._dp +& 
+  &  (15*g2p2*TrYeadjYe*Yu)/8._dp - (9*TrYeadjYeYeadjYe*Yu)/4._dp + (17*g1p2*TrYuadjYu*Yu)/8._dp +& 
+  &  (45*g2p2*TrYuadjYu*Yu)/8._dp + 20*g3p2*TrYuadjYu*Yu - (27*TrYuadjYuYuadjYu*Yu)/4._dp -& 
+  &  (43*g1p2*YuadjYdYd)/80._dp + (9*g2p2*YuadjYdYd)/16._dp - 16*g3p2*YuadjYdYd +          & 
+  &  (15*TrYdadjYd*YuadjYdYd)/4._dp + (5*TrYeadjYe*YuadjYdYd)/4._dp + (15*TrYuadjYu*YuadjYdYd)/4._dp +& 
+  &  11._dp*(YuadjYdYdadjYdYd)/4._dp - YuadjYdYdadjYuYu/4._dp + (223*g1p2*YuadjYuYu)/80._dp +& 
+  &  (135*g2p2*YuadjYuYu)/16._dp + 16*g3p2*YuadjYuYu - (27*TrYdadjYd*YuadjYuYu)/4._dp -    & 
+  &  (9*TrYeadjYe*YuadjYuYu)/4._dp - (27*TrYuadjYu*YuadjYuYu)/4._dp - YuadjYuYuadjYdYd +   & 
+  &  3._dp*(YuadjYuYuadjYuYu)/2._dp - 6*YuadjYuYu*Lam
+
+   
+!betaYu3 =  (Yt*(48*g3**2*(8*Lam*Yt**2 - 157*Yt**4) + 8*g3**4*Yt**2*(3827 - 1368*Z3) + &
+!& 32*g3**6*(-2083 + 960*Z3) + 9*(-24*Lam**3 + 5*Lam**2*Yt**2 + 528*Lam*Yt**4 + &
+!& 2*Yt**6*(113 + 36*Z3))))/48._dp
+
+   DYu = oo16pi2*( betaYu1 + oo16pi2 * betaYu2 ) 
+   If (ThreeLoopRGE) Then 
+    betaYu3 = (Yt*(48*g3p2*(8*Lam*Ytp2 - 157*Ytp4)                     &
+        &   + 8*g3p4*Ytp2*(3827 - 1368*Z3) + 32*g3**6*(-2083 + 960*Z3) &
+        &   + 9*(-24*Lamp3 + 5*Lamp2*Ytp2 + 528*Lam*Ytp4               &
+        &   + 2*Yt**6*(113 + 36*Z3))) ) /48._dp
+
+    DYu(3,3) = DYu(3,3) +  oo16pi2**3*betaYu3 
+   End If 
+   
+  Else 
+  DYu = oo16pi2* betaYu1 
+  End If 
+   
+   
+  Call Chop(DYu) 
+
+  !-------------------- 
+  ! Yd 
+  !-------------------- 
+   
+  betaYd1  = -(g1p2*Yd)/4._dp - (9*g2p2*Yd)/4._dp - 8*g3p2*Yd + 3*TrYdadjYd*Yd +        & 
+  &  TrYeadjYe*Yd + 3*TrYuadjYu*Yd + 3._dp*(YdadjYdYd)/2._dp - 3._dp*(YdadjYuYu)/2._dp
+
+   
+   
+  If (TwoLoopRGE) Then 
+  betaYd2 = (-127*g1p4*Yd)/600._dp - (27*g1p2*g2p2*Yd)/20._dp - (23*g2p4*Yd)/4._dp +              & 
+  &  (31*g1p2*g3p2*Yd)/15._dp + 9*g2p2*g3p2*Yd - 108*g3p4*Yd + (3*Lamp2*Yd)/2._dp +        & 
+  &  (5*g1p2*TrYdadjYd*Yd)/8._dp + (45*g2p2*TrYdadjYd*Yd)/8._dp + 20*g3p2*TrYdadjYd*Yd -   & 
+  &  (27*TrYdadjYdYdadjYd*Yd)/4._dp + (3*TrYdadjYuYuadjYd*Yd)/2._dp + (15*g1p2*TrYeadjYe*Yd)/8._dp +& 
+  &  (15*g2p2*TrYeadjYe*Yd)/8._dp - (9*TrYeadjYeYeadjYe*Yd)/4._dp + (17*g1p2*TrYuadjYu*Yd)/8._dp +& 
+  &  (45*g2p2*TrYuadjYu*Yd)/8._dp + 20*g3p2*TrYuadjYu*Yd - (27*TrYuadjYuYuadjYu*Yd)/4._dp +& 
+  &  (187*g1p2*YdadjYdYd)/80._dp + (135*g2p2*YdadjYdYd)/16._dp + 16*g3p2*YdadjYdYd -       & 
+  &  (27*TrYdadjYd*YdadjYdYd)/4._dp - (9*TrYeadjYe*YdadjYdYd)/4._dp - (27*TrYuadjYu*YdadjYdYd)/4._dp +& 
+  &  3._dp*(YdadjYdYdadjYdYd)/2._dp - YdadjYdYdadjYuYu - (79*g1p2*YdadjYuYu)/80._dp +      & 
+  &  (9*g2p2*YdadjYuYu)/16._dp - 16*g3p2*YdadjYuYu + (15*TrYdadjYd*YdadjYuYu)/4._dp +      & 
+  &  (5*TrYeadjYe*YdadjYuYu)/4._dp + (15*TrYuadjYu*YdadjYuYu)/4._dp - YdadjYuYuadjYdYd/4._dp +& 
+  &  11._dp*(YdadjYuYuadjYuYu)/4._dp - 6*YdadjYdYd*Lam
+
+   
+  DYd = oo16pi2*( betaYd1 + oo16pi2 * betaYd2 ) 
+
+   
+  Else 
+  DYd = oo16pi2* betaYd1 
+  End If 
+   
+   
+  Call Chop(DYd) 
+
+  !-------------------- 
+  ! Ye 
+  !-------------------- 
+   
+  betaYe1  = (-9*g1p2*Ye)/4._dp - (9*g2p2*Ye)/4._dp + 3*TrYdadjYd*Ye + TrYeadjYe*Ye +   & 
+  &  3*TrYuadjYu*Ye + 3._dp*(YeadjYeYe)/2._dp
+
+   
+   
+  If (TwoLoopRGE) Then 
+  betaYe2 = (1371*g1p4*Ye)/200._dp + (27*g1p2*g2p2*Ye)/20._dp - (23*g2p4*Ye)/4._dp +              & 
+  &  (3*Lamp2*Ye)/2._dp + (5*g1p2*TrYdadjYd*Ye)/8._dp + (45*g2p2*TrYdadjYd*Ye)/8._dp +     & 
+  &  20*g3p2*TrYdadjYd*Ye - (27*TrYdadjYdYdadjYd*Ye)/4._dp + (3*TrYdadjYuYuadjYd*Ye)/2._dp +& 
+  &  (15*g1p2*TrYeadjYe*Ye)/8._dp + (15*g2p2*TrYeadjYe*Ye)/8._dp - (9*TrYeadjYeYeadjYe*Ye)/4._dp +& 
+  &  (17*g1p2*TrYuadjYu*Ye)/8._dp + (45*g2p2*TrYuadjYu*Ye)/8._dp + 20*g3p2*TrYuadjYu*Ye -  & 
+  &  (27*TrYuadjYuYuadjYu*Ye)/4._dp + (387*g1p2*YeadjYeYe)/80._dp + (135*g2p2*YeadjYeYe)/16._dp -& 
+  &  (27*TrYdadjYd*YeadjYeYe)/4._dp - (9*TrYeadjYe*YeadjYeYe)/4._dp - (27*TrYuadjYu*YeadjYeYe)/4._dp +& 
+  &  3._dp*(YeadjYeYeadjYeYe)/2._dp - 6*YeadjYeYe*Lam
+
+
+
+   
+  DYe = oo16pi2*( betaYe1 + oo16pi2 * betaYe2 ) 
+
+   
+  Else 
+  DYe = oo16pi2* betaYe1 
+  End If 
+   
+   
+  Call Chop(DYe) 
+
+  !-------------------- 
+  ! ln(vev)
+  !-------------------- 
+  betaVEV1 = (0.45_dp + 0.25_dp*Xi) * g1p2 &
+         & + (2.25_dp + 0.75_dp*Xi) * g2p2          &
+         & - TrYeadjYe - 3._dp * (TrYdadjYd+TrYuadjYu)
+
+   
+   
+  If (TwoLoopRGE) Then
+   chi4 = 6.75_dp * (TrYdadjYdYdadjYd + TrYuadjYuYuadjYu)          &
+      & + 2.25_dp * TrYeadjYeYeadjYe - 1.5_dp * TrYdadjYuYuadjYd
+
+   Y4 = (0.85_dp * g1p2 + 2.25_dp * g2p2 + 8._dp * g3p2) * TrYuadjYu &
+    & + (0.25_dp * g1p2 + 2.25_dp * g2p2 + 8._dp * g3p2) * TrYdadjYd &
+    & + 0.75_dp * (g1p2 + g2p2) * TrYeadjYe
+
+   betaVEV2 = chi4 - 1.5_dp * lamp2 - 2.5_dp * Y4 - 1.61625_dp * g1p4 &
+     & - 0.3375_dp * g2p2 * g1p2 + 8.46875_dp * g2p4
+   ! adding auge dependend part
+   betaVEV2 =  betaVEV2 &
+          & + (18*g1p4*Xi + 180*g1p2*g2p2*Xi + 2250*g2p4*Xi            &
+          &   - 360*g1p2*TrYuadjYu*Xi - 1800*g2p2*TrYuadjYu*Xi         & 
+          &   - 60*TrYeadjYe*(5*g2p2*(5 + 2._dp*Xi)                    &
+          &   + g1p2*(25 + 2._dp*(Xi))) - 20*TrYdadjYd*(800._dp*(g3p2) & 
+          &   + 45*g2p2*(5 + 2._dp*(Xi)) + g1p2*(25 + 18._dp*(Xi)))    &
+          &   + 18*g1p4*Xip2 + 180*g1p2*g2p2*Xip2 - 450*g2p4*Xip2)/800._dp
+   Dln_v = oo16pi2*( betaVEV1 + oo16pi2 * betaVEV2 ) 
+
+  Else 
+   Dln_v = oo16pi2* betaVEV1 
+  End If 
+   Dgi(1) = Dg1   
+   Dgi(2) = Dg2   
+   Dgi(3) = Dg3   
+   Call ParametersToG59(Dgi,DLam,DYu,DYd,DYe,Dln_v,f)
+
+  Iname = Iname - 1 
+
+ End Subroutine rge59a 
 
 
  Subroutine rge75(len, T,GY,F)

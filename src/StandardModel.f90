@@ -48,7 +48,6 @@ Use Mathematics
 ! constants for B-physics, can be changed using the FLHA
 ! taking data from arXiv:0808.1297v3 and arXiv:0910.2928
 ! update: http://krone.physik.unizh.ch/~lunghi/webpage/LatAves/page7/page7.html
-! update arXiv:1204.0791
 ! experimental data from PDG 2013
 !-----------------------------------------------------------------
   Real(dp) :: MassBq(2) = (/ 5.2796_dp, 5.3667_dp /), etaB = 0.55_dp &
@@ -76,6 +75,93 @@ Use Mathematics
  Private :: RGE10_SMa
 
 Contains
+
+ Subroutine CalculateLowScaleMasses(mf_l_in, mf_d_in, mf_u_in, Qhigh, alpha &
+     &  , alphas, mf_l_out, mf_d_out, mf_u_out, kont)
+ !-----------------------------------------------------------------------
+ ! calculates the low scale masses from the running masses at Qhigh,
+ ! which is assumed to be below m_t as the top-quark is not included here.
+ ! The formulas for the decoupling procedure can
+ ! be found in K.G.Chetyrkin et al., hep-ph/0004189
+ ! input:
+ !  Qhigh ........... high energy scale, must be larger than Qlow and mb(mb)
+ !  mf_l_in ......... lepton masses at Qhigh
+ !  mf_d_in ......... d-quark masses (d,s,b) at Qhigh
+ !  mf_u_in ......... u-quark masses (u,c) at Qhigh
+ !  alpha ........... alpha_electromagnetic at Qhigh
+ !  alphas .......... alpha_strong at Qhigh
+ ! output:
+ !  mf_l_out ........ mf_l onshell
+ !  mf_d_out ........ mf_d with d and s at Q=2 GeV and mb(4.8)
+ !  mf_u_out ........ mf_u with u and ca at Q=2 GeV
+ !  kont ............ contains the error, =0 if everything is fine
+ ! written by Werner Porod, 02.08.16
+ !-----------------------------------------------------------------------
+ Implicit None
+  Real(dp), Intent(in) ::  mf_l_in(3), mf_d_in(3), mf_u_in(3), alpha &
+     &  , alphas, Qhigh
+  Real(dp), Intent(out) :: mf_l_out(3), mf_d_out(3), mf_u_out(3)
+  Integer, Intent(inout) :: kont
+
+  Real(dp) :: g9(9), g10(10), as_nf, as_nf_minus_1, as_nf_d_pi, aem , tz, dt
+  Real(dp), Parameter :: zeta3 = 1.202056903159594285399738161511449990765_dp &
+     & , c_as(2) = (/ 11._dp / 72._dp                                         &
+     &             , 58067._dp / 13824._dp - 82043._dp * zeta3 / 27648._dp /) 
+     
+  Iname = Iname + 1
+  NameOfUnit(Iname) = "CalculateRunningMasses"
+
+  kont = 0 
+
+  !-------------------------------------------------------------------------
+  ! calculate first coupling at low scales, putting abritary fermion masses
+  ! because they are not needed at this stage
+  !-------------------------------------------------------------------------
+  g10(1) = Sqrt(4._dp * Pi * alphas)
+  g10(2) = Sqrt(4._dp * Pi * alpha)
+  g10(3:5)= mf_l_in
+  g10(6:7)= mf_u_in(1:2)
+  g10(8:10)= mf_d_in
+
+  tz = Log(Qhigh/4.8_dp) ! mb(mb)~4.8 GeV in SM
+  dt = tz / 50._dp
+
+  Call odeint(g10, 10, tz, 0._dp, 1.e-7_dp, dt, 0._dp, RGE10_SMa, kont)
+
+  !-------------------------------------------
+  ! at mb(mb) we have to decouple the b-quark
+  !--------------------------------------------
+  as_nf = g10(1)**2 / (4._dp * Pi)
+  as_nf_d_pi = as_nf / Pi
+  as_nf_minus_1 = as_nf *(1._dp+ as_nf_d_pi**2 *(c_as(1) +c_as(2)*as_nf_d_pi))
+  g9(1) = Sqrt(4._dp * Pi * as_nf_minus_1)
+  g9(2:9) = g10(2:9)
+  tz = Log(2._dp/4.8_dp) 
+  dt = tz / 50._dp
+  Call odeint(g9, 9, 0._dp, tz, 1.e-7_dp, dt, 0._dp, RGE10_SMa, kont)
+  
+  !--------------------------------------------------
+  ! lepton masses at Qlow, note that aem is alpha/pi
+  ! shift to on-shell masses
+  !--------------------------------------------------
+  aem = g9(2)**2 / (4._dp * Pi**2)
+  mf_l_out = g9(3:5) / (1._dp - aem)
+  
+  !-----------
+  ! m_u, m_c, m_t
+  !-----------
+  mf_u_out(1:2) = g9(6:7) 
+  mf_u_out(3) = mf_u_in(3) ! top quark mass did not run
+  !----------------
+  ! m_d, m_s, m_b
+  !----------------
+  mf_d_out(1:2) = g9(8:9)
+  mf_d_out(3) = g10(10)
+
+  Iname = Iname - 1
+
+ End Subroutine CalculateLowScaleMasses
+
 
  Subroutine CalculateRunningMasses(mf_l_in, mf_d_in, mf_u_in, Qlow, alpha &
      &  , alphas, Qhigh, mf_l_out, mf_d_out, mf_u_out, kont)

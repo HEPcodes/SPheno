@@ -11,23 +11,17 @@ Use LoopFunctions, Only: Igamma, I2gamma, Jgamma, Kgamma &
 ! load modules
 
 ! private variables
- ! variables for gluino -> Stop_i W b
- Real(dp), Private :: mg2, mb2, mt2, mgT, coeffT(-2:2), mSb2(2), mgsb(2) &
-     & , mgSb2(2), mst2, mgT2
- Complex(dp), Private :: coeffSbB(3,0:2), coeffSbT(2,0:2,0:1)
- Logical :: WStB_contri(3)
  ! for check, if there is a numerical problem in the 3-body decays
  Real(dp), Private :: p_test 
- Real(dp), Private, Parameter :: prec=100._dp*Epsilon(1._dp)
 
 Contains
 
 
  Subroutine GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-    & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_t, mf_d, USquark, gSU3            &
+    & , n_sd, Glu, Chi0, ChiPm, mf_u, g_t, mf_d, USquark, gSU3            &
     & , cpl_UNSu_L, cpl_UNSu_R, cpl_CDSu_L, cpl_CDSu_R, cpl_UGSu_L, cpl_UGSu_R &
     & , cpl_SdSuW, DSquark, cpl_DNSd_L, cpl_DNSd_R, cpl_CUSd_L, cpl_CUSd_R     &
-    & , cpl_DGSd_L, cpl_DGSd_R, mW, epsI, deltaM, Check_Real_States)
+    & , cpl_DGSd_L, cpl_DGSd_R, epsI, deltaM, Check_Real_States)
  !------------------------------------------------------------------
  ! calculates all 3-body decays of a gluino
  ! input:
@@ -49,8 +43,8 @@ Contains
  Implicit None
 
   Integer, Intent(in) :: n_d, id_d(:), n_u, id_u(:), n_n, n_c, id_gl, n_su &
-     & , n_sd, n_W
-  Real(dp), Intent(in) :: mf_u(n_u), mf_d(n_d), epsI, deltaM, g_T, gSU3, mW(:)
+     & , n_sd
+  Real(dp), Intent(in) :: mf_u(n_u), mf_d(n_d), epsI, deltaM, g_T, gSU3
   Complex(dp), Intent(in) :: cpl_UNSu_L(:,:,:), cpl_UNSu_R(:,:,:)          &
      & , cpl_CDSu_L(:,:,:), cpl_CDSu_R(:,:,:), cpl_UGSu_L(:,:)             &
      & , cpl_UGSu_R(:,:), cpl_DNSd_L(:,:,:), cpl_DNSd_R(:,:,:)             &
@@ -217,25 +211,6 @@ Contains
       Glu%id2(100+i1,2) = id_gl
     End If
    End Do
-   !-------------------------------
-   ! decay into Stop W B
-   ! in case of generation mixing, the position of the stops is determined
-   ! using the couplings stop-top-gluino and in the same way for sbottoms
-   !-------------------------------  
-    mStop = mUSquark(5:6)
-    mStop2 = mUSquark2(5:6)
-    mSbottom = mDSquark(5:6)
-    mSbottom2 = mDSquark2(5:6)
-    gSbottom = g_Sd(5:6)
-    c_BGSb_L = cpl_DGSd_L(3,5:6)
-    c_BGSb_R = cpl_DGSd_R(3,5:6)
-    c_TGSt_L = cpl_UGSu_L(3,5:6)
-    c_TGSt_R = cpl_UGSu_R(3,5:6)
-    c_WSbSt = cpl_SdSuW(5:6,5:6,1)
-   i_part = 0
-!   Call GluinoToStopWB(mglu, mStop, mStop2, mSbottom, mSbottom2, gSbottom     &
-!       & , c_BGSb_L, c_BGSb_R, c_WSbSt, c_TGSt_L, c_TGSt_R, CKM(3,3), g_t &
-!       & , epsI, i_part, Check_Real_States, gStWB(5:6,3) )
    !---------------------------
    ! simplifies life sometimes
    !---------------------------
@@ -1075,255 +1050,6 @@ Contains
   Iname = Iname - 1
 
  End Subroutine GluToChimqqp
- 
- Subroutine GluinoToStopWB(mglu, mStop, mStop2, mSbottom, mSbottom2, gSbottom &
-                        &, c_BGSb_L, c_BGSb_R, c_WSbSt, c_TGSt_L, c_TGSt_R    &
-                        &, c_Wbt, g_t, prec, i_part, RealStates, width)
- !--------------------------------------------------------------------------
- ! calculates the width gluino -> stop_1 b W in the MSSM
- ! written by Werner Porod
- ! - 11.02.02: implementation without generation mixing
- ! - 15.07.02: addapting code for implementation
- !             in routine GluinoThreeBodyDecays
- ! 24.08.03: adding the possiblity to check for real intermediate states
- !           with the help of the variable RealStates
- !           If RealStates=.True. then the contribution of real intermediate
- !           states will not be calculated
- !--------------------------------------------------------------------------
- Implicit None
-  Integer, Intent(inout) :: i_part
-  Real(dp), Intent(in) :: mglu, mStop(2), mStop2(2), mSbottom(2)   &
-      & , mSbottom2(2) , gSbottom(2), prec, g_t
-  Complex(dp), Intent(in) :: c_BGSb_L(2), c_BGSb_R(2), c_WSbSt(2,2) &
-      & , c_TGSt_L(2), c_TGSt_R(2), c_Wbt
-  Logical, Intent(in) :: RealStates
-  Real(dp), Intent(out) ::  width(2)
-
-  Integer :: i1, i2
-  Real(dp) :: mBmG, AbsCL2, AbsCR2, mTmG, mb2omW2, ReClCr, mBmT, mst2omW2 &
-      & , smin, smax
-
-  !----------------------------
-  ! first kinematics
-  !----------------------------
-  width = 0._dp
-  If (mglu.Lt.(mStop(1)+mf_d(3)+mW)) Return
- 
-  Iname = Iname + 1
-  NameOfUnit(Iname) = "GluinoToStopWB"
-
-  mg2 = mglu**2
-  mb2 = mf_d2(3)
-  mBmG = mglu * mf_d(3)
-  mTmG = mf_u(3) * mglu
-  mb2omW2 = mb2 / mW2
-  mBmT = mf_d(3) * mf_u(3)
-
-  mt2 = mf_u2(3)
-  mst2omW2 = mst2 / mW2
-  msb2 = mSbottom2
-
-  Do i2=1,2
-   WStB_contri = .True.
-   If (RealStates) Then
-    mgt = 0._dp
-    mgsb = 0._dp
-    If (mGlu.Gt.(mStop(i2)+mf_u(3))) WStB_contri(1) = .False.
-    If (mGlu.Gt.(mSbottom(1)+mf_d(3))) WStB_contri(2) = .False.
-    If (mGlu.Gt.(mSbottom(2)+mf_d(3))) WStB_contri(3) = .False.
-    If (      (.Not.WStB_contri(1)).And.(.Not.WStB_contri(2))   &
-       & .And.(.Not.WStB_contri(3)) ) Cycle
-    mgt = mf_u(3) * g_t
-    mgsb = gSbottom * mSbottom
-   End If
-   mgt2 = mgt**2
-   mgsb2 = mgsb**2
-   If (mglu.Lt.(mStop(i2)+mf_d(3)+mW)) Return
-   mst2 = mStop2(i2)
-   !--------------------------------------
-   ! coefficients for sbottom exchange
-   !--------------------------------------
-   coeffSbB = ZeroC
-   Do i1=1,2
-    AbsCL2 = Abs(c_BGSb_L(i1))**2 + Abs(c_BGSb_R(i1))**2
-    ReClCr = Real(c_BGSb_L(i1)* Conjg(c_BGSb_R(i1)),dp )
-    coeffSbB(i1,2) = - 2._dp * AbsCL2
-    coeffSbB(i1,1) = ( 2._dp * (mb2 + mG2 - mst2) + mW2) * AbsCL2        &
-                 & + 8._dp * mBmG * ReClCr
-    coeffSbB(i1,0) = ( (mb2 + mG2) * AbsCL2 + 4._dp * mBmG * ReClCr )    &
-                   & * ( 2._dp * mst2 - mW2)
-    coeffSbB(i1,:) =  coeffSbB(i1,:) * Abs(c_WSbSt(i1,i2))**2
-   End Do
-   coeffSbB(3,2) = - 2._dp * ( Conjg(c_BGSb_L(1))*c_BGSb_L(2)            &
-                &           + Conjg(c_BGSb_R(1))*c_BGSb_R(2) )
-   coeffSbB(3,1) = ( Conjg(c_BGSb_L(1))*c_BGSb_L(2)                      &
-              &     + Conjg(c_BGSb_R(1))*c_BGSb_R(2) )                   &
-              &   * (2._dp * (mb2 + mG2 - mst2 ) + mW2 )                 &
-              &   + 4._dp * mBmG * ( Conjg(c_BGSb_L(1))*c_BGSb_R(2)      &
-              &                    + Conjg(c_BGSb_R(1))*c_BGSb_L(2) )
-   coeffSbB(3,0) = ( ( Conjg(c_BGSb_L(1))*c_BGSb_L(2)                    &
-              &     + Conjg(c_BGSb_R(1))*c_BGSb_R(2) ) * (mb2 + mg2)     &
-              &   + 2._dp * mBmG * ( Conjg(c_BGSb_L(1))*c_BGSb_R(2)      &
-              &                    + Conjg(c_BGSb_R(1))*c_BGSb_L(2) ) )  &
-              & * ( 2._dp * mst2 - mW2)
-   coeffSbB(3,:) = 2._dp * coeffSbB(3,:) * c_WSbSt(1,i2) *Conjg(c_WSbSt(2,i2)) 
-
-   !--------------------------------------
-   ! coefficients for top exchange
-   !--------------------------------------
-   coeffT = 0._dp
-   AbsCR2 = Abs(c_TGSt_R(i2))**2
-   AbsCL2 = Abs(c_TGSt_L(i2))**2
-   ReClCr = 2._dp * Real( Conjg(c_TGSt_L(i2)) * c_TGSt_R(i2),dp )
-   coeffT(-2) = AbsCL2 * mt2 * ( 0.5_dp * mb2 * (1._dp + mb2omW2) - mW2)     &
-           &          * (mg2 - mst2) 
-   coeffT(-1) = AbsCR2 * ( 0.5_dp * mb2 * ( 1._dp + mb2omW2) - mW2)          &
-           &          * (mg2 - mst2)                                         & 
-           & + AbsCL2 * mt2 * (0.5_dp * mb2 * (1._dp  + mb2omW2 ) - mW2      &
-           &                  + (mg2 - mst2) * (0.5_dp - mb2omW2 )  )        &
-           & + ReClCr * mTmG * ( mb2 * (1._dp + mb2omW2) - 2._dp * mW2 )
-   coeffT(0) = AbsCR2 * (0.5_dp * mb2 * (1._dp + mb2omW2) - mW2              &
-          &            + (mg2-mst2) * (0.5_dp - mb2omW2) )                   &
-          & + AbsCL2 * mt2 * ( 0.5_dp - mb2omW2 + 0.5_dp * (mg2-mst2) / mW2) &
-          & + ReClCr * mTmG * (1._dp - 2._dp * mb2omW2)
-   coeffT(1) = AbsCR2 * ( 0.5_dp * (1._dp + mg2/mW2 - mst2omW2) - mb2omW2 )  &
-          & + 0.5_dp * ReClCr * mTmG / mW2 + 0.5_dp * AbsCL2 * mt2 / mW2
-   coeffT(2) = 0.5_dp * AbsCR2 / mW2 
-   coeffT = Abs(c_Wbt)**2 * coeffT
-   !-----------------------------------------------------
-   ! coefficients for interference top-sbottom exchange
-   !-----------------------------------------------------
-   coeffSbT = ZeroC
-   Do i1=1,2
-    coeffSbT(i1,2,1) = - c_TGSt_R(i2) * Conjg(c_BGSb_R(i1)) / mW2
-    coeffSbT(i1,2,0) = mBmT * c_TGSt_L(i2) * Conjg(c_BGSb_L(i1)) / mW2
-    coeffSbT(i1,1,1) = mBmT * c_TGSt_L(i2) * Conjg(c_BGSb_L(i1)) / mW2 &
-                  & + c_TGSt_R(i2) * Conjg(c_BGSb_R(i1))               &
-                  &   * ( 1._dp + mst2omW2 + mg2 / mW2)                      &
-                  & + mBmG * c_TGSt_R(i2) * Conjg(c_BGSb_L(i1)) / mW2  &
-                  & + mTmG * c_TGSt_L(i2) * Conjg(c_BGSb_R(i1)) / mW2
-    coeffSbT(i1,1,0) = - c_TGSt_L(i2) * Conjg(c_BGSb_L(i1))           &
-                  &     * mBmT * (1 + mb2omW2 + 2._dp * mst2omW2)           &
-                  & + c_TGSt_R(i2) * Conjg(c_BGSb_L(i1))              &  
-                  &     * mBmG * (1._dp - mb2omW2)                          &
-                  & + c_TGSt_L(i2) * Conjg(c_BGSb_R(i1))              &  
-                  &     * mTmG * (1._dp - mb2omW2)                          &
-                  & + c_TGSt_R(i2) * Conjg(c_BGSb_R(i1))              &
-                  &   * (mg2 - mst2) * (2._dp - mb2omW2)
-    coeffSbT(i1,0,1) = c_TGSt_L(i2) * Conjg(c_BGSb_L(i1))             &
-                  &     * mBmT * (1 - mst2omW2)                             &
-                  & + c_TGSt_R(i2) * Conjg(c_BGSb_L(i1))              &  
-                  &     * mBmG  * (1 - mst2omW2)                            &
-                  & + c_TGSt_L(i2) * Conjg(c_BGSb_R(i1))              &  
-                  &     * mTmG  * (1 - mst2omW2)                            &
-                  & + c_TGSt_R(i2) * Conjg(c_BGSb_R(i1))              &
-                  &   * mg2 * (1 - mst2omW2)
-    coeffSbT(i1,0,0) = c_TGSt_L(i2) * Conjg(c_BGSb_L(i1))* mBmT         &
-                &  * (mb2 * (1._dp+mst2omW2)-2._dp*mg2-mst2*(1._dp-mst2omW2)) &
-                & + c_TGSt_R(i2) * Conjg(c_BGSb_L(i1)) * mBmG           &
-                &       * (mb2*(1 + mst2omW2)-2._dp * mg2 + mst2 - mW2)       &
-                & + c_TGSt_L(i2) * Conjg(c_BGSb_R(i1)) * mTmG           &
-                &       * (mb2*(1 + mst2omW2)-2._dp * mg2 + mst2 - mW2)       &
-                & + c_TGSt_R(i2) * Conjg(c_BGSb_R(i1))                  &
-                &   * ( mg2 * ( mb2 * (1 + mst2omW2)                          &
-                &             - 2._dp * (mg2 + mW2 - mst2) )                  &
-                &     + mb2 * mst2 * (1._dp - mst2omW2) )
-    coeffSbT(i1,:,:) = c_WSbSt(i1,i2) * coeffSbT(i1,:,:)
-   End Do
-
-   coeffSbT = - 2._dp * coeffSbT * Conjg(c_Wbt)
-
-   smin = (mf_d(3)+mW)**2
-   smax = (mglu - mstop(i2))**2
-   If (i_part.Eq.1) Then
-    CoeffSbT = 0
-    coeffT = 0
-   Else If (i_part.Eq.2) Then
-    coeffSbB = 0
-    CoeffSbT = 0
-   Else If (i_part.Eq.3) Then
-    coeffSbB = 0
-    coeffT = 0
-   End If
-   width(i2) = oo256pi3 * Dgauss(GluStoWB,smin,smax,prec) / Abs(mglu)**3
-  End Do
-
-  Iname = Iname - 1
-
- End Subroutine  GluinoToStopWB
-!\end{verbatim}
-
- Real(dp) Function GluStoWB(s)
- Implicit None
-  Real(dp), Intent(in) :: s
-
-  Integer :: i1
-  Real(dp) :: s2, wsr, tmin, tmax, teil(6), sumI
-
-  s2 = s**2
-  wsr = kappa(s,mst2,mg2) * kappa(s, mW2, mb2)
-  sumI = mg2 + mW2 + mst2 + mb2 - s - (mg2-mst2)*(mb2-mW2) / s
-  tmin = 0.5_dp * (sumI - wsr/s)
-  tmax = 0.5_dp * (sumI + wsr/s)
-  teil = 0._dp
-  !------------
-  ! sbottom 
-  !------------
-  Do i1=1,2
-   If (WStB_contri(i1+1)) Then
-    teil(i1) = coeffSbB(i1,2) * I2t2dtm1g1(tmin, tmax, mSb2(i1), mgSb2(i1))   &
-           & + coeffSbB(i1,1) * I2tdtm1g1(tmin, tmax, mSb2(i1), mgSb2(i1))    &
-           & + coeffSbB(i1,0) * I2dtm1g1(tmin, tmax, mSb2(i1), mgSb2(i1))
-   End If
-  End Do
-  If (WStB_contri(2).And.WStB_contri(3)) Then
-   teil(3) = Real( coeffSbB(3,2)                                              &
-          &    *I2t2dtm12g12(tmin, tmax, mSb2(1), mgSb(1), mSb2(2), mgSb2(2)) &
-          &   + coeffSbB(3,1)                                                 &
-          &    * I2tdtm12g12(tmin, tmax, mSb2(1), mgSb(1), mSb2(2), mgSb2(2)) &
-          &   + coeffSbB(3,0)                                                 &
-          &     * I2dtm12g12(tmin, tmax, mSb2(1), mgSb(1), mSb2(2), mgSb2(2)) &
-          &     ,dp)
-  End If
-  !------
-  ! top
-  !------
-  If (WStB_contri(1)) Then
-   teil(4) = wsr * ( coeffT(-2) / s2 + coeffT(-1) / s + coeffT(0) &
-          &       + coeffT(2) * s2 + coeffT(1) * s ) / ((s-mt2)**2 + mgt2)
-  End If
-  !----------------
-  ! top sbottom
-  !----------------
-  Do i1=1,2
-   If (WStB_contri(1).And.WStB_contri(i1+1)) Then
-    teil(4+i1) = (coeffSbT(i1,0,1) * s + coeffSbT(i1,0,0) )                   &
-            &      * I2dsmg1tmg2(s, tmin, tmax, mt2, mgt, mSb2(i1), mgSb(i1)) &
-            & + (coeffSbT(i1,1,1) * s + coeffSbT(i1,1,0) )                    &
-            &     * I2tdsmg1tmg2(s, tmin, tmax, mt2, mgt, mSb2(i1), mgSb(i1)) &
-            & + (coeffSbT(i1,2,1) * s + coeffSbT(i1,2,0) )                    &
-            &     * I2t2dsmg1tmg2(s, tmin, tmax, mt2, mgt, mSb2(i1), mgSb(i1))
-   End If
-  End Do
-
-  GluStoWB = Sum(teil)
-
-  !----------------------------------------------------------------------
-  ! parts of the amplitudes squared need to be positive
-  !----------------------------------------------------------------------
-  If (   (teil(1).Lt.0._dp).Or.(teil(2).Lt.0._dp).Or.(teil(4).Lt.0._dp)  &
-   & .Or.(Sum(teil(1:3)).Lt.0._dp).Or.(GluStoWB.Lt.0._dp) ) Then
-    If (ErrorLevel.Ge.-1) Then
-     Write(ErrCan,*) "Error in Function GluStoWB:"
-     Write(ErrCan,*) "teil(1),teil(2),teil(4)",teil(1:2),teil(4)
-     Write(ErrCan,*) "Sum(teil(1:3))",Sum(teil(1:3))
-     Write(ErrCan,*) "GluStoWB",GluStoWB
-     Write(ErrCan,*) "s,mg2,mst2,mb2,mw2",s,mg2,mst2,mb2,mw2
-     If (ErrorLevel.Ge.0) Call TerminateProgram
-    End If
-  End If
-
- End Function GluStoWB
 
  Real(dp) Function GluinoToStopC(mglu, mStop2, Rstop, mSbottom2, mP02 &
         & , tanb, yukB, mu, A_b, c_GUSu_R, kont)

@@ -82,8 +82,8 @@ Contains
   Logical :: check
  ! RP-masses + mixing
   Real(dp) :: mGlu, mC(5), mC2(5), mSdown(6), mSdown2(6), mSup(6), mSup2(6)   &
-    & , mP0(5), mP02(5), mS0(5), mS02(5), mSpm(8), mSpm2(8), mZ2_t &
-    & , mN(7), mN1L(7), mN2(7), mN1L2(7), AbsLam, AbsEps, abs_mu, tb, sb2,cb2,c2b
+    & , mP0(5), mP02(5), mS0(5), mS02(5), mSpm(8), mSpm2(8) &
+    & , mN(7), mN1L(7), mN2(7), mN1L2(7), AbsLam, AbsEps
   Complex(dp) :: PhaseGlu, RSdown(6,6), RSup(6,6), N(7,7), N1L(7,7), lam(3), epst(3)
   Logical, Save :: WriteOut = .False.
 !  Logical, Save :: WriteOut = .True.
@@ -130,23 +130,6 @@ Contains
   !-------------------------------------------------
   tan2_atm_opt = 0.5_dp * (tan2_atm_min + tan2_atm_max)
   tan2_sol_opt = 0.5_dp * (tan2_sol_min + tan2_sol_max)
-
-  tb = vevsm(2)/vevsm(1)
-  cb2 = 1._dp/(1._dp+tb**2)
-  sb2 = cb2 * tb**2
-  c2b = cb2-sb2
-  !--------------------------------------------------
-  ! recalculating mu and B for the tree-level vacuum
-  !--------------------------------------------------
-  mZ2_t = 0.25_dp * (g0(1)**2+g0(2)**2)*(vevSM(1)**2+vevsm(2)**2)
-  Abs_Mu = (M2H_mZ(2) * sb2 - M2H_mZ(1) * cb2) / c2b  - 0.5_dp * mZ2_t
-  If (abs_mu.lt.0._dp) then
-   kont = -211
-   Iname = Iname -1
-   return
-  End If
-  mu_mZ = Sqrt(abs_mu)* phase_mu 
-  B_mZ = (M2H_mZ(1) + M2H_mZ(2) + 2._dp *  Abs_Mu) * tb / (1+tb**2)
 
   !--------------------------
   ! a very first guess
@@ -422,7 +405,7 @@ Contains
   Real(dp) :: mGlu, mC(5), mC2(5), mSdown(6), mSdown2(6), mSup(6), mSup2(6)   &
     & , mP0(5), mP02(5), mS0(5), mS02(5), mSpm(8), mSpm2(8) &
     & , mN(7), mN1L(7), mN2(7), mN1L2(7)
-  Complex(dp) :: PhaseGlu, RSdown(6,6), RSup(6,6), N(7,7), N1L(7,7), lam(3), epst(3)
+  Complex(dp) :: PhaseGlu, RSdown(6,6), RSup(6,6), N(7,7), N1L(7,7), epst(3)
   Logical, Save :: WriteOut = .False.
   Logical :: l_phases
 
@@ -1091,7 +1074,7 @@ Contains
     & , mSneut2_T(3), mS02_T(2), mSpm2_T(2), RS0_T(2,2), mC2_T(2), mN2_T(4)  &
     & , mass_new(32), mass_old(32), diff_m(32)
   Complex(dp) :: U_T(2,2), V_T(2,2), N_T(4,4), RSpm_T(2,2)  &
-    & , RSlepton_T(6,6), RSneut_T(3,3), mu_T, B_T, mu_save
+    & , RSlepton_T(6,6), RSneut_T(3,3), mu_T, B_T
   Integer :: i2, i3
   Logical :: Converge, UseFixedScale
 
@@ -1841,8 +1824,7 @@ Contains
   Integer :: i1
   Real(dp) :: sinW2, gp, g,vev
   Real(dp) :: mN1L(7), mN1L2(7)
-  Real(dp) :: mGlu_T, mSdown_T(6), mSdown2_T(6), mSup_T(6), mSup2_T(6)
-  Complex(dp) :: bi(4), BiEpsi(4), N1L(7,7), RSdown_T(6,6), RSup_T(6,6)
+  Complex(dp) :: bi(4), BiEpsi(4), N1L(7,7)
 
  !------------------------------------------------------
  ! internal information on particle identities

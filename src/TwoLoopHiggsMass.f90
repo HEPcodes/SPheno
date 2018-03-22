@@ -4239,15 +4239,13 @@ Contains
   Subroutine tauresfuncs(t,A0,BL,T1,T2,s2t,c2t,cb,sb,q,mu,F2_s)
   Implicit None
   Real(dp) :: t,A0,BL,T1,T2,s2t,c2t,cb,sb,q,mu
-  Real(dp) :: ct2,st2,Xt,Yt,At, mt
+  Real(dp) :: Xt,Yt,At, mt
   Real(dp) :: F2_s
 
   mt = Sqrt(t)
   Xt = s2t*(T1-T2)/2._dp/mt
   Yt = Xt - mu/cb/sb
   At = sb**2*Xt+cb**2*Yt
-  ct2 = (1._dp+c2t)/2._dp
-  st2 = (1._dp-c2t)/2._dp
   
   F2_s = 2*c2t**2*sb**2*mt*Xt/(T1-T2)*Li2(1-BL/T1) &
       & - 2*c2t**2*sb**2*mt*Xt/(T1-T2)*Li2(1-BL/T2) &
