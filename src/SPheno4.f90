@@ -73,7 +73,6 @@ Implicit None
  ! Input and output files
  !------------------------------------------------------
   Character(len=120) :: inputFileName, outputFileName
-
  Iname = 1
  NameOfUnit(1) = "SPheno3"
  !--------------------------------------------------------------------------
@@ -998,7 +997,6 @@ Contains
    End If
 
   Else ! high scale model
-
    If (Len(Trim(Old_data)).Ne.0) Then
     Call FirstGuess(phase_mu, tanb, Mi, M2_E, M2_L, A_l, M2_D   &
            & , M2_Q, M2_U, A_d, A_u, mu, B, M2_H, gp, g, Y_l  &

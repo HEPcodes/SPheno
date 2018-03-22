@@ -47,7 +47,7 @@ Contains
 !                                  !                4 -> RP spontaneous
 
   Integer :: i1, i_h
-  Real(dp) :: sin2_ab(4), mhi(4), vev, mSel, mChar, m_bound, dm, tan2
+  Real(dp) :: sin2_ab(4), mhi(4), mSel, mChar, m_bound, dm, tan2
   !----------------------------------
   ! initialisation
   !----------------------------------

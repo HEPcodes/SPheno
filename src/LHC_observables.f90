@@ -10,9 +10,7 @@ Use SusyDecays
 Contains
 
 
- Subroutine Calc_LHC_observables(mN, N, mC, U, V, mSlepton, Rslepton        &
-     & , mSdown, RSdown, mSup, RSup, mGlu, PhaseGlu, mS0, RS0, mP0, RP0     &
-     & , mSpm, RSpm, gauge, Y_u, Y_d, A_u, A_d, mu, vevSM, GenerationMixing &
+ Subroutine Calc_LHC_observables(mN, mSlepton, mSdown, mSup, GenerationMixing &
      & , observ)
  !--------------------------------------------------------------
  ! calculates various kinematical LHC observables
@@ -23,23 +21,17 @@ Contains
  !  mSup(6) ....... u-squark masses
  ! written by Werner Porod, 5.3.2010
  !--------------------------------------------------------------
- implicit none
-  Real(dp), Intent(in) :: mN(:), mSlepton(:), mSup(6), mSdown(6), gauge(3) &
-      & , vevSM(2), mGlu, mC(:), mS0(:), RS0(:,:), mP0(:), RP0(:,:)    &
-      & , mSpm(:)
-  Complex(dp), Intent(in) :: N(:,:), PhaseGlu, RSup(6,6), RSdown(6,6), U(:,:) &
-      & , V(:,:), RSpm(:,:), mu, Rslepton(:,:)
-  Complex(dp), Intent(in), Dimension(3,3) :: Y_u, Y_d, A_u, A_d
-  Logical, intent(in) :: GenerationMixing
-  Real(dp), intent(out) :: observ(:)
+ Implicit None
+  Real(dp), Intent(in) :: mSlepton(:), mSup(6), mSdown(6), mN(:)
+  Logical, Intent(in) :: GenerationMixing
+  Real(dp), Intent(out) :: observ(:)
 
-  Real(dp) :: mSq_av_2, mSlepton2(Size(mSlepton)), lq_low, lq_near, lq_far 
+  Real(dp) :: mSq_av_2, lq_low, lq_near, lq_far 
   Integer :: i1, i2, i_n, i_count
 
-  i_n = size(mN)
-  mSlepton2 = mSlepton**2
+  i_n = Size(mN)
 
-  If (GenerationMixing) then
+  If (GenerationMixing) Then
    observ = 0._dp
   Else
    !---------------------------------------
@@ -50,14 +42,14 @@ Contains
     Do i1=1,i2-1
      observ(i_count) = Mll_max(Abs(mN(i2)),mSlepton(1),Abs(mN(i1)))
      i_count = i_count + 1
-    end do
-   end do
+    End Do
+   End Do
    Do i2=2,i_n
     Do i1=1,i2-1
      observ(i_count) = Mll_max(Abs(mN(i2)),mSlepton(2),Abs(mN(i1)))
      i_count = i_count + 1
-    end do
-   end do
+    End Do
+   End Do
    !---------------------------------------
    ! mu+ mu- edges
    !---------------------------------------
@@ -65,14 +57,14 @@ Contains
     Do i1=1,i2-1
      observ(i_count) = Mll_max(Abs(mN(i2)),mSlepton(3),Abs(mN(i1)))
      i_count = i_count + 1
-    end do
-   end do
+    End Do
+   End Do
    Do i2=2,i_n
     Do i1=1,i2-1
      observ(i_count) = Mll_max(Abs(mN(i2)),mSlepton(4),Abs(mN(i1)))
      i_count = i_count + 1
-    end do
-   end do
+    End Do
+   End Do
    !---------------------------------------
    ! tau+ tau- edges
    !---------------------------------------
@@ -80,14 +72,14 @@ Contains
     Do i1=1,i2-1
      observ(i_count) = Mll_max(Abs(mN(i2)),mSlepton(5),Abs(mN(i1)))
      i_count = i_count + 1
-    end do
-   end do
+    End Do
+   End Do
    Do i2=2,i_n
     Do i1=1,i2-1
      observ(i_count) = Mll_max(Abs(mN(i2)),mSlepton(6),Abs(mN(i1)))
      i_count = i_count + 1
-    end do
-   end do
+    End Do
+   End Do
   !-------------------------------------------------------------
   ! l+ l- q edge, averaging over d_L, s_L, u_L, c_L = m^max_llq
   !-------------------------------------------------------------
@@ -133,29 +125,11 @@ Contains
   observ(i_count) = mSlepton(2) - mN(1)
   i_count = i_count + 1
 
-  !---------------------------------------
-  ! M_tb by Hisano et al., hep-ph/0304214
-  !---------------------------------------
-!   observ(i_count) = M_w_tb(gauge, Y_u, Y_d, A_u, A_d, vevSM, mu, mGlu, PhaseGlu &
-!     & , mSup, RSup, mSdown, RSdown, mC, U, V, mN, N, mS0, RS0, mP0, RP0    &
-!     & , mSpm, RSpm )
   End If
 
 
- end Subroutine Calc_LHC_observables
+ End Subroutine Calc_LHC_observables
 
- Subroutine Write_LHC_observables(io, observ, names)
- implicit none
-  Integer, Intent(in) :: io
-  Real(dp), intent(in) :: observ(:) 
-  Character(len=*), intent(in) :: names(:)
-  
-  Write(io,100) "Block LHCobservables"
-
-
-100 Format(a)
-
- end Subroutine Write_LHC_observables
 
   Real(dp) Function Mll_max(mchi2, msl, mchi1)
   !----------------------------------------------------

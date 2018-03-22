@@ -3083,9 +3083,9 @@ Contains
   Real(dp) :: p2, sinW2_Q, v1(2,2), u1(2,2), test(2), cosW, mC2_L(2)
   Complex(dp) :: mat2(2,2), phaseM, mat2a(2,2), SigL(2,2), SigR(2,2) &
       & , SigS(2,2), mat22(2,2), U2(2,2), V2(2,2), coupLC, coupRC
-  Complex(dp) :: c_SmpCN_L(2,2,4), c_SmpCN_R(2,2,4), c_CNuSl_L(2,3,6)         &
-      & , c_CNuSl_R(2,3,6), c_CLSn_L(2,3,3), c_CLSn_R(2,3,3), c_CUSd_L(2,3,6) &
-      & , c_CUSd_R(2,3,6), c_CDSu_L(2,3,6), c_CDSu_R(2,3,6), Rsd(2,2)         &
+  Complex(dp) :: c_SmpCN_L(2,2,4), c_SmpCN_R(2,2,4), c_CNuSl_R(2,3,6)  &
+      & , c_CLSn_L(2,3,3), c_CLSn_R(2,3,3), c_CUSd_L(2,3,6)            &
+      & , c_CUSd_R(2,3,6), c_CDSu_L(2,3,6), c_CDSu_R(2,3,6), Rsd(2,2)  &
       & , Rsu(2,2), Rsl(2,2), yuk, YukP
 #ifdef GENERATIONMIXING
   Complex(dp) :: mat3(3,3), mat6(6,6)
@@ -3128,7 +3128,6 @@ Contains
   !----------------------------------
   ! couplings for 1-loop calculation
   !----------------------------------
-  c_CNuSl_L = 0._dp
   c_CNuSl_R = 0._dp
   c_CLSn_L = 0._dp
   c_CLSn_R = 0._dp
@@ -3149,7 +3148,6 @@ Contains
      Do i3=1,6
       Call CoupCharginoSfermion(i1, i2, i3, gSU2, 0.5_dp, RSlepton, Y_l &
                               &, mat3, id3c, id3c, id2c, id2c, coupLC, coupRC)
-      c_CNuSl_L(i1, i2, i3) = coupLC
       c_CNuSl_R(i1, i2, i3) = coupRC
       Call CoupCharginoSfermion(i1, i2, i3, gSU2, 0.5_dp, RSdown, Y_d &
                               &, Y_u, uU_L, uU_R, id2c, id2c, coupLC, coupRC)
@@ -3183,7 +3181,6 @@ Contains
      Do i3=1,2
       Call CoupCharginoSfermion(i2, i3, gSU2, 0.5_dp, RSl, Yuk, Yukp, id2c, &
                               & id2c, coupLC, coupRC)
-      c_CNuSl_L(i2, i1, (i1-1)*2 + i3) = coupLC
       c_CNuSl_R(i2, i1, (i1-1)*2 + i3) = coupRC
      End Do
      Call CoupCharginoSfermion(i2, 1, gSU2, -0.5_dp, id2C, Yuk, Yukp, id2c, &
@@ -3280,7 +3277,7 @@ Contains
   Do i_l=n_char,1,-1
    p2 = mC2(i_l)
    Call Sigma_Chargino(p2, mC, mC2, mSdown2, c_CUSd_L, c_CUSd_R             &
-          , mSup2, c_CDSu_L, c_CDSu_R, mSlepton2, c_CNuSl_L, c_CNuSl_R      &
+          , mSup2, c_CDSu_L, c_CDSu_R, mSlepton2, c_CNuSl_R                 &
           , mSneut2, c_CLSn_L, c_CLSn_R, mN, mN2, c_CNW_L, c_CNW_R          &
           , mSpm2, c_SmpCN_L, c_SmpCN_R, c_CCZ_L, c_CCZ_R, c_CCG_L, c_CCG_R &
           , mP02, c_CCP0_L, c_CCP0_R, mS02, c_CCS0_L, c_CCS0_R, mZ2, mW2    &
@@ -3327,7 +3324,7 @@ Contains
     i_count = i_count + 1 
     p2 = mC2_L(i_l)
     Call Sigma_Chargino(p2, mC, mC2, mSdown2, c_CUSd_L, c_CUSd_R            &
-          , mSup2, c_CDSu_L, c_CDSu_R, mSlepton2, c_CNuSl_L, c_CNuSl_R      &
+          , mSup2, c_CDSu_L, c_CDSu_R, mSlepton2, c_CNuSl_R                 &
           , mSneut2, c_CLSn_L, c_CLSn_R, mN, mN2, c_CNW_L, c_CNW_R          &
           , mSpm2, c_SmpCN_L, c_SmpCN_R, c_CCZ_L, c_CCZ_R, c_CCG_L, c_CCG_R &
           , mP02, c_CCP0_L, c_CCP0_R, mS02, c_CCS0_L, c_CCS0_R, mZ2, mW2    &
@@ -4151,7 +4148,7 @@ Contains
   Integer :: i1
   Complex(dp) :: sumI
 
-  Real(dp) :: A0m2, F0m2, t, s, q, logTQ, logGT
+  Real(dp) :: F0m2, t, s, q, logTQ, logGT
   
   Complex(dp) :: res2, Mtttt0, Tt0T, T0tt, Btt, At
 
@@ -4427,7 +4424,7 @@ Contains
    mf_d2 = (Yd*vev)**2 / 2
    mf_u2 = (Yu*vev)**2 / 2
 
-   Call PiZZT1_SM(mZ2, gauge(2), sinW2, vev, mZ2, mW2, mH_Susy2 &
+   Call PiZZT1_SM(mZ2, gauge(2), sinW2, mZ2, mW2, mH_Susy2 &
                 & , mf_l2, mf_u2, mf_d2, dmZ2)
    mZ2_run = Real(dmZ2+mZ2,dp)
    If (mZ2_run.Lt.0._dp) Then
@@ -4448,7 +4445,7 @@ Contains
     mf_l2 = (Yl*vev)**2 / 2
     mf_d2 = (Yd*vev)**2 / 2
     mf_u2 = (Yu*vev)**2 / 2
-    Call PiZZT1_SM(mZ2, gauge(2), sinW2, vev, mZ2_run, mW2_run, mH_Susy2 &
+    Call PiZZT1_SM(mZ2, gauge(2), sinW2, mZ2_run, mW2_run, mH_Susy2 &
                  & , mf_l2, mf_u2, mf_d2, dmZ2)
     mZ2_run = Real(dmZ2+mZ2,dp)
     If (mZ2_run.Lt.0._dp) Then
@@ -4512,11 +4509,8 @@ Contains
 
   Real(dp) :: mf_l2(3), mf_u2(3), mf_d2(3), tadpole
 
-  Real(dp) :: sinW2_DR, mS02, cosW_DR, c_S0WW, c_S0ZZ, c_SpSmS0S0  &
-     & , c_S0S0WW, c_S0S0ZZ, c_P0S0S0, c_P0P0S0S0, c_S03, c_S04    &
-     & , c_DDS0_L(3), c_UUS0_L(3), c_LLS0_L(3), PiS1, c_SpSmS0
-  Logical :: WriteOut
-
+  Real(dp) :: sinW2_DR, mS02, cosW_DR, c_S0WW, c_S0ZZ, c_S03    &
+     & , c_DDS0_L(3), c_UUS0_L(3), c_LLS0_L(3), PiS1
 
   Iname = Iname + 1
   NameOfUnit(Iname) = 'HiggsMass_Loop_SM'
@@ -7309,359 +7303,6 @@ Contains
   Iname = Iname - 1
 
  End Subroutine PiPseudoScalar
-
-
- Subroutine PiPseudoScalar_NMSSM(p2, c_DDP0_L, c_UUP0_L, c_LLP0_L             &
-     & , mDSquark2, c_SdSdP0P0, mUSquark2, c_SuSuP0P0, mSlepton2, c_SlSlP0P0  &
-     & , mSneutrino2, c_SnSnP0P0, c_SdSdP0, c_SuSuP0, c_SlSlP0, c_SnSnP0      &
-     & , mS02, mP02, mSpm2, c_SpmP0W, c_P0S0Z, c_P0P0WW, c_P0P0ZZ, c_SpSmP0P0 &
-     & , mC, mC2, c_CCP0_L, c_CCP0_R, c_P0P0S0S0, c_S0P0P0, c_P04, mN, mN2    &
-     & , c_NNP0_L, c_NNP0_R, mZ2, mW2, WriteOut, res)
- !-------------------------------------------------------------------------
- ! calculates the 1-loop self energies of the pseudoscalar higgs
- ! The formulae of J. Bagger et al, Nucl. Phys. B491 are used.
- ! Note, that gSU3 has to be set to 0 for sleptons
- ! the input is:
- ! - p2 ......... the outer momentum squared 
- ! - gU1 ........ the U(1) gauge coupling
- ! - gSU2 ....... the SU(2) gauge coupling
- ! the output is:
- ! res
- ! written 03.11.2008
- !-----------------------------------------------------------------------
- Implicit None
-
- Real(dp), Intent(in) :: p2, mUSquark2(6), mDSquark2(6), mSneutrino2(:)    &
-     &, mS02(:), mP02(:), mSpm2(:), c_P0S0Z(:,:), c_P0P0WW(:), c_P0P0ZZ(:) &
-     &, mSlepton2(:), mC(:), mC2(:), c_P0P0S0S0(:,:,:), c_S0P0P0(:,:,:)    &
-     &, c_P04(:,:,:), mN(:), mN2(:), mZ2, mW2
-  Complex(dp), Intent(in) :: c_DDP0_L(:), c_UUP0_L(:), c_LLP0_L(:)           &
-     &, c_SdSdP0P0(:,:,:), c_SuSuP0P0(:,:,:), c_SlSlP0P0(:,:,:)              &
-     &, c_SnSnP0P0(:,:,:), c_SdSdP0(:,:,:), c_SuSuP0(:,:,:), c_SlSlP0(:,:,:) &
-     &, c_SnSnP0(:,:,:), c_SpmP0W(:,:), c_SpSmP0P0(:,:,:), c_CCP0_L(:,:,:)   &
-     &, c_CCP0_R(:,:,:), c_NNP0_L(:,:,:), c_NNP0_R(:,:,:)
-  Logical, Intent(in) :: WriteOut
-  Complex(dp), Intent(inout) :: res(:,:)
-
-  Integer :: i1, i2, i3, i4, i5, i_sf1, i_sf2
-  Complex(dp) :: sumI(n_P0,n_P0)
-
-  Real(dp) :: A0m2, B0m2, F0m2, G0m2
-
-  Iname = Iname + 1
-  NameOfUnit(Iname) = "PiPseudoScalar"
-
-  !-----------------------
-  ! initialisation
-  !-----------------------
-  res = 0._dp
-  !-------------------
-  ! fermions
-  !-------------------
-
-  sumI = 0._dp
-  Do i1=1,3
-   sumI(1,1) = 6._dp * Abs( c_DDP0_L(i1) )**2                              &
-           &   * ((p2 * Real(B0(p2, mf_d2(i1), mf_d2(i1)),dp)              &
-           &     - 2._dp * Real( A0(mf_d2(i1)),dp )))                      &
-           & +  2._dp * Abs( c_LLP0_L(i1) )**2                             &
-           &   * ((p2 * Real(B0(p2, mf_l2(i1), mf_l2(i1)),dp)              &
-           &     - 2._dp * Real( A0( mf_l2(i1) ),dp )))
-   sumI(2,2) = 6._dp * Abs( c_UUP0_L(i1) )**2                              &
-           &   * (p2 * Real(B0(p2, mf_u2(i1), mf_u2(i1)),dp)               &
-           &     - 2._dp * Real( A0(mf_u2(i1)),dp) )
-   If (WriteOut) Write(ErrCan,*) "fermions",i1,sumI(1,1),sumI(2,2)
-   res = res + sumI
-  End Do
-
-  !--------------------
-  ! sfermions
-  !--------------------
-  sumI = 0._dp
-  Do i1=1,6
-   A0m2 = -6._dp * A0( mDsquark2(i1) )
-   Do i2=1,n_P0
-    Do i3=i2,n_P0
-       sumI(i2,i3) = c_SdSdP0P0(i1,i2,i3) * A0m2
-    End Do
-   End Do 
-   res = res + sumI
-If (WriteOut) Write(ErrCan,*) "Sd Sd P0 P0",i1,sumI(1,1),sumI(1,2)&
-      &,sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-  End Do
-
-  sumI = 0._dp
-  Do i1=1,6
-   A0m2 = -6._dp * A0( mUsquark2(i1) )
-   Do i2=1,n_P0 
-    Do i3=i2,n_P0
-      sumI(i2,i3) = c_SuSuP0P0(i1,i2,i3) * A0m2
-    End Do
-   End Do
-   res = res + sumI
-If (WriteOut) Write(ErrCan,*) "Su Su P0 P0",i1,sumI(1,1),sumI(1,2)&
-      &,sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-  End Do
-
-  sumI = 0._dp
-  Do i1=1,n_Slept
-   A0m2 = -2._dp * A0( mSlepton2(i1) )
-   Do i2=1,n_P0 
-    Do i3=i2,n_P0
-     sumI(i2,i3) = c_SlSlP0P0(i1,i2,i3) * A0m2
-    End Do
-   End Do
-   res = res + sumI
-If (WriteOut) Write(ErrCan,*) "Sl Sl P0 P0",i1,sumI(1,1),sumI(1,2)&
-      &,sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-  End Do
-
-  sumI = 0._dp
-  Do i1=1,n_Sneut
-   A0m2 = -2._dp * A0( mSneutrino2(i1) )
-   Do i2=1,n_P0
-    Do i3=i2,n_P0
-     sumI(i2,i3) = c_SnSnP0P0((i1-1)*2+1,i2,i3) * A0m2
-    End Do
-   End Do
-   res = res + sumI
- If (WriteOut) Write(ErrCan,*) "Sn Sn P0 P0",i1,sumI(1,1),sumI(1,2)&
-      &,sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-  End Do
-
- ! .not.GenerationMixing
-   sumI = 0._dp
-   Do i1=1,3
-     i_sf1 = (i1-1)*2+1
-      i_sf2 = (i1-1)*2+2
-      B0m2 = 3._dp * Real( B0(p2, mDSquark2(i_sf1), mDSquark2(i_sf2)),dp )
-      Do i4=1,n_P0
-       Do i5=i4,n_P0
-        sumI(i4,i5) = Conjg( c_SdSdP0(i_sf1,i_sf2,i4) ) &
-                    &  * c_SdSdP0(i_sf1,i_sf2,i5) * B0m2
-       End Do ! i5
-      End Do ! i4
-      res = res + sumI
-      If (WriteOut) Write(ErrCan,*) "Sd Sd P0",i_sf1,i_sf2 &
-          & ,sumI(1,1),sumI(1,2),sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-
-      B0m2 = 3._dp * Real( B0(p2, mUSquark2(i_sf1), mUSquark2( i_sf2) ),dp )
-      Do i4=1,n_P0
-       Do i5=i4,n_P0
-        sumI(i4,i5) = Conjg( c_SuSuP0(i_sf1,i_sf2,i4) ) &
-                    &  * c_SuSuP0(i_sf1,i_sf2,i5) * B0m2
-       End Do ! i5
-      End Do ! i4
-      res = res + sumI
-      If (WriteOut) Write(ErrCan,*) "Su Su P0",i_sf1,i_sf2 &
-          & ,sumI(1,1),sumI(1,2),sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)  
-   End Do
-
-   sumI = 0._dp
-   Do i1=1,3
-     i_sf1 = (i1-1)*2+1
-      i_sf2 = (i1-1)*2+2
-      B0m2 = Real( B0(p2, mSlepton2(i_sf1), mSlepton2( i_sf2) ),dp )
-      Do i4=1,n_P0
-       Do i5=i4,n_P0
-        sumI(i4,i5) = Conjg( c_SlSlP0(i_sf1,i_sf2,i4) ) &
-                    &  * c_SlSlP0(i_sf1,i_sf2,i5) * B0m2
-       End Do ! i5
-      End Do ! i4
-      If (WriteOut) Write(ErrCan,*) "Sl Sl P0",i_sf1,i_sf2 &
-          & ,sumI(1,1),sumI(1,2),sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-      res = res + sumI
-   End Do
-
- !-------------------
- ! gauge bosons
- !-------------------
-
- sumI = 0._dp
-  Do i2=2,n_Spm
-   F0m2 = Real( Floop(p2, mSpm2(i2), mW2),dp )
-   sumI(1,1) = Abs( c_SpmP0W(i2,1) )**2 * F0m2
-   sumI(1,2) = Conjg( c_SpmP0W(i2,1) ) * c_SpmP0W(i2,2) * F0m2
-   sumI(2,2) = Abs( c_SpmP0W(i2,2) )**2 * F0m2
-   If (WriteOut) Write(ErrCan,*) "S+ P0 W",i2 ,sumI(1,1),sumI(1,2),sumI(2,2)
-   res = res + sumI
-  End Do
-  
-  sumI = 0._dp
-  F0m2 = Real( Floop(p2,mW2,mW2),dp ) + 7._dp * mW2 * Real( B0(p2,mW2,mW2),dp )
-  If (WriteOut) Write(ErrCan,*) "P0 W+ W-",sumI(1,1),sumI(1,2),sumI(2,2)
-  res = res + sumI
-
-  sumI = 0._dp
-  Do i2=1,n_S0
-   F0m2 = Real( Floop(p2, mS02(i2), mZ2),dp )
-   sumI(1,1) = Abs( c_P0S0Z(i2,1) )**2 * F0m2
-   sumI(1,2) = c_P0S0Z(i2,1) * c_P0S0Z(i2,2) * F0m2
-   sumI(1,3) = c_P0S0Z(i2,1) * c_P0S0Z(i2,3) * F0m2
-   sumI(2,2) = Abs( c_P0S0Z(i2,2) )**2 * F0m2
-   sumI(2,3) = c_P0S0Z(i2,2) * c_P0S0Z(i2,3) * F0m2
-   If (WriteOut) Write(ErrCan,*) "P0 S0 Z",i2 ,sumI(1,1),sumI(1,2),sumI(2,2)
-   res = res + sumI
-  End Do
-
-  sumI = 0._dp
-  Do i1=1,n_P0
-   SumI(i1,i1) = c_P0P0WW(i1) * A0(mW2) +  c_P0P0ZZ(i1) * A0(mZ2)
-   If (WriteOut) Write(ErrCan,*) "P0 P0 WW, ZZ",i1,sumI(i1,i1)
-   res(i1,i1) = res(i1,i1) + sumI(i1,i1)
-  End Do
-
- !-----------------
- ! charged Higgs
- !-----------------
-
-  Do i1=1,n_Spm
-   A0m2 = A0( mSpm2(i1) )
-   Do i3=1,n_P0
-    Do i4=i3,n_P0
-     sumI(i3,i4) = c_SpSmP0P0(i1,i3,i4) * A0m2
-    End Do
-   End Do
-   If (WriteOut) Write(ErrCan,*) &
-           & "Sp Sm P0 P0",i1,sumI(1,1),sumI(1,2),sumI(2,2)
-   res = res + sumI
-  End Do
-
- !------------------
- ! charginos
- !------------------
-
-  sumI = 0._dp
-  Do i1=1,n_char
-   G0m2 = Real( Gloop(p2, mC2(i1), mC2(i1)),dp )
-   B0m2 = 4._dp * mC2(i1) * Real( B0(p2, mC2(i1), mC2(i1)), dp )
-   Do i3=1,n_P0
-    sumI(i3,i3) =                                                           &
-       &  (Abs(c_CCP0_L(i1,i1,i3))**2 + Abs(c_CCP0_R(i1,i1,i3))**2) * G0m2  &
-       &  - Real( Conjg(c_CCP0_R(i1,i1,i3)) * c_CCP0_L(i1,i1,i3),dp ) * B0m2
-    Do i4=i3+1,n_P0
-     sumI(i3,i4) = ( Conjg(c_CCP0_L(i1,i1,i3))*c_CCP0_L(i1,i1,i4)           &
-            &   + Conjg(c_CCP0_R(i1,i1,i3))* c_CCP0_R(i1,i1,i4) ) * G0m2    &
-            & - 0.5_dp *( Conjg(c_CCP0_R(i1,i1,i3)) * c_CCP0_L(i1,i1,i4)    &
-            &           + Conjg(c_CCP0_L(i1,i1,i3)) * c_CCP0_R(i1,i1,i4))*B0m2
-    End Do
-   End Do
-   If (WriteOut) Write(ErrCan,*) "C C P0",i1,i1,sumI(1,1),sumI(1,2),sumI(1,3) &
-       &,sumI(2,2),sumI(2,3),sumI(3,3) 
-   res = res + sumI
-
-   sumI = 0._dp
-   Do i2=i1+1,n_char
-    G0m2 = 2._dp * Real( Gloop(p2, mC2(i1), mC2(i2)),dp )
-    B0m2 = 8._dp * mC(i1) * mC(i2) * Real( B0(p2, mC2(i1), mC2(i2)),dp )
-
-    Do i3=1,n_s0
-     sumI(i3,i3) =                                                           &
-          &  (Abs(c_CCP0_L(i1,i2,i3))**2 +Abs(c_CCP0_R(i1,i2,i3))**2) * G0m2 &
-          & - Real( Conjg(c_CCP0_R(i1,i2,i3)) * c_CCP0_L(i1,i2,i3),dp ) * B0m2
-    Do i4=i3+1,n_P0     
-     sumI(i3,i4) = ( Conjg(c_CCP0_L(i1,i2,i3))*c_CCP0_L(i1,i2,i4)          &
-            &   + Conjg(c_CCP0_R(i1,i2,i3))* c_CCP0_R(i1,i2,i4) ) * G0m2   &
-            & - 0.5_dp *( Conjg(c_CCP0_R(i1,i2,i3)) * c_CCP0_L(i1,i2,i4)   &
-            &         + Conjg(c_CCP0_L(i1,i2,i3)) * c_CCP0_R(i1,i2,i4)) * B0m2
-     End Do ! i4
-    End Do ! i3
-    If (WriteOut) Write(ErrCan,*) "C C P0",i1,i2,sumI(1,1),sumI(1,2),sumI(1,3)&
-       &,sumI(2,2),sumI(2,3),sumI(3,3) 
-    res = res + sumI
-   End Do
-  End Do
-
- !--------------------
- ! pseudoscalar Higgs
- !--------------------
-
- sumI = 0._dp
-  Do i1=1,n_P0
-   A0m2 = A0( mP02(i1) )
-   Do i2=1,n_P0
-    Do i3=i2,n_p0
-    sumI(i2,i3) = c_P04(i1,i2,i3) * A0m2
-    End Do
-   End Do
-   res = res + sumI
- If (WriteOut) Write(ErrCan,*) "P0 P0 P0 P0",i1,sumI(1,1),sumI(1,2),sumI(1,3)&
-       &,sumI(2,2),sumI(2,3),sumI(3,3) 
-  End Do
-
- !--------------------
- ! neutral Higgs
- !--------------------
-
- sumI = 0._dp
-  Do i1=1,n_S0
-   A0m2 = - 0.5_dp * A0( mS02(i1) )
-   Do i2=1,n_P0
-    Do i3=i2,n_P0
-    sumI(i2,i3) = c_P0P0S0S0(i2,i3,i1) * A0m2
-    If (WriteOut) Write(ErrCan,*) "P0 P0 S0 S0",i1,i2,sumI(1,1),sumI(1,2)&
-           &,sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-    End Do ! i3
-   End Do ! i2
-   res = res + sumI
-If (WriteOut) Write(ErrCan,*) "P0 P0 S0 S0",i1,i2,sumI(1,1),sumI(1,2)&
-           &,sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-  End Do
-
-
-  sumI = 0._dp
-  Do i1=1,n_S0
-   Do i2=1,n_P0
-    B0m2 = 0.5_dp * Real( B0(p2,mS02(i1), mP02(i2)),dp )
-    Do i3=1,n_S0
-     sumI(i3,i3) = c_S0P0P0(i3,i1,i2)**2 * B0m2
-     Do i4=i3+1,n_S0
-      sumI(i3,i4) = c_S0P0P0(i3,i1,i2) * c_S0P0P0(i4,i1,i2) * B0m2
-     End Do ! i4 
-    End Do ! i3
-    res = res + sumI
-If (WriteOut) Write(ErrCan,*) "P0 P0 S0",i1,i2,sumI(1,1),sumI(1,2)&
-           &,sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-   End Do
-  End Do
-
- !------------------
- ! neutralinos
- !------------------
-
-   sumI = 0._dp
-  Do i1=1,n_neut
-   Do i2=1,n_neut
-    G0m2 = 0.5_dp * Real( Gloop(p2,mN2(i1),mN2(i2)),dp )
-    B0m2 = 2._dp * mN(i1) * mN(i2) * Real( B0(p2,mN2(i1),mN2(i2)),dp )
-    Do i3=1,n_P0
-     sumI(i3,i3) = (Abs(c_NNP0_L(i1,i2,i3))**2 + Abs(c_NNP0_R(i1,i2,i3))**2) &
-              &   * G0m2                                                     &
-              & - Real( Conjg(c_NNP0_R(i1,i2,i3)) * c_NNP0_L(i1,i2,i3),dp )   &
-              &   * B0m2
-     Do i4=i3+1,n_P0
-      sumI(i3,i4) = ( Conjg(c_NNP0_L(i1,i2,i3)) * c_NNP0_L(i1,i2,i4)     &
-               &    + Conjg(c_NNP0_R(i1,i2,i3)) * c_NNP0_R(i1,i2,i4) )   &
-               &   * G0m2                                                &
-               &  - ( Conjg(c_NNP0_R(i1,i2,i3)) * c_NNP0_L(i1,i2,i4)     &
-               &    + Conjg(c_NNP0_L(i1,i2,i3)) * c_NNP0_R(i1,i2,i4) )   &
-               &   * 0.5_dp *  B0m2
-     End Do !i4
-     res(i3,i3:n_P0) = res(i3,i3:n_P0) + sumI(i3,i3:n_P0)
-    End Do ! i3
-If (WriteOut) Write(ErrCan,*) "N N P0",i1,i2,sumI(1,1),sumI(1,2)&
-           &,sumI(1,3),sumI(2,2),sumI(2,3),sumI(3,3)
-   End Do ! i2
-  End Do ! i1 
-
-  Do i2=1,n_S0
-   Do i1=2,n_S0
-     res(i1,i2) = Conjg( res(i2,i1) )
-   End Do
-  End Do
-  res = oo16pi2 * res
-
- End Subroutine PiPseudoScalar_NMSSM
 
 
  Subroutine PiScalar(p2, c_DDS0_L, c_UUS0_L, c_LLS0_L                         &
@@ -10683,7 +10324,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
  End Subroutine PiWWT1
 
 
- Subroutine PiWWT1_SM(p2, gSU2, sinW2, mS02, vev, mf_l2, mf_u2, mf_d2  &
+ Subroutine PiWWT1_SM(p2, gSU2, sinW2, mS02, mf_l2, mf_u2, mf_d2  &
          & , CKM, mZ2, mW2, res)
  !-----------------------------------------------------------------------
  ! Calculates the 1-loop self energy of W-boson. 
@@ -10703,14 +10344,14 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
  ! 30.01.17: adding MSbar contribution, thanks to Florian Staub
  !-----------------------------------------------------------------------
  Implicit None
-  Real(dp), Intent(in) :: p2, gSU2, sinW2, mS02, vev, mZ2, mW2, mf_l2(3) &
+  Real(dp), Intent(in) :: p2, gSU2, sinW2, mS02, mZ2, mW2, mf_l2(3) &
                       & , mf_d2(3), mf_u2(3)
   Complex(dp), Intent(in) :: CKM(3,3)
   Complex(dp), Intent(out) :: res 
 
-  Integer :: i1, i2, i3
-  Real(dp) :: cosW2, g2, coup
-  Complex(dp) :: sumI, coupC, coupLC, coupRC
+  Integer :: i1, i2
+  Real(dp) :: cosW2, g2
+  Complex(dp) :: sumI
   Integer, Parameter :: rMS=1
 
   Logical :: WriteOut
@@ -11141,7 +10782,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
  End Subroutine PiZZT1
 
 
- Subroutine PiZZT1_SM(p2, gSU2, sinW2, vev, mZ2, mW2, mS02 &
+ Subroutine PiZZT1_SM(p2, gSU2, sinW2, mZ2, mW2, mS02 &
    &    , mf_l2, mf_u2, mf_d2, res)
  !-----------------------------------------------------------------------
  ! Calculates the 1-loop self energy of Z-boson.
@@ -11153,7 +10794,6 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
  !  - p2 ......... the outer momentum squared
  !  - gSU2 ....... the SU(2) gauge coupling at p2
  !  - sinW2 ...... sin(theta_W) squared
- !  - vev ........ SM vev
  !  - mZ2 ........ Z-boson mass squared
  !  - mW2 ........ W-boson mass squared
  !  - mS02 ....... mass of the scalar Higgs squared
@@ -11164,7 +10804,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
  !-----------------------------------------------------------------------
  Implicit None
 
-  Real(dp), Intent(in) :: p2, gSU2, sinW2, vev, mS02, mW2, mZ2, mf_l2(3) &
+  Real(dp), Intent(in) :: p2, gSU2, sinW2, mS02, mW2, mZ2, mf_l2(3) &
         & , mf_u2(3), mf_d2(3)
   Complex(dp), Intent(out) :: res
 
@@ -11312,7 +10952,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
      & , cosW_DR, sinb, cosb, c_S0WW(2), c_P0S0Z(2,2), c_S0ZZ(2)            &
      & , c_S0S0WW(2), c_S0S0ZZ(2), c_P0P0S0S0(2,2,2), c_P0S0S0(2,2,2)       &
      & , c_S03(2,2,2), c_S04(2,2,2), Mi2(2), mat2a(2,2), Pi2S(2,2), nen     &
-     & , det, sumI, nen2
+     & , det, sumI, nen2, ratio
   Logical :: WriteOut
   Complex(dp) :: PiS1(2,2), c_DDS0_L(3), c_DDS0_R(3), c_LLS0_L(3), RSd(2,2) &
      & , RSu(2,2), RSl(2,2), c_LLS0_R(3), c_UUS0_L(3), c_UUS0_R(3)          &
@@ -11553,14 +11193,8 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
      Rstop = RUsquark(5:6,5:6)
      mSq = (Sum(Sqrt(mUsquark2(1:4)))+Sum(Sqrt(mDsquark2))) / 10._dp
     End If
-!msq=Sqrt(mUsquark2(5))
-! Write(*,*) mSt,mSq,mglu,Sqrt(q2),gsu3
     Call PiScalar3(Q2, gSU3, mT, mSt, Rstop, mSq, mglu, mu &
                 & , vevs_DR(2)/vevs_DR(1), Pi3s)
-!Write(*,*) "Pi2",pi2s(1,:)
-!Write(*,*) "   ",pi2s(2,:)
-!Write(*,*) "Pi3",pi3s(1,:)
-!Write(*,*) "   ",pi3s(2,:)
     Pi2s=Pi2s+Pi3s
    End If
 #endif
@@ -11583,6 +11217,16 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
      & , c_P0P0S0S0, c_P0S0S0, c_S03, c_S04, mN, mN2, c_NNS0_L, c_NNS0_R      &
      & , mZ2_mZ, mW2, WriteOut, PiS1)
 
+   If ((i_lh.Eq.1).And.(Switch_to_1_loop_mh)) Then ! additional check 
+    ratio = 0._dp
+    If (Real(PiS1(1,1),dp).Ne.0._dp) ratio = Pi2s(1,1)/Real(PiS1(1,1),dp)
+    If (Real(PiS1(1,2),dp).Ne.0._dp) ratio = Max(Pi2s(1,2)/Real(PiS1(1,2),dp),ratio)
+    If (Real(PiS1(2,2),dp).Ne.0._dp) ratio = Max(Pi2s(2,2)/Real(PiS1(2,2),dp),ratio)
+    If (ratio.Gt.0.9_dp) Then
+     Pi2s = 0._dp
+     Only_1loop_Higgsmass = .True.
+    End If
+   End If
    mat2 = mat2a - Real(PiS1,dp) + Pi2s
 
    det = 0.5_dp * Sqrt((mat2(1,1)-mat2(2,2))**2+4*Abs(mat2(1,2))**2)
@@ -11666,7 +11310,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
 
 
  Subroutine Sigma_Chargino(p2, mC, mC2, mSdown2, c_CUSd_L, c_CUSd_R        &
-       & , mSup2, c_CDSu_L, c_CDSu_R, mSlepton2, c_CNuSl_L, c_CNuSl_R      &
+       & , mSup2, c_CDSu_L, c_CDSu_R, mSlepton2, c_CNuSl_R                 &
        & , mSneut2, c_CLSn_L, c_CLSn_R, mN, mN2, c_CNW_L, c_CNW_R          &
        & , mSpm2, c_SmpCN_L, c_SmpCN_R, c_CCZ_L, c_CCZ_R, c_CCG_L, c_CCG_R &
        & , mP02, c_CCP0_L, c_CCP0_R, mS02, c_CCS0_L, c_CCS0_R, mZ2, mW2    &
@@ -11680,7 +11324,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
   Real(dp), Intent(in) :: p2, mC(:), mC2(:), mSdown2(:), mSup2(:), mZ2, mW2   &
        & , mSlepton2(:), mSneut2(:), mN(:), mN2(:), mSpm2(:), mP02(:), mS02(:)
   Complex(dp), Intent(in) :: c_CUSd_L(:,:,:), c_CUSd_R(:,:,:)                 &
-     & , c_CDSu_L(:,:,:), c_CDSu_R(:,:,:), c_CNuSl_L(:,:,:), c_CNuSl_R(:,:,:) &
+     & , c_CDSu_L(:,:,:), c_CDSu_R(:,:,:), c_CNuSl_R(:,:,:)                   &
      & , c_CLSn_L(:,:,:), c_CLSn_R(:,:,:), c_CNW_L(:,:), c_CNW_R(:,:)         &
      & , c_SmpCN_L(:,:,:), c_SmpCN_R(:,:,:), c_CCZ_L(:,:), c_CCZ_R(:,:)       &
      & , c_CCG_L(:,:), c_CCG_R(:,:), c_CCP0_L(:,:,:), c_CCP0_R(:,:,:)         &
@@ -12070,8 +11714,8 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
     & , C_llH, C_llA
 
   Complex(dp) :: sigma(3,3), alphaM(3)
-  Complex(dp), Dimension(3,3) :: WdR, WdL, WuL, WuR, WlL, WlR, SigDLR  &
-     & , SigULR, SigLLR, DelU, DelDnoY, DelDY, DelLnoY, DelLY, SigU    &
+  Complex(dp), Dimension(3,3) :: WdR, WdL, WuL, WuR, WlL, WlR  &
+     & , DelU, DelDnoY, DelDY, DelLnoY, DelLY, SigU            &
      & , SigDnoY, SigDY, SigLnoY, SigLY, E_ij, Etil_ij
   Complex(dp), Dimension(3,3,3) :: LamDLL, LamDRR, LamULL, LamURR, LamLLL &
      & , LamLRR
@@ -12873,8 +12517,8 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
  End Subroutine Sigma_Fermion3
 
 
- Subroutine Sigma_Fermion3_SM(mf, yuk_f, RfL, RfR, gSU2, gSU3, sinW2 &
-        &  ,T3, e , mfp, RfpL, RfpR, mH2, mZ2, mW2, SigS, SigL, SigR )
+ Subroutine Sigma_Fermion3_SM(mf, yuk_f, RfL, RfR, gSU2, sinW2 &
+        &  ,T3, e , mfp, RfpL, mH2, mZ2, mW2, SigS, SigL, SigR )
  !-----------------------------------------------------------------------
  ! Calculates the 1-loop self energy of SM-fermions in the three generation
  ! case.
@@ -12907,14 +12551,13 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
  ! 10.07.15: taking only SM-part
  !-----------------------------------------------------------------------
  Implicit None
-  Real(dp), Intent(in) :: gSU3, gSU2, sinW2, mH2, mf(3),mfp(3)   &
+  Real(dp), Intent(in) :: gSU2, sinW2, mH2, mf(3),mfp(3)   &
      & , e, T3, mZ2, mW2
-  Complex(dp), Dimension(3,3), Intent(in) :: yuk_f, RfL, RfR, RfpL, RfpR
+  Complex(dp), Dimension(3,3), Intent(in) :: yuk_f, RfL, RfR, RfpL
   Complex(dp), Dimension(3,3), Intent(out) :: SigS, SigL, SigR
 
   Integer :: i1, i2, i3, i4
-  Real(dp) :: cosW2, coupL, coupR, mf2(3), mfp2(3), gp &
-     & , B1m2, B0m2, B1m2a, B0m2a
+  Real(dp) :: coupL, coupR, mf2(3), mfp2(3), B1m2, B0m2, B1m2a, B0m2a
 
   Complex(dp) :: sumS(3,3), sumL(3,3), sumR(3,3), c_L(3), c_R(3)
   Logical :: WriteOut
@@ -12936,10 +12579,8 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    WriteOut = .False.
   End If
 
-  cosW2 = 1._dp - sinW2
   mf2 = mf**2
   mfp2 = mfp**2
-  gp = gSU2 * Sqrt(sinW2/cosW2)
   SigS = ZeroC
   SigL = ZeroC
   SigR = ZeroC

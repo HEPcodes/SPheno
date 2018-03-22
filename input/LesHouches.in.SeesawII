@@ -23,6 +23,7 @@ Block SPhenoInput       # SPheno specific input
 11   0                  # calculate branching ratios
 12   1.00000000E-04     # write only branching ratios larger than this value
 21   0                  # calculate cross section 
+49   1                  # use old procedure
 Block YHD15THDIN          # Yukawa coupling lambda_1 at M_GUT
  1  1  1  2.00000000E-02  #
 Block YHU15TBHUIN         # Yukawa coupling lambda_2 at M_GUT

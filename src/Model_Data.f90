@@ -124,7 +124,7 @@ Use LoopFunctions
       & , A_lam222, Ao_h02, Ao_lam112, Ao_lam122, Ao_lam222
 
  !------------------------------------------------------
- ! General mirrage mediation, H. Baer et al, 1610.06205
+ ! General mirage mediation, H. Baer et al, 1610.06205
  !------------------------------------------------------
  Real(dp) :: alpha_mir, a3_mir, cm_mir, cHu_mir, cHd_mir
 !------------------------------
@@ -723,6 +723,14 @@ Contains
   AYe_h15 = 0._dp
   AYd_h15 = 0._dp
   AYu_h15 = 0._dp
+  !------------------------------
+  ! mirage mediation
+  !------------------------------
+  alpha_mir = 0._dp
+  a3_mir = 0._dp
+  cm_mir = 0._dp
+  cHu_mir = 0._dp
+  cHd_mir = 0._dp
 
  End Subroutine Set_All_Parameters_0
 

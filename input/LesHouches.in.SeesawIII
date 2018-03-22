@@ -22,6 +22,7 @@ Block SPhenoInput       # SPheno specific input
 11   0                  # calculate branching ratios
 12   1.00000000E-04     # write only branching ratios larger than this value
 21   0                  # calculate cross section 
+49   1                  # use old procedure
 Block Y24IN             # coupling of the 24-plet to 5-plet and H_u at M_GUT
  1  1   1  0.0 		# Y_24_11
  1  1   2 -0.7 		# Y_24_12

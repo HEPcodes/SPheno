@@ -196,8 +196,6 @@ Contains
   Complex(dp) :: yuk, A, Rsl(2,2) , Rsd(2,2) , Rsu(2,2) 
   Real(dp) :: fakt, r_T, width, width1
   Real(dp), Parameter :: mf_nu(3)=0._dp, e_d = -1._dp/3._dp, e_u = 2._dp/3._dp
-  Complex(dp), Parameter :: g_sd0(6) = 0._dp, g_su0(6) = 0._dp &
-      & , g_u0(3) = (1._dp,0._dp), g_d0(3)  = (1._dp,0._dp)
   Logical :: OnlySM
 
   Iname = Iname + 1
@@ -353,28 +351,28 @@ Contains
    If (Glu%g.Lt.fac3*Glu%m) Then
     Glu%gi2 = 0._dp
     Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-       & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+       & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
        & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
        & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-       & , c_GDSd_R, m_W, epsI, deltaM, .False. )
+       & , c_GDSd_R, epsI, deltaM, .False. )
 
    Else ! calculate only 3-body modes via virtual particles
 
     Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-       & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+       & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
        & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
        & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-       & , c_GDSd_R, m_W, epsI, deltaM, .True. )
+       & , c_GDSd_R, epsI, deltaM, .True. )
 
    End If
 
   Else ! calculation of 3-body decay modes is enforced
 
    Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-      & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+      & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
       & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
       & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-      & , c_GDSd_R, m_W, epsI, deltaM, .True. )
+      & , c_GDSd_R, epsI, deltaM, .True. )
 
   End If
 
@@ -808,18 +806,18 @@ Contains
      Sup(5)%id2(i1,1) = Chi0(i1)%id
      Sup(5)%id2(i1,2) = id_u(2)
     End Do
-    Call StopDecays3(n_l, id_l, n_nu, id_nu, n_su, n_sd, n_sle, n_snu, n_d   &
-     & , id_d, id_W, n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R &
-     & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L          &
-     & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)        &
+    Call StopDecays3(id_l, id_nu, n_su, n_sd, n_sle, n_snu, id_d, id_W   &
+     & , n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R         &
+     & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L      &
+     & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)    &
      & , Slept, c_CNuSl_R, epsI, .False.)
 
    Else  ! calculation excluding widths
 
-    Call StopDecays3(n_l, id_l, n_nu, id_nu, n_su, n_sd, n_sle, n_snu, n_d   &
-     & , id_d, id_W, n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R &
-     & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L          &
-     & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)        &
+    Call StopDecays3(id_l, id_nu, n_su, n_sd, n_sle, n_snu, id_d, id_W   &
+     & , n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R         &
+     & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L      &
+     & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)    &
      & , Slept, c_CNuSl_R, epsI, .True.)
 
    End If
@@ -1209,28 +1207,28 @@ Contains
    If (Glu%g.Lt.fac3*Glu%m) Then
     Glu%gi2 = 0._dp
     Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-       & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+       & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
        & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
        & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-       & , c_GDSd_R, m_W, epsI, deltaM, .False. )
+       & , c_GDSd_R, epsI, deltaM, .False. )
 
    Else ! calculate only 3-body modes via virtual particles
 
     Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-       & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+       & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
        & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
        & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-       & , c_GDSd_R, m_W, epsI, deltaM, .True. )
+       & , c_GDSd_R, epsI, deltaM, .True. )
 
    End If
 
   Else ! calculation of 3-body decay modes is enforced
 
    Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-      & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+      & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
       & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
       & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-      & , c_GDSd_R, m_W, epsI, deltaM, .True. )
+      & , c_GDSd_R, epsI, deltaM, .True. )
 
   End If
 
@@ -1448,19 +1446,19 @@ Contains
      Sup(5)%id2(i1,1) = Chi0(i1)%id
      Sup(5)%id2(i1,2) = id_u(2)
     End Do
-    Call StopDecays3(n_l, id_l, n_nu, id_nu, n_su, n_sd, n_sle, n_snu, n_d     &
-       & , id_d, id_W, n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R &
-       & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L          &
-       & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)        &
-       & , Slept, c_CNuSl_R, epsI, .False.)
+    Call StopDecays3(id_l, id_nu, n_su, n_sd, n_sle, n_snu, id_d, id_W   &
+     & , n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R         &
+     & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L      &
+     & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)    &
+     & , Slept, c_CNuSl_R, epsI, .False.)
 
    Else  ! calculation excluding widths
 
-    Call StopDecays3(n_l, id_l, n_nu, id_nu, n_su, n_sd, n_sle, n_snu, n_d     &
-       & , id_d, id_W, n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R &
-       & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L          &
-       & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)        &
-       & , Slept, c_CNuSl_R, epsI, .True.)
+    Call StopDecays3(id_l, id_nu, n_su, n_sd, n_sle, n_snu, id_d, id_W   &
+     & , n_n, n_c,Sup, Sdown, Chi0, gauge(2), c_UNSu_L, c_UNSu_R         &
+     & , c_DNSd_L, c_DNSd_R, c_SdSuW(:,:,1), Sneut, ChiPm, c_CLSn_L      &
+     & , c_CLSn_R, c_CDSu_L, c_CDSu_R, c_CNW_L(:,:,1), c_CNW_R(:,:,1)    &
+     & , Slept, c_CNuSl_R, epsI, .True.)
 
    End If
   End If ! generation mixing
@@ -1634,7 +1632,6 @@ Contains
   Real(dp) :: tanb, sinW, cosW, vev, m_Z(1), m_W(1), F_eff, sinb, cosb &
       & , width, width1, cosW2
   Complex(dp) :: bi(4)
-  Real(dp), Parameter :: mf_nu(3)=0._dp
   Logical :: OnlySM
 
   Iname = Iname + 1
@@ -1726,28 +1723,28 @@ c_GraUSu_R = 0
 
    If (Glu%g.Lt.fac3*Glu%m) Then
     Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-       & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+       & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
        & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
        & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-       & , c_GDSd_R, m_W, epsI, deltaM, .False. )
+       & , c_GDSd_R, epsI, deltaM, .False. )
 
    Else ! calculate only 3-body modes via virtual particles
 
     Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-       & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+       & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
        & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
        & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-       & , c_GDSd_R, m_W, epsI, deltaM, .True. )
+       & , c_GDSd_R, epsI, deltaM, .True. )
 
    End If
 
   Else ! calculation of 3-body decay modes is enforced
 
    Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-      & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+      & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
       & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
       & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-      & , c_GDSd_R, m_W, epsI, deltaM, .True. )
+      & , c_GDSd_R, epsI, deltaM, .True. )
 
   End If
   Call check_charge(Glu%id,Glu%id3)
@@ -2244,7 +2241,6 @@ c_GraUSu_R = 0
 
   Real(dp) :: tanb, sinW, cosW, vev, m_Z(1), m_W(1), F_eff, sinb, cosb
   Complex(dp) :: bi(4)
-  Real(dp), Parameter :: mf_nu(3)=0._dp
   Logical :: OnlySM
 
   Iname = Iname + 1
@@ -2335,28 +2331,28 @@ c_GraUSu_R = 0
 
    If (Glu%g.Lt.fac3*Glu%m) Then
     Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-       & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+       & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
        & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
        & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-       & , c_GDSd_R, m_W, epsI, deltaM, .False. )
+       & , c_GDSd_R, epsI, deltaM, .False. )
 
    Else ! calculate only 3-body modes via virtual particles
 
     Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-       & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+       & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
        & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
        & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-       & , c_GDSd_R, m_W, epsI, deltaM, .True. )
+       & , c_GDSd_R, epsI, deltaM, .True. )
 
    End If
 
   Else ! calculation of 3-body decay modes is enforced
 
    Call GluinoThreeBodyDecays(n_d, id_d, n_u, id_u, n_n, n_c, id_gl, n_su  &
-      & , n_sd, n_W, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)      &
+      & , n_sd, Glu, Chi0, ChiPm, mf_u, g_T, mf_d, Sup, gauge(3)           &
       & , c_UNSu_L, c_UNSu_R, c_CDSu_L, c_CDSu_R, c_GUSu_L, c_GUSu_R       &
       & , c_SdSuW, Sdown, c_DNSd_L, c_DNSd_R, c_CUSd_L, c_CUSd_R, c_GDSd_L &
-      & , c_GDSd_R, m_W, epsI, deltaM, .True. )
+      & , c_GDSd_R, epsI, deltaM, .True. )
 
   End If
   Call check_charge(Glu%id,Glu%id3)

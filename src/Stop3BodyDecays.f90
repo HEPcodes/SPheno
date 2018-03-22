@@ -54,27 +54,20 @@ Contains
 
  
  Real(dp) Function Sq2toSq1Chi1(muChi, muSq)
- implicit none
-  Real(dp), intent(in) :: muChi(2), muSq
+ Implicit None
+  Real(dp), Intent(in) :: muChi(2), muSq
 
-  Real(dp) :: lam1, sq_lam1, lam2, sq_lam2, ProdChi
+  Real(dp) :: ProdChi
 
-  if (muChi(1).eq.muChi(2)) then
-   lam1 = -1._dp + 2._dp * (muChi(1) + muSq) - (muSq - muChi(1))**2
-   sq_lam1 = Sqrt(abs(lam1))
-
-   Sq2toSq1Chi1 = (muSq - 1._dp) * (5._dp - 6._dp * muChi(1)                 &
+  If (muChi(1).Eq.muChi(2)) Then
+    Sq2toSq1Chi1 = (muSq - 1._dp) * (5._dp - 6._dp * muChi(1)                 &
               &                    + 5._dp * muSq- 2._dp * muSq / muChi(1) ) &
               &  - 2._dp * (muSq/muchi(1))**2 * Log( muSq )                  &
               &  + 2._dp * (muSq-muChi(1)) * (muChi(1)-1._dp)                &
               &    * (muSq + muSq*muChi(1) + muChi(1) - 3._dp*muChi(1)**2 )  &
               &    * Log((muChi(1)-1._dp)/(muChi(1)-muSq)) / muChi(1)**2
 
-  else
-   lam1 = -1._dp + 2._dp * (muChi(1) + muSq) - (muSq - muChi(1))**2
-   sq_lam1 = Sqrt(abs(lam1))
-   lam2 = -1._dp + 2._dp * (muChi(2) + muSq) - (muSq - muChi(2))**2
-   sq_lam2 = Sqrt(abs(lam2))
+  Else
    prodChi = muChi(1) * muChi(2)
    Sq2toSq1Chi1 = (muSq - 1._dp) * (3._dp +3._dp * muSq -2._dp * Sum(muChi))  &
               & - 2._dp * muSq**2/ProdChi * Log( muSq )                       &
@@ -83,21 +76,19 @@ Contains
               &    -muChi(1) * (muSq-muChi(2))**2 * (muChi(2)-1._dp)**2       &
               &        * Log((muChi(2)-muSq)/(muChi(2)-1._dp)) / muchi(2)     &
               &    ) / (0.5_dp * (muChi(2)-muChi(1)))
-  end if
+  End If
 
   Sq2toSq1Chi1 = 0.25_dp * Sq2toSq1Chi1
 
- end Function Sq2toSq1Chi1
+ End Function Sq2toSq1Chi1
 
  Real(dp) Function Sq2toSq1Chi2(muChi, muSq)
- implicit none
-  Real(dp), intent(in) :: muChi(2), muSq
+ Implicit None
+  Real(dp), Intent(in) :: muChi(2), muSq
 
-  Real(dp) :: lam1, sq_lam1, lam2, sq_lam2, prodChi
+  Real(dp) :: prodChi
 
-  if (muChi(1).eq.muChi(2)) then
-   lam1 = -1._dp + 2._dp * (muChi(1) + muSq) - (muSq - muChi(1))**2
-   sq_lam1 = Sqrt(abs(lam1))
+  If (muChi(1).Eq.muChi(2)) Then
    Sq2toSq1Chi2 = 0.5_dp * (muSq - 1._dp)                                   &
               &   * (muchi(1) - 2._dp * muchi(1)**2 - 2._dp * muSq          &
               &     + muSq * muChi(1) )                                     &
@@ -105,11 +96,7 @@ Contains
               & + (muSq- muChi(1)) * (muChi(1)-1._dp) * (muSq-muChi(1)**2)  &
               &   * Log( (muChi(1)-1._dp) / (muChi(1)-muSq) ) / muChi(1)
 
-  else
-   lam1 = -1._dp + 2._dp * (muChi(1) + muSq) - (muSq - muChi(1))**2
-   sq_lam1 = Sqrt(abs(lam1))
-   lam2 = -1._dp + 2._dp * (muChi(2) + muSq) - (muSq - muChi(2))**2
-   sq_lam2 = Sqrt(abs(lam2))
+  Else
    prodChi = muChi(1) * muChi(2)
    Sq2toSq1Chi2 = muSq * (1._dp + muSq - 0.5_dp *muSq * Sum(muChi) / ProdChi) &
              &         * Log(muSq)                                            &
@@ -120,11 +107,11 @@ Contains
              &    * Log((muChi(2)-muSq)/(muChi(2)-1._dp)) / muchi(2)          &
              &    ) / (2._dp * (muChi(2)-muChi(1)) )
 
-  end if
+  End If
 
   Sq2toSq1Chi2 = Sq2toSq1Chi2 / (muChi(1)*muChi(2))
 
- end Function Sq2toSq1Chi2
+ End Function Sq2toSq1Chi2
 
  Subroutine Sq2ToSq1ff(mSq, C_Sq2Sq1Z, Lf, Rf, mS0, c_Sq2Sq1S0, c_FFS0 &
            & , mP0, c_Sq2Sq1P0, c_FFP0, mC, C_CFSfp_L, C_CFSfp_R, mN   &
@@ -520,10 +507,10 @@ Contains
 
  End Function stbWchi
 
- Subroutine StopDecays3(n_l, id_l, n_nu, id_nu, n_su, n_sd, n_sle, n_snu, n_d &
-        & , id_d, id_W, n_n, n_c, Sup, Sdown, Chi0, g, c_UNSu_L, c_UNSu_R     &
-        & , c_DNSd_L, c_DNSd_R, c_SdSuW, Sneut, ChiPm, c_CLSn_L, c_CLSn_R     &
-        & , c_CDSu_L, c_CDSu_R, c_CNW_L, c_CNW_R, Slept, c_CNuSl_R, prec      &
+ Subroutine StopDecays3(id_l, id_nu, n_su, n_sd, n_sle, n_snu              &
+        & , id_d, id_W, n_n, n_c, Sup, Sdown, Chi0, g, c_UNSu_L, c_UNSu_R  &
+        & , c_DNSd_L, c_DNSd_R, c_SdSuW, Sneut, ChiPm, c_CLSn_L, c_CLSn_R  &
+        & , c_CDSu_L, c_CDSu_R, c_CNW_L, c_CNW_R, Slept, c_CNuSl_R, prec   &
         & , Check_Real_States)
  !-----------------------------------------------------------------------
  ! calculates the 3-body stop decays
@@ -532,8 +519,8 @@ Contains
  ! 20.09.10: adapting to new variable types
  !-----------------------------------------------------------------------
  Implicit None
-  Integer, Intent(in) :: n_l, id_l(:), n_nu, id_nu(:), n_su, n_sd, n_sle  &
-     & , n_snu, n_d, id_d(:), id_W(:), n_n, n_c
+  Integer, Intent(in) :: id_l(:), id_nu(:), n_su, n_sd, n_sle  &
+     & , n_snu, id_d(:), id_W(:), n_n, n_c
   Real(dp), Intent(in) :: prec, g
   Complex(dp), Intent(in) :: c_CLSn_L(:,:,:), c_CLSn_R(:,:,:), c_CDSu_L(:,:,:) &
      & , c_CDSu_R (:,:,:), c_CNuSl_R(:,:,:), c_UNSu_L(:,:,:), c_UNSu_R(:,:,:)  &
@@ -552,7 +539,7 @@ Contains
      & , kll2, ktl2, mbmcha, mtaumc, mbmtau, mbmcha1                          &
      & , mbmcha2, smin, smax, Abslt11Sq, Abskt11Sq, AbslL11Sq, mSl4, f_stop   &
      & , qlqr, ql2qr2, kl, k2l2, lqlkqr, kqllqr,  mbchp1, mchp1chi, mbchi     &
-     & , mbt, mb4, mb6, mchi2, mchi4, mchit, mchp1chp2, mst4   &
+     & , mbt, mb4, mchi2, mchi4, mchit, mchp1chp2, mst4   &
      & , mb2chi2, mb2st2, mchi2st2, oomw, mbomw, mbtomw, mbchiomw, mchitomw   &
      & , mstomw, mchiomw, kt1l1CQliCQri, kt1Cl1QliCQri, mbchp2, mchp2chi      &
      & , mchp1t, mbchp1omw, mchp1chiomw, ft2, ht2, fht, mSb(2)
@@ -862,7 +849,6 @@ Contains
      mbt = mf_d(3) * mf_u(3)
      mb2 = mf_d2(3)
      mb4 = mf_d2(3)**2
-     mb6 = mb4 * mb2
      mchi2 = mN2(j)
      mchi4 = mchi2 * mchi2
      mchit = mN(j) * mf_u(3)
