@@ -192,13 +192,8 @@ Contains
   Complex(dp) :: coup, g_u(3), g_d(3), g_l(3), g_c(2), g_sl(6), g_sd(6), g_su(6)
   Complex(dp), Dimension(3,3) :: uD_L_h, uD_R_h, uL_L_h, uL_R_h, uU_L_h, uU_R_h
   Real(dp) :: g_W, g_Hp, m_W(1), m_Z(1), F_eff, gam, mf(3), mf_d2_h(3)   &
-      & , mf_u2_h(3), mf_l2_h(3), mGlu, mC(2), mC2(2), mN(4), mN2(4)     &
-      & , mSneut(3), mSneut2(3), mSlepton(6), mSlepton2(6), mSdown(6)    &
-      & , mSdown2(6), mSup(6), mSup2(6), mP0(2), mP02(2), RP0_h(2,2)     &
-      & , mS0(2), mS02(2), RS0_h(2,2), mSpm(2), mSpm2(2), sinb, cosb
-  Complex(dp) :: U_h(2,2), V_h(2,2), N_h(4,4), Rsneut_h(3,3), RSlepton_h(6,6)  &
-              & , RSdown_h(6,6), RSup_h(6,6), RSpm_h(2,2), PhiGlu, yuk, A      &
-              & , Rsl(2,2) , Rsd(2,2) , Rsu(2,2) 
+      & , mf_u2_h(3), mf_l2_h(3), sinb, cosb
+  Complex(dp) :: yuk, A, Rsl(2,2) , Rsd(2,2) , Rsu(2,2) 
   Real(dp) :: fakt, r_T, width, width1
   Real(dp), Parameter :: mf_nu(3)=0._dp, e_d = -1._dp/3._dp, e_u = 2._dp/3._dp
   Complex(dp), Parameter :: g_sd0(6) = 0._dp, g_su0(6) = 0._dp &
@@ -437,15 +432,6 @@ Contains
    Forall(i1=1:3) mf_u2_h(i1) = (vevSM(2)*Abs(Y_u_h(i1,i1)))**2
   End If
 
-  Call TreeMassesMSSM(g_i(1), g_i(2), vevSM, Mi(1), Mi(2), Mi(3), mu_h, B     &
-              & , tanb_mZ, M2_E, M2_L, A_l_h, Y_l_h                           &
-              & , M2_D, M2_U, M2_Q, A_d_h, A_u_h, Y_d_h, Y_u_h                &
-              & , mGlu, PhiGlu, mC, mC2, U_h, V_h, mN, mN2, N_h               &
-              & , mSneut, mSneut2, Rsneut_h, mSlepton, mSlepton2, RSlepton_h  &
-              & , mSdown, mSdown2, RSdown_h, mSup, mSup2, RSup_h              &
-              & , mP0, mP02, RP0_h, mS0, mS02, RS0_h, mSpm, mSpm2, RSpm_h     &
-              & , GenerationMixing, kont, .False. )
-
   If (GenerationMixing) Then
    Do i1 = 1,3
     Do i2 = 1,3
@@ -475,7 +461,7 @@ Contains
   c_S0WWvirt(1,1) = c_S0WW(1,1) / vev
   c_S0ZZvirt(1,1) = Sqrt(7._dp/12._dp-10._dp/9._dp*sinW2+40._dp/27._dp*sinW2**2) &
              & * c_S0ZZ(1,1) / vev
-  Call CoupChargedScalarScalar3(2, 2, 1, RSpm_h, RS0, vevSM, g_i(1), g_i(2) &
+  Call CoupChargedScalarScalar3(2, 2, 1, RSpm, RS0, vevSM, g_i(1), g_i(2) &
                                    &, c_SmpS03(2,2,1) )
   g_Hp = c_SmpS03(2,2,1) * vev /( 2._dp * Spm(2)%m2)
 
@@ -483,34 +469,34 @@ Contains
   g_d = RS0(1,1) * vev / vevSM(1)
   g_l = RS0(1,1) * vev / vevSM(1)
   Do i2=1,2
-   Call CoupCharginoScalar(i2, i2, 1, U_h, V_h, RS0, g_i(2), g_c(i2), cR)
-   g_c(i2) = g_c(i2) * vev / mC(i2)
+   Call CoupCharginoScalar(i2, i2, 1, U, V, RS0, g_i(2), g_c(i2), cR)
+   g_c(i2) = g_c(i2) * vev / ChiPm(i2)%m2
   End Do
 
   If (GenerationMixing) Then
    Do i2=1,6
-    Call CoupScalarSfermion3(1, i2, i2, RS0, -0.5_dp, e_d, Y_d_h, Rsdown_h   &
+    Call CoupScalarSfermion3(1, i2, i2, RS0, -0.5_dp, e_d, Y_d_h, Rsdown   &
                            &, A_d_h, mu_h, vevSM, g_i(1), g_i(2), g_sd(i2) )
-    g_sd(i2) =  - 0.5_dp * g_sd(i2) * vev / mSdown2(i2)
-    Call CoupScalarSfermion3(1, i2, i2, RS0, 0.5_dp, e_u, Y_u_h, Rsup_h      &
+    g_sd(i2) =  - 0.5_dp * g_sd(i2) * vev / Sdown(i2)%m2
+    Call CoupScalarSfermion3(1, i2, i2, RS0, 0.5_dp, e_u, Y_u_h, Rsup      &
                            &, A_u_h, mu_h, vevSM, g_i(1), g_i(2), g_su(i2) )
-    g_su(i2) =  - 0.5_dp * g_su(i2) * vev / mSup2(i2)
+    g_su(i2) =  - 0.5_dp * g_su(i2) * vev / Sup(i2)%m2
     Call CoupScalarSfermion3(1, i2, i2, RS0, -0.5_dp, -1._dp, Y_l_h        &
-                 &, Rslepton_h, A_l_h, mu_h, vevSM, g_i(1), g_i(2), g_sl(i2) )
-    g_sl(i2) =  - 0.5_dp * g_sl(i2) * vev / mSlepton2(i2)
+                 &, Rslepton, A_l_h, mu_h, vevSM, g_i(1), g_i(2), g_sl(i2) )
+    g_sl(i2) =  - 0.5_dp * g_sl(i2) * vev / Slept(i2)%m2
    End Do
   Else
    Do i2=1,3
-    Rsl = RSlepton_h(2*(i2-1)+1:2*(i2-1)+2, 2*(i2-1)+1:2*(i2-1)+2)
-    Rsd = RSdown_h(2*(i2-1)+1:2*(i2-1)+2, 2*(i2-1)+1:2*(i2-1)+2)
-    Rsu = RSup_h(2*(i2-1)+1:2*(i2-1)+2, 2*(i2-1)+1:2*(i2-1)+2)
+    Rsl = RSlepton(2*(i2-1)+1:2*(i2-1)+2, 2*(i2-1)+1:2*(i2-1)+2)
+    Rsd = RSdown(2*(i2-1)+1:2*(i2-1)+2, 2*(i2-1)+1:2*(i2-1)+2)
+    Rsu = RSup(2*(i2-1)+1:2*(i2-1)+2, 2*(i2-1)+1:2*(i2-1)+2)
 
     yuk = Y_l_h(i2,i2)
     A = A_l_h(i2,i2)
     Do i1=1,2
      Call CoupScalarSfermion3(1, i1, i1, RS0, -0.5_dp, -1._dp, Yuk, Rsl  &
                                &, A, mu_h, vevSM, g_i(1), g_i(2), cR )
-     g_sl( (i2-1)*2+i1 ) =  - 0.5_dp * cR * vev / mSlepton2( (i2-1)*2 + i1 )
+     g_sl( (i2-1)*2+i1 ) =  - 0.5_dp * cR * vev / Slept( (i2-1)*2 + i1 )%m2
     End Do
 
     yuk = Y_d_h(i2,i2)
@@ -518,7 +504,7 @@ Contains
     Do i1=1,2
      Call CoupScalarSfermion3(1, i1, i1, RS0, -0.5_dp, e_d, Yuk, Rsd  &
                                &, A, mu_h, vevSM, g_i(1), g_i(2), cR )
-     g_sd( (i2-1)*2+i1 ) =  - 0.5_dp * cR * vev / mSdown2( (i2-1)*2 + i1 )
+     g_sd( (i2-1)*2+i1 ) =  - 0.5_dp * cR * vev / Sdown( (i2-1)*2 + i1 )%m2
     End Do
 
     yuk = Y_u_h(i2,i2)
@@ -526,7 +512,7 @@ Contains
     Do i1=1,2
      Call CoupScalarSfermion3(1, i1, i1, RS0, 0.5_dp, e_u, Yuk, Rsu  &
                                &, A, mu_h, vevSM, g_i(1), g_i(2), cR )
-     g_su( (i2-1)*2+i1 ) =  - 0.5_dp * cR * vev / mSup2( (i2-1)*2 + i1 )
+     g_su( (i2-1)*2+i1 ) =  - 0.5_dp * cR * vev / Sup( (i2-1)*2 + i1 )%m2
     End Do
 
    End Do
@@ -540,8 +526,8 @@ Contains
   r_T = 1._dp - oo4pi2 * g_i(3)**2
   fakt = 1._dp + 2._dp * oo3pi2 * g_i(3)**2
   Call CoupScalarPhoton(S0(1)%m2, mW2, g_W, mf_u2_h, g_u, r_T, mf_d2_h, g_d   &
-    & , mf_l2_h, g_l, mC2, g_c, Spm(2)%m2, g_Hp, mSup2, g_su, mSdown2 &
-    & , g_sd, fakt, mSlepton2, g_sl, c_GGS0(1), coup )
+    & , mf_l2_h, g_l, ChiPm%m2, g_c, Spm(2)%m2, g_Hp, Sup%m2, g_su, Sdown%m2 &
+    & , g_sd, fakt, Slept%m2, g_sl, c_GGS0(1), coup )
 
   ! effectively we have the SM outside
   c_GGS0(1) = c_GGS0(1) * alpha_125 ! oo4pi * g_i(2)**2 * sinW2
@@ -555,8 +541,8 @@ Contains
   g_d = g_d * fakt 
   g_su = g_su * fakt 
   g_sd = g_sd * fakt 
-  Call CoupScalarGluon(S0(1)%m2, mf_u2, g_u, mf_d2, g_d, mSup2, g_su &
-                      & , mSdown2, g_sd, c_GlGlS0(1), coup )
+  Call CoupScalarGluon(S0(1)%m2, mf_u2, g_u, mf_d2, g_d, Sup%m2, g_su &
+                      & , Sdown%m2, g_sd, c_GlGlS0(1), coup )
   r_GlGlS0(1) = Abs(c_GlGlS0(1) / coup)**2
   fakt = Sqrt(1._dp + 215._dp * oo48pi2 * g_i(3)**2)
   c_GlGlS0(1) = c_GlGlS0(1) * alphaS_125 * fakt ! * oo4pi * g_i(3)**2 * fakt
@@ -1645,7 +1631,8 @@ Contains
   Complex(dp), Dimension(3,6) :: c_GraDSd_L, c_GraDSd_R, c_GraUSu_L &
       & , c_GraUSu_R
 
-  Real(dp) :: tanb, sinW, cosW, vev, m_Z(1), m_W(1), F_eff, sinb, cosb
+  Real(dp) :: tanb, sinW, cosW, vev, m_Z(1), m_W(1), F_eff, sinb, cosb &
+      & , width, width1, cosW2
   Complex(dp) :: bi(4)
   Real(dp), Parameter :: mf_nu(3)=0._dp
   Logical :: OnlySM
@@ -1902,6 +1889,20 @@ c_GraUSu_R = 0
    End If
    Call check_charge(ChiPm(i1)%id,ChiPm(i1)%id3)
 
+   If (i1.Eq.4) Then ! then calculate decay into pion and check this
+                     ! partial width with respect to the total width
+    Call  FermionToFermionPi(ChiPm(4)%m,Chi0(4)%m,m_pip,f_pi, G_F &
+           & , c_CNW_L(4,4,1)/gauge(2),c_CNW_R(4,4,1)/gauge(2), width)
+    If (width.Gt.sum(ChiPm(4)%gi3(82:90)) ) Then ! PDG 111 pi0, 211 pi+
+     ChiPm(4)%gi2(1) = width
+     ChiPm(4)%id2(1,1) = Chi0(4)%id
+     ChiPm(4)%id2(1,2) = id_piP
+     ChiPm(4)%gi3(82:90) = 0._dp
+     ChiPm(4)%g = Sum(ChiPm(4)%gi2) + Sum(ChiPm(4)%gi3)
+     ChiPm(4)%bi2 = ChiPm(4)%gi2 / ChiPm(4)%g
+     ChiPm(4)%bi3 = ChiPm(4)%gi3 / ChiPm(4)%g
+    End If 
+   End If
   End Do
 
   OnlySM = .True.
@@ -1984,6 +1985,52 @@ c_GraUSu_R = 0
 
    End If ! CTBD
    Call check_charge(Chi0(i1)%id,Chi0(i1)%id3)
+
+   If (i1.Eq.4) Then ! then calculate decay into pion and check this
+                     ! partial width with respect to the total width
+    Call  FermionToFermionPi(Chi0(i1)%m,ChiPm(4)%m,m_pip,f_pi, G_F &
+           & , c_CNW_L(4,i1,1)/gauge(2),c_CNW_R(4,i1,1)/gauge(2), width1)
+    If ((width1).Gt.Sum(Chi0(i1)%gi3(109:126)) ) Then ! PDG 111 pi0, 211 pi+
+     Chi0(i1)%gi2(1) = width
+     Chi0(i1)%id2(1,1) = Chi0(4)%id
+     Chi0(i1)%id2(1,2) = id_pi0
+     Chi0(i1)%gi2(2) = width1
+     Chi0(i1)%id2(2,1) = Chipm(4)%id
+     Chi0(i1)%id2(2,2) = id_piP + 1
+     Chi0(i1)%gi2(3) = width1
+     Chi0(i1)%id2(3,1) = Chipm(4)%id + 1
+     Chi0(i1)%id2(3,2) = id_piP
+     Chi0(i1)%gi3(109:126) = 0._dp
+     Chi0(i1)%g = Sum(Chi0(i1)%gi2) + Sum(Chi0(i1)%gi3)
+     Chi0(i1)%bi2 = Chi0(i1)%gi2 / Chi0(i1)%g
+     Chi0(i1)%bi3 = Chi0(i1)%gi3 / Chi0(i1)%g
+    End If 
+   End If
+
+   If (i1.Eq.5) Then ! then calculate decay into pion and check this
+                     ! partial width with respect to the total width
+    cosW2 = cosW**2
+    Call  FermionToFermionPi(Chi0(i1)%m,Chi0(4)%m,m_pi0,f_pi, G_F/cosW2 &
+           & , c_NNZ_L(i1,4,1)/gauge(2),c_NNZ_R(i1,4,1)/gauge(2), width)
+    Call  FermionToFermionPi(Chi0(i1)%m,ChiPm(4)%m,m_pip,f_pi, G_F &
+           & , c_CNW_L(4,i1,1)/gauge(2),c_CNW_R(4,i1,1)/gauge(2), width1)
+    If ((width+width1).Gt.Sum(Chi0(i1)%gi3(55:72)) ) Then ! PDG 111 pi0, 211 pi+
+     Chi0(i1)%gi2(1) = width
+     Chi0(i1)%id2(1,1) = Chi0(4)%id
+     Chi0(i1)%id2(1,2) = id_pi0
+     Chi0(i1)%gi2(2) = width1
+     Chi0(i1)%id2(2,1) = Chipm(4)%id
+     Chi0(i1)%id2(2,2) = id_piP + 1
+     Chi0(i1)%gi2(3) = width1
+     Chi0(i1)%id2(3,1) = Chipm(4)%id + 1
+     Chi0(i1)%id2(3,2) = id_piP
+     Chi0(i1)%gi3(55:72) = 0._dp
+     Chi0(i1)%gi3(127:143) = 0._dp
+     Chi0(i1)%g = Sum(Chi0(i1)%gi2) + Sum(Chi0(i1)%gi3)
+     Chi0(i1)%bi2 = Chi0(i1)%gi2 / Chi0(i1)%g
+     Chi0(i1)%bi3 = Chi0(i1)%gi3 / Chi0(i1)%g
+    End If 
+   End If
 
   End Do
 

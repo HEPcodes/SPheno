@@ -122,6 +122,11 @@ Use LoopFunctions
  Real(dp) :: vP2
  Complex(dp) :: h02, lam2, lam112, lam122, A_h02, A_lam112, A_lam122 &
       & , A_lam222, Ao_h02, Ao_lam112, Ao_lam122, Ao_lam222
+
+ !------------------------------------------------------
+ ! General mirrage mediation, H. Baer et al, 1610.06205
+ !------------------------------------------------------
+ Real(dp) :: alpha_mir, a3_mir, cm_mir, cHu_mir, cHd_mir
 !------------------------------
 ! masses and mixing angles
 !------------------------------
@@ -295,9 +300,9 @@ Use LoopFunctions
 !-----------------------------------------------------------
 ! checks if extpar is used for input and collects data
 !-----------------------------------------------------------
- Integer :: in_extpar(0:203,2)=0
- Real(dp) :: r_extpar(0:203)=0._dp, i_extpar(203)=0._dp
- Character(len=26) :: n_extpar(0:203)=" "
+ Integer :: in_extpar(0:215,2)=0
+ Real(dp) :: r_extpar(0:215)=0._dp, i_extpar(215)=0._dp
+ Character(len=26) :: n_extpar(0:215)=" "
 Contains
 
 
@@ -2224,6 +2229,16 @@ Contains
   id_grav = 89
   id_p(id_grav) = id_gravitino
   c_name(id_grav) = "~G"
+
+  !----------------------------------
+  ! pions
+  !----------------------------------
+  id_p(id_pi0) = 111
+  c_name(id_pi0) = "pi^0"
+  id_p(id_piP) = 211
+  c_name(id_piP) = "pi^+"
+  id_p(id_piM) = -211
+  c_name(id_piM) = "pi^-"
 
  End Subroutine Initialize_RPexplicit
 

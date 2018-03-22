@@ -3947,7 +3947,7 @@ end if
    & , BRbtosgamma, Bs_ll, Bd_ll, BrBToSLL, BtoSNuNu, BR_Bu_TauNu, R_Bu_TauNu &
    & , epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu, a_e, a_mu, a_tau, d_e, d_mu   &
    & , d_tau, BrMutoEGamma, BrTautoEGamma, BrTautoMuGamma, BrMu3e, BrTau3e    &
-   & , BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau)
+   & , BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau, EDMs_N)
 
  Implicit None
   !---------------------------------
@@ -3966,7 +3966,7 @@ end if
    & , a_tau, d_e, d_mu, d_tau, BrMutoEGamma, BrTautoEGamma, BrTautoMuGamma    &
    & , BrMu3e, BrTau3e, BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau, BtoSNuNu &
    & , Bs_ll(3), Bd_ll(3), rho_parameter, epsK, K0toPi0NuNu, KptoPipNuNu       &
-   & , R_Bu_TauNu, DeltaMK
+   & , R_Bu_TauNu, DeltaMK, EDMs_N(2)
   Complex(dp), Intent(out) :: DeltaMBd, DeltaMBs
 
   !------------------
@@ -4012,7 +4012,9 @@ end if
     & , cpl_NNS0_L(4,4,2), cpl_NNS0_R(4,4,2), cpl_P0SdSd(2,6,6)                &
     & , cpl_P0SuSu(2,6,6), cpl_S0SdSd(2,6,6), cpl_S0SuSu(2,6,6), cpl_dWu(3,3)  &
     & , cpl_UUS0_L(3,3,2), cpl_UUS0_R(3,3,2), cpl_UUP0_L(3,3,2)                &
-    & , cpl_UUP0_R(3,3,2), cpl_CsP0W(2,2), cpl_CsS0W(2,2), cpl_CsCsS0(2,2,2)
+    & , cpl_UUP0_R(3,3,2), cpl_CsP0W(2,2), cpl_CsS0W(2,2), cpl_CsCsS0(2,2,2)   &
+    & , cpl_CUSd_L(2,3,6), cpl_CUSd_R(2,3,6), cpl_GUSu_L(3,6), cpl_GUSu_R(3,6) &
+    & , cpl_UNSu_L(3,4,6), cpl_UNSU_R(3,4,6) !& 
   Real(dp) :: cpl_S0WW(2)
 
   Real(dp), Parameter :: T3_d=-0.5_dp, T3_u=0.5_dp
@@ -4032,7 +4034,8 @@ end if
      & , cosW, sinW2, mf_u_in(3), abs_mu2, mf_d_in(3)
 
   Real(dp) :: mf_u_Q(3), s12, s13, s23, c12, c23, c13, phase
-  Complex(dp) :: epsD(3), epsL(3), epsD_FC
+  Complex(dp) :: epsD(3), epsL(3), epsD_FC, WC_gs
+  Real(dp) :: R_D, R_Dstar
   Logical :: GenMix_save
 ! should be shifted to input/output
   Real(dp) :: epsK_SM
@@ -4660,6 +4663,19 @@ end if
               &           , uD_R , Y_l_160, vevSM)
   R_Bu_TauNu = Bm_to_l_nu(3,1, mSpm2(2), tanb_160, RSpm_T, Y_d_160, uU_L  &
               &           , uD_R , Y_l_160, vevSM, .True.)
+  !--------------------------------------------------------------------------
+  !     [BR(B -> D tau nu)/BR(B -> D e nu)]_SUSY
+  ! R = ------------------------------------------
+  !     [BR(B -> D tau nu)/BR(B -> D e nu)]_SM
+  !
+  !       [BR(B -> D^* tau nu)/BR(B -> D^* e nu)]_SUSY
+  ! R^* = ------------------------------------------
+  !       [BR(B -> D^* tau nu)/BR(B -> D^* e nu)]_SM
+  ! formula take from S.Fajfer, J.F.Kamenik, I Nisandzic, arXiv:1203.2654
+  !--------------------------------------------------------------------------
+  WC_gs = - Y_d_160(3,3) * Y_l_160(3,3) * vevSM(1)**2 /( 2._dp * mSpm2_T(2))
+  R_D = 1._dp + 1.5_dp * Real(WC_gs) + Abs(WC_gs)**2
+  R_Dstar = 1._dp + 0.12_dp * Real(WC_gs) + 0.05_dp * Abs(WC_gs)**2
   !-------------------
   ! Delta(M_Bd)
   !-------------------
@@ -4766,6 +4782,14 @@ end if
              & , Y_l_mZ, Zero33C, uL_L, uL_R, U_T, V_T, cpl_CLSn_L(i1,i2,i3) &
              & , cpl_CLSn_R(i1,i2,i3) )
     End Do
+    Do i3=1,6
+     Call CoupCharginoSfermion(i1, i2, i3, g, 0.5_dp, RSdown_T       &
+      & , Y_d_mZ, Y_u_mZ, uU_L, uU_R, U_T, V_T, cpl_CUSd_L(i1,i2,i3) &
+      & , cpl_CUSd_R(i1,i2,i3) )
+     Call CoupCharginoSfermion(i1, i2, i3, g, -0.5_dp, RSup_T        &
+      & , Y_D_mZ, Y_U_mZ, uD_L, uD_R, U_T, V_T, cpl_CDSu_L(i1,i2,i3) &
+      & , cpl_CDSu_R(i1,i2,i3))
+    End Do
    End Do
   End Do
 
@@ -4774,9 +4798,29 @@ end if
     Do i3=1,6  
      Call CoupNeutralinoSlepton(i1, i2, i3, gp, g, RSlept_T &
          & , uL_L, uL_R, Y_l_mZ, N_T, cpl_LNSl_L(i1,i2,i3), cpl_LNSl_R(i1,i2,i3) )
+     Call CoupNeutralinoSdown(i1, i2, i3, gp, g, RSdown_T &
+      & , uD_L, uD_R, Y_d_mZ, N_T, cpl_DNSd_L(i1,i2,i3), cpl_DNSd_R(i1,i2,i3) )
+     Call CoupNeutralinoSup(i1, i2, i3, gp, g, RSdown_T &
+      & , uU_L, uU_R, Y_u_mZ, N_T, cpl_UNSu_L(i1,i2,i3), cpl_UNSu_R(i1,i2,i3) )
     End Do
    End Do
   End Do
+
+  Do i1=1,3
+   Do i3=1,6  
+    Call CoupGluinoSquark3(gs, phase_Glu_T, i1, i3, RSdown_T, uD_L, uD_R &
+           & , cpl_DGSd_L(i1,i3), cpl_DGSd_R(i1,i3) )
+    Call CoupGluinoSquark3(gs, phase_Glu_T, i1, i3, RSup_T, uU_L, uU_R &
+           & , cpl_GUSu_L(i1,i3), cpl_GUSu_R(i1,i3) )
+   End Do
+  End Do
+  !------------------------------------------------------------------
+  ! Neutron electric dipole moments
+  !------------------------------------------------------------------
+  Call Neutron_EDM(mN_T, mC_T, mglu_T, mSup2_T, cpl_UNSu_L, cpl_UNSu_R        &
+    & , cpl_GUSu_L, cpl_GUSu_R, cpl_CDSu_L, cpl_CDSu_R, mSdown2_T, cpl_DNSd_L &
+    & , cpl_DNSd_R, cpl_DGSd_L, cpl_DGSd_R, cpl_CUSd_L, cpl_CUSd_R   &
+    & , GenerationMixing, .True., .True., EDMs_N)
 
   !------------------------------------------------------------------
   ! leptonic electric dipole moments

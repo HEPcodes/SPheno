@@ -10719,7 +10719,6 @@ Real(dp) Function KilianB0C0(a,b,c)
  ! cutoff for masses = sqrt(10^-10) GeV
  Implicit None
  Real(dp), Intent(in) :: a,b,c
- Real(dp) :: B0user, C0user
 
  If ((a.le.1.E-10_dp).and.(b.le.1.E-10_dp)) Then
   KilianB0C0 = 1._dp - Log(c/getRenormalizationScale())

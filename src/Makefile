@@ -46,8 +46,8 @@ ifeq (${F90},nagfor)
 endif
  
 .SUFFIXES : .o .ps .f90 .F90 .a
-bin/SPheno: ${name} SPheno3.o
-	${F90} -o SPheno ${LFlagsB} SPheno3.o ../lib/${name}
+bin/SPheno: ${name} SPheno4.o
+	${F90} -o SPheno ${LFlagsB} SPheno4.o ../lib/${name}
 	mv SPheno ../bin
 ${name}: ${name}(Control.o)  ${name}(Mathematics.o)  ${name}(RGEs.o)       \
     ${name}(MathematicsQP.o)  ${name}(LoopFunctions.o) ${name}(StandardModel.o) \
@@ -64,17 +64,17 @@ ${name}: ${name}(Control.o)  ${name}(Mathematics.o)  ${name}(RGEs.o)       \
 clean:
 	rm -f *.o *~ */*.o */*~
 cleanall:
-	rm -f bin/SPheno3 lib/*.a *~ */*.o */*~ include/*
+	rm -f bin/SPheno4 lib/*.a *~ */*.o */*~ include/*
 #
 # Suffix rules
 #
 .f90.a:
 	${F90} ${comp} $<
-	ar -ruc $@ $*.o
+	ar -ruc -U $@ $*.o
 	rm -f $*.o
 .F90.a:
 	${F90} ${comp}  ${PreDef} $<
-	ar -ruc $@ $*.o
+	ar -ruc -U $@ $*.o
 	rm -f $*.o
 .f90.o: 
 	${F90} ${comp}  $< 

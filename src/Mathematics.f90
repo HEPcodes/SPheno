@@ -1439,9 +1439,8 @@ Contains
       Return
     Endif
    End Do ! while ( 1._dp+Abs(CONST*C2) .NE. 1._dp) 
-    
+   
    erg = erg + S16
-
   End Do ! while (BB.NE.B)
 
  

@@ -88,7 +88,7 @@ Contains
  !   - Fgmsb ................. the vev of the F-component in the GMSB model
  !--------------------------------------------------------------------
  Implicit None
-  Character(len=60) :: inFile
+  Character(len=120) :: inFile
   Integer, Intent(out) :: kont
   Real(dp), Intent(out) :: Fgmsb, Ecms(:), Pm(:), Pp(:)
   Character(len=15), Intent(out) :: HighScaleModel
@@ -872,6 +872,7 @@ Contains
       End If
      End If
      If ((i_model.Eq.3).And.(Sum(set_mod_par(1:4)).Eq.4)) kont = 0 ! AMSB
+     If ((i_model.Eq.4).And.(Sum(set_mod_par(3:4)).Eq.2)) kont = 0 ! Mirrage
      If (kont.Ne.0) Call AddError(Abs(kont))
 
   Else If (i_particles.Eq.2) Then  ! MSSM + nu_R particle content
@@ -1805,7 +1806,7 @@ Contains
      If (i_test.Eq.1) Then
       i_particles = i_test
       i_model = i_mod
-      If ((i_mod.Lt.0).Or.(i_mod.Gt.3)) Then
+      If ((i_mod.Lt.0).Or.(i_mod.Gt.4)) Then
        Write(ErrCan,*) "Error in routine "//NameOfUnit(Iname)
        Write(ErrCan,*) "MSSM, Unknown entry for Block MODSEL ",i_mod
        kont = -302
@@ -1824,6 +1825,10 @@ Contains
       Else If (i_mod.Eq.3) Then
        HighScaleModel = "AMSB"
        check = SetHighScaleModel("AMSB")
+
+      Else If (i_mod.Eq.4) Then
+       HighScaleModel = "Mirrage"
+       check = SetHighScaleModel("Mirrage")
       End If
 
      Else If (i_test.Eq.3) Then
@@ -2235,10 +2240,14 @@ Contains
       If ((wert.Eq.1._dp).Or.(wert.Eq.2._dp)) i1 =  SetYukawaScheme(Int(wert))
 
      Case(38) ! set looplevel of RGEs
-      If (wert.Ne.2._dp) Then
-       TwoLoopRGE=.False.
-      Else
+      If (wert.eq.2._dp) Then
        TwoLoopRGE=.True.
+       ThreeLoopRGE=.False.
+      Else If (wert.eq.3._dp) Then
+       TwoLoopRGE=.True.
+       ThreeLoopRGE=.True.
+      Else
+       TwoLoopRGE=.False.
       End If
 
      Case(39) ! write additional SLHA1 file
@@ -2254,6 +2263,11 @@ Contains
      Case(42) ! W-boson width
       gamW = wert
 
+     Case(48) ! switch on SM decoupling
+      if (wert.eq.1._dp) l_mt_3loop = .True.
+
+     Case(49) ! switch on SM decoupling
+      if (wert.eq.1._dp) l_SM_decoupling = .False.
 
      Case(80) ! exit for sure with non-zero value if a problem occurs
       If (wert.Eq.1) Non_Zero_Exit = .True.      
@@ -2347,8 +2361,13 @@ Contains
      If ((i_par.Eq.0).And.(i_c.Eq.0)) Then
       n_extpar(0) = "scale for input parameters"
       If (i_model.Eq.0) Call SetRGEScale(wert**2)  ! in case of MSSM
-      If (i_model.Eq.1) Call SetGUTScale(wert)     ! Sugra
-      If (i_model.Eq.3) Call SetGUTScale(wert)     ! AMSB
+      If ((i_model.Eq.1).or.(i_model.Eq.1)) then ! SUGRA or AMSB
+       If (wert.ge.1.e15_dp) Then ! this is a dirty hack to disthinguish
+        Call SetGUTScale(wert)    ! between setting GUT scale and EWSB input
+       Else
+        Call SetInputScale(wert)
+       End If
+      End If ! SUGRA or AMSB
      Else If (i_par.Eq.1) Then 
       n_extpar(1) = "M_1"
       If (i_c.Eq.0) Mi(1) = Cmplx(wert, Aimag(Mi(1)), dp) 
@@ -2464,77 +2483,77 @@ Contains
       End If
 
      Else If ((i_par.Eq.31).And.(i_c.Eq.0)) Then 
-      n_extpar(31) = "M^2_L11"
+      n_extpar(31) = "M_L11"
       M2L_pmns(1,1) = wert**2
       M2L_0_pmns(1,1) = M2L_pmns(1,1)
       set_mod_par(11) = 1
      Else If ((i_par.Eq.32).And.(i_c.Eq.0)) Then 
-      n_extpar(32) = "M^2_L22"
+      n_extpar(32) = "M_L22"
       M2L_pmns(2,2) = wert**2
       M2L_0_pmns(2,2) = M2L_pmns(2,2)
       set_mod_par(12) = 1
      Else If ((i_par.Eq.33).And.(i_c.Eq.0)) Then 
-      n_extpar(33) = "M^2_L33"
+      n_extpar(33) = "M_L33"
       M2L_pmns(3,3) = wert**2
       M2L_0_pmns(3,3) = M2L_pmns(3,3)
       set_mod_par(13) = 1
      Else If ((i_par.Eq.34).And.(i_c.Eq.0)) Then 
-      n_extpar(34) = "M^2_E11"
+      n_extpar(34) = "M_E11"
       M2E_pmns(1,1) = wert**2
       M2E_0_pmns(1,1) = M2E_pmns(1,1)
       set_mod_par(14) = 1
      Else If ((i_par.Eq.35).And.(i_c.Eq.0)) Then 
-      n_extpar(35) = "M^2_E22"
+      n_extpar(35) = "M_E22"
       M2E_pmns(2,2) = wert**2
       M2E_0_pmns(2,2) = M2E_pmns(2,2)
       set_mod_par(15) = 1
      Else If ((i_par.Eq.36).And.(i_c.Eq.0)) Then 
-      n_extpar(36) = "M^2_E33"
+      n_extpar(36) = "M_E33"
       M2E_pmns(3,3) = wert**2
       M2E_0_pmns(3,3) = M2E_pmns(3,3)
       set_mod_par(16) = 1
      Else If ((i_par.Eq.41).And.(i_c.Eq.0)) Then 
-      n_extpar(41) = "M^2_Q11"
+      n_extpar(41) = "M_Q11"
       M2Q_sckm(1,1) = wert**2
       M2Q_0_sckm(1,1) = M2Q_sckm(1,1)
       set_mod_par(17) = 1
      Else If ((i_par.Eq.42).And.(i_c.Eq.0)) Then 
-      n_extpar(42) = "M^2_Q22"
+      n_extpar(42) = "M_Q22"
       M2Q_sckm(2,2) = wert**2
       M2Q_0_sckm(2,2) = M2Q_sckm(2,2)
       set_mod_par(18) = 1
      Else If ((i_par.Eq.43).And.(i_c.Eq.0)) Then 
-      n_extpar(43) = "M^2_Q33"
+      n_extpar(43) = "M_Q33"
       M2Q_sckm(3,3) = wert**2
       M2Q_0_sckm(3,3) = M2Q_sckm(3,3)
       set_mod_par(19) = 1
      Else If ((i_par.Eq.44).And.(i_c.Eq.0)) Then 
-      n_extpar(44) = "M^2_U11"
+      n_extpar(44) = "M_U11"
       M2U_sckm(1,1) = wert**2
       M2U_0_sckm(1,1) = M2U_sckm(1,1)
       set_mod_par(20) = 1
      Else If ((i_par.Eq.45).And.(i_c.Eq.0)) Then 
-      n_extpar(45) = "M^2_U22"
+      n_extpar(45) = "M_U22"
       M2U_sckm(2,2) = wert**2
       M2U_0_sckm(2,2) = M2U_sckm(2,2)
       set_mod_par(21) = 1
      Else If ((i_par.Eq.46).And.(i_c.Eq.0)) Then 
-      n_extpar(46) = "M^2_U33"
+      n_extpar(46) = "M_U33"
       M2U_sckm(3,3) = wert**2
       M2U_0_sckm(3,3) = M2U_sckm(3,3)
       set_mod_par(22) = 1
      Else If ((i_par.Eq.47).And.(i_c.Eq.0)) Then 
-      n_extpar(47) = "M^2_D11"
+      n_extpar(47) = "M_D11"
       M2D_sckm(1,1) = wert**2
       M2D_0_sckm(1,1) = M2D_sckm(1,1)
       set_mod_par(23) = 1
      Else If ((i_par.Eq.48).And.(i_c.Eq.0)) Then 
-      n_extpar(48) = "M^2_D22"
+      n_extpar(48) = "M_D22"
       M2D_sckm(2,2) = wert**2
       M2D_0_sckm(2,2) = M2D_sckm(2,2)
       set_mod_par(24) = 1
      Else If ((i_par.Eq.49).And.(i_c.Eq.0)) Then 
-      n_extpar(49) = "M^2_D33"
+      n_extpar(49) = "M_D33"
       M2D_sckm(3,3) = wert**2
       M2D_0_sckm(3,3) = M2D_sckm(3,3)
       set_mod_par(25) = 1
@@ -2680,6 +2699,34 @@ Contains
        If (i_c.Eq.0) Lambda2_gut = Cmplx(wert, Aimag(Lambda2_gut),dp)
        If (i_c.Eq.1) Lambda2_gut = Cmplx(Real(Lambda2_gut,dp), wert,dp)
        lam12_0(2) = Lambda2_gut
+!------------------------------------------
+! General mirrage mediation, 1610.062505
+!------------------------------------------
+     Else if (i_par.eq.210) then
+      m32 = wert
+      l_m32_in = .True.
+      n_extpar(210) = "m_3/2"
+
+     Else if (i_par.eq.211) then
+      alpha_mir = wert
+      n_extpar(210) = "alpha"
+     
+     Else if (i_par.eq.212) then
+      a3_mir = wert
+      n_extpar(210) = "a_3"
+
+     Else if (i_par.eq.213) then
+      cm_mir = wert
+      n_extpar(210) = "c_m"
+
+     Else if (i_par.eq.214) then
+      cHu_mir = wert
+      n_extpar(210) = "c_Hu"
+
+     Else if (i_par.eq.215) then
+      cHd_mir = wert
+      n_extpar(215) = "c_Hd"
+
 
 ! Florian Staub, Seesaw II+III
 
@@ -2776,14 +2823,14 @@ Contains
       End If
 
      Else If ((i_par.Eq.3).And.(i_c.Eq.0)) Then 
-      If ((i_model.Ge.0).And.(i_model.Le.3)) Then ! MSSM, mSugra, GMSB, AMSB
+      If ((i_model.Ge.0).And.(i_model.Le.4)) Then ! MSSM, mSugra, GMSB, AMSB
        set_mod_par(3) = 1
        tanb = wert
        tanb_mZ = wert
       End If
 
      Else If (i_par.Eq.4) Then 
-      If ((i_model.Ge.0).And.(i_model.Le.3)) Then ! MSSM, mSugra, GMSB, AMSB, sign_mu
+      If ((i_model.Ge.0).And.(i_model.Le.4)) Then ! MSSM, mSugra, GMSB, AMSB, sign_mu
        set_mod_par(4) = 1
        If (i_c.Eq.0) phase_mu = Cmplx(wert, Aimag(phase_mu),dp)
        If (i_c.Eq.1) phase_mu = Cmplx(Real(phase_mu, dp),  wert, dp)
@@ -2943,13 +2990,13 @@ Contains
  End  Subroutine LesHouches_Input
 
 
- Subroutine LesHouches_Out(io_L, kont, id_p, names, HighScaleModel, M_GUT &
-      & , BRbtosgamma, Bs_ll, Bd_ll, DeltaMBd, DeltaMBs, BrBToSLL         &
-      & , BtoSNuNu, BR_Bu_TauNu, R_Bu_TauNu  &
+ Subroutine LesHouches_Out(io_L, kont, id_p, names, HighScaleModel, M_GUT  &
+      & , BRbtosgamma, Bs_ll, Bd_ll, DeltaMBd, DeltaMBs, BrBToSLL          &
+      & , BtoSNuNu, BR_Bu_TauNu, R_Bu_TauNu,d_N                            &
       & , a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMuToEGamma, BrTauToEGamma  &
       & , BrTauToMuGamma, BrMu3e, BrTau3e, BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau &
-      & , BR_Z_mu_tau, epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu  &
-      & , Rho_parameter, Ecms, Pm, Pp, ISR, SigSup, SigSdown, SigSle &
+      & , BR_Z_mu_tau, epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu             &
+      & , Rho_parameter, Ecms, Pm, Pp, ISR, SigSup, SigSdown, SigSle       &
       & , SigSn, SigChi0, SigC, SigS0, SigSP, SigHp, omega, f_name)
  !--------------------------------------------------------------------
  ! writes out data using the Les Houches standard as defined in 
@@ -2983,7 +3030,7 @@ Contains
       & , BtoSNuNu, a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMuToEGamma          &
       & , BrTauToEGamma, BrTauToMuGamma, BrMu3e, BrTau3e, BrTau3Mu, Bd_ll(3)  &
       & , BR_Z_e_mu, BR_Z_e_tau, BR_Z_mu_tau                                  &
-      & , epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu                             &
+      & , epsK, DeltaMK, K0toPi0NuNu, KptoPipNuNu, d_N(2)                     &
       & , R_Bu_TauNu, Rho_parameter, Ecms(:), Pm(:)                           &
       & , Pp(:), SigSup(:,:,:), SigSdown(:,:,:), SigSle(:,:,:), SigSn(:,:,:)  &
       & , SigChi0(:,:,:), SigC(:,:,:), SigS0(:,:), SigSP(:,:,:), SigHp(:,:,:)
@@ -4636,7 +4683,7 @@ Contains
 
     If (l_RP_Pythia) Then  ! Pythia only takes 4x4 matrix for neutralinos
                            ! and 2x2 for charginos
-     mNr(1:7) = Abs(Chi07(1:7)%m)
+     mNr(1:7) = Chi07(1:7)%m
      Do i1=1,4
       If (Sum(Abs(Real(N(i1,:)))).Lt.0.1_dp) Then
        nr(i1,1:4) = Aimag(n(i1,:))
@@ -4868,7 +4915,7 @@ Contains
                      ! to avoid this trick here
    Call WriteParametersAtQ(Q, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
           & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, tanb_Q, phase_mu      &
-          & , GenerationMixing, Q_act, 1.e-4_dp, io_L)
+          & , GenerationMixing, Q_act, 1.e-4_dp, io_L, mu, B)
    tanb_Q = tb_save 
    Write(io_L,100) "###########################################################"
    If (Calc_Mass) then
@@ -5451,7 +5498,8 @@ Contains
   Write(io_L,101) 11,R_Bu_TauNu," # BR(B_u -> tau nu)/BR(B_u -> tau nu)_SM"
   Write(io_L,101) 12,Abs(DeltaMbd)," # |Delta(M_Bd)| [ps^-1] "
   Write(io_L,101) 13,Abs(DeltaMbs)," # |Delta(M_Bs)| [ps^-1] "
-
+  Write(io_L,101) 14,d_N(1)," # neutron EDM according to the chiral quark model"    
+  Write(io_L,101) 15,d_N(2)," # neutron EDM according to the relativistic quark-parton model"    
   Write(io_L,101) 16, epsK       , " # epsilon_K" 
   Write(io_L,101) 17, DeltaMK    , " # Delta(M_K)" 
   Write(io_L,101) 18, K0toPi0NuNu, " # BR(K^0 -> pi^0 nu nu)" 
@@ -11271,10 +11319,13 @@ Contains
 
  Subroutine WriteParametersAtQ(Qin, gauge, Y_l, Y_d, Y_u, Mi, A_l, A_d, A_u &
           & , M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, tanb, phase_mu            &
-          & , GenerationMixing, Qout, delta, io_L)
+          & , GenerationMixing, Qout, delta, io_L, mu_in, B_in)
  !-----------------------------------------------------------------------
  ! runs the parameters given at a scale Qin to the scale Qout, calculates
  ! the masses within the MSSM and prints them out 
+ ! 23.10.2016: adding an option to write out mu and B, note however, that the
+ ! parameters entering the RGEs fullfill the loop-corrected tadpole equations
+ ! and not the tree-level tadpole equations
  !-----------------------------------------------------------------------
  Implicit None
   Integer, Intent(in) :: io_L
@@ -11283,6 +11334,7 @@ Contains
   Complex(dp), Intent(in) :: Mi(3), phase_mu
   Complex(dp), Intent(in), Dimension(3,3) :: Y_l, Y_d, Y_u, A_l, A_d, A_u &
     & , M2_E, M2_L, M2_D, M2_Q, M2_U
+  Complex(dp), Intent(in), Optional :: mu_in, B_in
 
   ! local variables
   Integer :: kont, i1, id_su(6), id_sd(6), id_sle(6), id_snu(3)
@@ -11307,8 +11359,16 @@ Contains
   tz = Log(Qin/Qout)
   dt = tz / 50._dp
 
-  B = ZeroC  ! will be calculated from tadpole equaitons
-  mu = ZeroC
+  If (Present(B_in)) Then
+   B = B_in
+  Else 
+   B = ZeroC  ! will be calculated from tadpole equaitons
+  End If
+  If (Present(mu_in)) Then
+   mu = mu_in
+  Else
+   mu = ZeroC  ! will be calculated from tadpole equaitons
+  End If
 
   Y_u_Q = Transpose(Y_u)
   Y_d_Q = Transpose(Y_d)
@@ -11539,6 +11599,19 @@ Contains
   End If
 
   If (.Not.(Calc_Mass.And.(kont.Eq.0))) Then ! return
+   If (Present(mu_in).Or.Present(B_in)) Then
+    Write(io_L,103) "Block Hmix Q=",Qout, "# Higgs mixing parameters"
+    If (Present(mu_in)) Write(io_L,104) 1,Real(mu,dp),"# mu"
+    Write(io_L,104) 2,tanb_Q,"# tan[beta](Q)"
+    If (Present(B_in)) Write(io_L,104) 4,Abs(B)*(1+tanb_Q**2)/tanb_Q,"# m^2_A(Q)"
+    If (Present(mu_in)) Then
+     If (Aimag(mu).Ne.0._dp) Then
+      Write(io_L,103) "Block IMHmix Q=",Qout, "# Higgs mixing parameters"
+      Write(io_L,104) 1,Aimag(mu),"# Im(mu)"
+     End If
+    End If
+   End If
+ 
    If (Calc_Mass) old_scale = SetRenormalizationScale(old_scale)
    Iname = Iname - 1
    Return

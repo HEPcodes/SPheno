@@ -12,6 +12,7 @@ Logical, Save :: MZ_input = .False.
 
 Contains
 
+
  Real(dp) Function AlphaEwDR(Q, mHpm, mSqU, mSqD, mSl, mChar)
  !-----------------------------------------------------------------------
  ! This function calculates the electromagnetig alpha(Q) in the DR scheme.
@@ -72,6 +73,35 @@ Contains
   AlphaEwDR = Alpha / (1._dp - DeltaAlpha)
 
  End Function AlphaEwDR
+
+
+ Real(dp) Function AlphaEwDR_SM(Q, mW, mt)
+ !-----------------------------------------------------------------------
+ ! This function calculates the electromagnetig alpha(Q) in the DR scheme
+ ! in the Standard Model.
+ ! The formula is taken from J. Bagger et al., Nucl.Phys.B 491, 3, (1997)
+ ! The input is:
+ !  - Alpha at Q=0, something like 1/137
+ !  - Q the energy
+ !  - mW, the W-boson mass
+ !  - mT, the top mass
+ !
+ ! adapted version from AlphaEwDR for the pure SM case
+ ! written by Werner Porod, 10.10.2015
+ !-----------------------------------------------------------------------
+ Implicit None
+
+  Real(dp), Intent(in) :: Q, mW,mt
+
+  Real(dp) :: DeltaAlpha
+
+   DeltaAlpha = 7._dp * Log(Q / mW) + 16._dp * Log(mt / Q ) / 9._dp
+   DeltaAlpha = Delta_Alpha_Lepton + Delta_Alpha_Hadron &
+            & - alpha * DeltaAlpha / ( 2._dp * Pi)
+
+  AlphaEwDR_SM = Alpha / (1._dp - DeltaAlpha)
+
+ End Function AlphaEwDR_SM
 
 
  Real(dp) Function AlphaEwMS(Q, alphaDR, mHpm, mSqU, mSqD, mSl, mChar, mt)

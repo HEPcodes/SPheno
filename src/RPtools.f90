@@ -138,15 +138,16 @@ Contains
   !--------------------------------------------------
   ! recalculating mu and B for the tree-level vacuum
   !--------------------------------------------------
-  mZ2_t = 0.25_dp * (g0(1)**2+g0(2)**2)*(vevSM(1)**2+vevsm(2)**2)
-  Abs_Mu = (M2H_mZ(2) * sb2 - M2H_mZ(1) * cb2) / c2b  - 0.5_dp * mZ2_t
-  If (abs_mu.lt.0._dp) then
-   kont = -211
-   Iname = Iname -1
-   return
-  End If
-  mu_mZ = Sqrt(abs_mu)* phase_mu 
-  B_mZ = (M2H_mZ(1) + M2H_mZ(2) + 2._dp *  Abs_Mu) * tb / (1+tb**2)
+! take this out as there are sometimes hugh one-loop corrections
+!  mZ2_t = 0.25_dp * (g0(1)**2+g0(2)**2)*(vevSM(1)**2+vevsm(2)**2)
+!  Abs_Mu = (M2H_mZ(2) * sb2 - M2H_mZ(1) * cb2) / c2b  - 0.5_dp * mZ2_t
+!  If (abs_mu.lt.0._dp) then
+!   kont = -211
+!   Iname = Iname -1
+!   return
+!  End If
+!  mu_mZ = Sqrt(abs_mu)* phase_mu 
+!  B_mZ = (M2H_mZ(1) + M2H_mZ(2) + 2._dp *  Abs_Mu) * tb / (1+tb**2)
 
   !--------------------------
   ! a very first guess

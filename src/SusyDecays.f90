@@ -2277,6 +2277,7 @@ Contains
   Do i1 = i_start, i_end
    m_in = msf(i1)
    i_count = 1
+   Sf(i1)%id2 = 0
    Sf(i1)%gi2 = 0._dp
    If (n_sf.eq.3) i_gen = i1
    If (n_sf.Eq.6) i_gen = (i1+1)/2

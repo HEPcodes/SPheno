@@ -4781,7 +4781,7 @@ Contains
 
   Integer :: i1
   Real(dp) :: D_sneut, T3, Yl, Yr, Ml, Mr, msf(2), msf2(2)
-  Real(dp) :: mStop2(2), mSbottom2(2), mT, Yukl
+  Real(dp) :: mStop2(2), mT, Yukl
   Complex(dp) :: A, Y, Rsf(2,2)
 
   Iname = Iname + 1
