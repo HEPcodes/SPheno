@@ -80,7 +80,7 @@ Contains
     & , A_d(3,3), A_u(3,3), M2_E(3,3), M2_L(3,3), M2_D(3,3), M2_Q(3,3)       &
     & , M2_U(3,3), phase_mu
   Real(dp), Intent(in) :: delta0, g(3), M2_H(2)
-  Real(dp), Intent(in), optional :: vevQ
+  Real(dp), Intent(in), Optional :: vevQ
   Real(dp), Intent(inout) :: tanb_mZ, tanb_Q
 
   Real(dp), Intent(out) :: mC(2), mN(4), mS0(2), mP0(2), mSpm(2)   &
@@ -551,8 +551,13 @@ Contains
       & + Pi2A0 + b_a
   !--------------------------------------------
   ! iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do
    i_count = i_count + 1
    p2 = mP02_1L(2)
@@ -585,6 +590,8 @@ Contains
    End If
   End Do
 
+  End If ! mass_calc_iteration
+
   If (mP02_1L(2).Le.0._dp) Then
    WriteWert = mP02_1L(2)
    Call WriteLoopMassesError(-7, "LoopMasses", kont)
@@ -604,6 +611,7 @@ Contains
    mf_u2 = mf_u**2
    Return
   End If
+
   !----------------------
   ! mW(mW)
   !----------------------
@@ -639,8 +647,13 @@ Contains
   mSpm2_1L(2) = mW2_mW + mA2_mA - Real( PiSpm,dp )
   !--------------------------------------------
   !  iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    p2 = mSpm2_1L(2)
@@ -670,6 +683,8 @@ Contains
     Exit
    End If
   End Do
+
+  End If ! mass_calc_iteration
 
 
   If (mSpm2_1L(2).Le.0._dp) Then
@@ -712,8 +727,13 @@ Contains
   End If
   !--------------------------------------------
   ! iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    comp2 = mS02_1L
@@ -758,6 +778,8 @@ Contains
    End If
 
   End Do
+
+  End If ! mass_calc_iteration
 
   !-----------
   ! Charginos 
@@ -822,8 +844,15 @@ Contains
   mglu_1L = Abs( mglu - dmglu )
   phase_glu = phase_glu * ( mglu - dmglu ) / mglu_1L
 
-  ! recalculation with improved mass
+  !--------------------------------------------
+  ! iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
+  !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    comp2(1) = mglu_1L**2
@@ -849,6 +878,8 @@ Contains
    End If
 
   End Do
+
+  End If ! mass_calc_iteration
   !--------------------------
   ! Up Squarks
   !--------------------------
@@ -1491,8 +1522,13 @@ Contains
 
   !--------------------------------------------
   !  iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    p2 = mSpm2_1L(2)
@@ -1521,6 +1557,8 @@ Contains
     Exit
    End If
   End Do
+
+  End If ! mass_calc_iteration
 
   If (mSpm2_1L(2).Le.0._dp) Then
    Call WriteLoopMassesError(-8, "LoopMasses_2", kont)
@@ -1562,8 +1600,13 @@ Contains
   End If
   !--------------------------------------------
   ! iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    comp2 = mS02_1L
@@ -1609,6 +1652,8 @@ Contains
    End If
 
   End Do
+
+  End If ! mass_calc_iteration
 
   !-----------
   ! Charginos 
@@ -1675,8 +1720,15 @@ Contains
   mglu_1L = Abs( mglu - dmglu )
   phase_glu = phase_glu * ( mglu - dmglu ) / mglu_1L
 
-  ! recalculation with improved mass
+  !--------------------------------------------
+  ! iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
+  !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    comp2(1) = mglu_1L**2
@@ -1702,6 +1754,8 @@ Contains
    End If
 
   End Do
+
+  End If ! mass_calc_iteration
 
   !--------------------------
   ! Up Squarks
@@ -2337,8 +2391,13 @@ Contains
   mSpm2_1L(2) = mW2_mW + mA2_mA - Real( PiSpm,dp )
   !--------------------------------------------
   !  iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    p2 = mSpm2_1L(2)
@@ -2367,6 +2426,8 @@ Contains
     Exit
    End If
   End Do
+
+  End If ! mass_calc_iteration
 
   mSpm2_1L(2) = mW2_mW + mA2_mA - Real( PiSpm,dp )
   If (mSpm2_1L(2).Le.0._dp) Then
@@ -2409,8 +2470,13 @@ Contains
   End If
   !--------------------------------------------
   ! iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    comp2 = mS02_1L
@@ -2455,6 +2521,8 @@ Contains
    End If
 
   End Do
+
+  End If ! mass_calc_iteration
 
   If (kont.Ne.0) Then
    Iname = Iname -1
@@ -2531,8 +2599,15 @@ Contains
   mglu_1L = Abs( mglu - dmglu )
   phase_glu = phase_glu * ( mglu - dmglu ) / mglu_1L
 
-  ! recalculation with improved mass
+  !--------------------------------------------
+  ! iteration using on-shell mass for p^2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
+  !--------------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    comp2(1) = mglu_1L**2
@@ -2558,6 +2633,8 @@ Contains
    End If
 
   End Do
+
+  End If ! mass_calc_iteration
   !--------------------------
   ! Up Squarks
   !--------------------------
@@ -3317,43 +3394,54 @@ Contains
    End If
  
    !---------------------------------------
-   ! redoing calculation using 1-loop mass 
+   ! redoing calculation using 1-loop mass
+   ! be aware that this can lead to problems as different orders
+   ! in perturbation theory are mixed. 
    !---------------------------------------
+
    i_count = 0
-   p2_loop: Do
-    i_count = i_count + 1 
-    p2 = mC2_L(i_l)
-    Call Sigma_Chargino(p2, mC, mC2, mSdown2, c_CUSd_L, c_CUSd_R            &
-          , mSup2, c_CDSu_L, c_CDSu_R, mSlepton2, c_CNuSl_R                 &
-          , mSneut2, c_CLSn_L, c_CLSn_R, mN, mN2, c_CNW_L, c_CNW_R          &
-          , mSpm2, c_SmpCN_L, c_SmpCN_R, c_CCZ_L, c_CCZ_R, c_CCG_L, c_CCG_R &
-          , mP02, c_CCP0_L, c_CCP0_R, mS02, c_CCS0_L, c_CCS0_R, mZ2, mW2    &
-          , WriteOut, SigL, SigR, SigS)
+   If (mass_calc_iteration) Then 
 
-    mat2 = mat2a - SigS - Matmul(SigR,mat2a) - Matmul(mat2a,SigL)
+    p2_loop: Do
+     i_count = i_count + 1 
+     p2 = mC2_L(i_l)
+     Call Sigma_Chargino(p2, mC, mC2, mSdown2, c_CUSd_L, c_CUSd_R            &
+           , mSup2, c_CDSu_L, c_CDSu_R, mSlepton2, c_CNuSl_R                 &
+           , mSneut2, c_CLSn_L, c_CLSn_R, mN, mN2, c_CNW_L, c_CNW_R          &
+           , mSpm2, c_SmpCN_L, c_SmpCN_R, c_CCZ_L, c_CCZ_R, c_CCG_L, c_CCG_R &
+           , mP02, c_CCP0_L, c_CCP0_R, mS02, c_CCS0_L, c_CCS0_R, mZ2, mW2    &
+           , WriteOut, SigL, SigR, SigS)
 
-    ierr = 0
-    mat22 = Matmul( Transpose( Conjg( mat2 ) ), mat2 )
-    If ( Maxval( Abs( Aimag(mat22) ) ).Eq.0._dp) Then ! reel matrix
-     Call EigenSystem(Real(mat22,dp), mC2_L, v1, ierr, test)
-     v2 = v1
-    Else
-     Call EigenSystem(mat22, mC2_L, v2, ierr, test)
-    End If
+     mat2 = mat2a - SigS - Matmul(SigR,mat2a) - Matmul(mat2a,SigL)
 
+     ierr = 0
+     mat22 = Matmul( Transpose( Conjg( mat2 ) ), mat2 )
+     If ( Maxval( Abs( Aimag(mat22) ) ).Eq.0._dp) Then ! reel matrix
+      Call EigenSystem(Real(mat22,dp), mC2_L, v1, ierr, test)
+      v2 = v1
+     Else
+      Call EigenSystem(mat22, mC2_L, v2, ierr, test)
+     End If
+
+     mC21L(i_l) = mC2_L(i_l)
+     mC1L(i_l) = Sqrt( mC21L(i_l) )
+     If (p2.Ne.0._dp) Then
+      test(1) = Abs(mC2_L(i_l) - p2) / p2
+     Else
+      test(1) = Abs(mC2_L(i_l))
+     End If
+     If (test(1).Lt.0.1_dp*delta) Exit p2_loop
+     If (i_count.Gt.30) Then
+      Write(*,*) "Problem in loop for mC",i_l,test(1),mC2_L(i_l)
+      Exit p2_loop
+     End If
+    End Do p2_loop
+   
+   Else !  mass_calc_iteration 
     mC21L(i_l) = mC2_L(i_l)
     mC1L(i_l) = Sqrt( mC21L(i_l) )
-    If (p2.Ne.0._dp) Then
-     test(1) = Abs(mC2_L(i_l) - p2) / p2
-    Else
-     test(1) = Abs(mC2_L(i_l))
-    End If
-    If (test(1).Lt.0.1_dp*delta) Exit p2_loop
-    If (i_count.Gt.30) Then
-     Write(*,*) "Problem in loop for mC",i_l,test(1),mC2_L(i_l)
-     Exit p2_loop
-    End If
-   End Do p2_loop
+
+   End If ! mass_calc_iteration 
 
    If (i_l.Gt.1)  Cycle ! Currently I take only the mixing matrices of chi_1
 
@@ -4924,22 +5012,27 @@ Contains
 
    !------------------------------------------
    ! redoing calculation using refined p2
+   ! be aware that this can lead to problems as different orders
+   ! in perturbation theory are mixed. 
    !------------------------------------------
    i_count = 0
-   p2_loop: Do 
-    i_count = i_count + 1 
-    p2 = mN1L2(i_l)
-    sigL = 0._dp
-    sigR = 0._dp
-    sigS = 0._dp
 
-    Call Sigma_Neutralino(p2, mN, mN2, c_NNZ_L, c_NNZ_R, mS02, c_NNS0_L   &
-     , c_NNS0_R, mP02, c_NNP0_L, c_NNP0_R, mC, mC2, c_CNW_L, c_CNW_R      &
-     , mSpm2, c_SmpCN_L, c_SmpCN_R, mSup2, c_UNSu_L, c_UNSu_R             &
-     , mSdown2, c_DNSd_L, c_DNSd_R, mSlepton2, c_LNSl_L, c_LNSl_R         &
-     , mSneut2, c_NuNSn_L, c_NuNSn_R, mZ2, mW2, WriteOut, SigL, SigR, SigS)
+   If (mass_calc_iteration) Then 
 
-    If (WriteOut) Then
+    p2_loop: Do 
+     i_count = i_count + 1 
+     p2 = mN1L2(i_l)
+     sigL = 0._dp
+     sigR = 0._dp
+     sigS = 0._dp
+
+     Call Sigma_Neutralino(p2, mN, mN2, c_NNZ_L, c_NNZ_R, mS02, c_NNS0_L   &
+      , c_NNS0_R, mP02, c_NNP0_L, c_NNP0_R, mC, mC2, c_CNW_L, c_CNW_R      &
+      , mSpm2, c_SmpCN_L, c_SmpCN_R, mSup2, c_UNSu_L, c_UNSu_R             &
+      , mSdown2, c_DNSd_L, c_DNSd_R, mSlepton2, c_LNSl_L, c_LNSl_R         &
+      , mSneut2, c_NuNSn_L, c_NuNSn_R, mZ2, mW2, WriteOut, SigL, SigR, SigS)
+
+     If (WriteOut) Then
        Write(ErrCan,*) "Neut, sigL",i_l
        Do i1=1,4
         Write(ErrCan,*) (sigL(i1,i2),i2=1,4)
@@ -4952,79 +5045,81 @@ Contains
        Do i1=1,4
         Write(ErrCan,*) (sigs(i1,i2),i2=1,4)
        End Do
-    End If
+     End If
 
-    mat4 = mat4a - 0.5_dp * ( SigS + Transpose(SigS)         &
-                           + Matmul(Transpose(SigL), mat4a)  &
-                           + Matmul(SigR, mat4a)             &
-                           + Matmul(mat4a,Transpose(SigR))   &
-                           + Matmul(mat4a, SigL) )
-    Call chop(mat4) ! to avoid problems with tiny numbers
+     mat4 = mat4a - 0.5_dp * ( SigS + Transpose(SigS)         &
+                            + Matmul(Transpose(SigL), mat4a)  &
+                            + Matmul(SigR, mat4a)             &
+                            + Matmul(mat4a,Transpose(SigR))   &
+                            + Matmul(mat4a, SigL) )
+     Call chop(mat4) ! to avoid problems with tiny numbers
 
-    If (Maxval(Abs(Aimag(mat4))).Eq.0._dp) Then ! matrix is reel
-     Call EigenSystem(Real(mat4,dp), mN_L, N4a, kont, test)
-
-     Do i1=1,4
-      If (mN_L(i1).Lt.0._dp) Then
-       mN_L(i1) = - mN_L(i1)
-       N1L(i1,:) = (0._dp,1._dp) * N4a(i1,:)
-      Else
-       N1L(i1,:) =N4a(i1,:)
-      End If
-     End Do
-
-     Do i1=1,3
-      Do i2=i1+1,4
-       If (Abs(mN_L(i1)).Gt.Abs(mN_L(i2))) Then
-        work = mN_L(i1)
-        mN_L(i1) = mN_L(i2)
-        mN_L(i2) = work
-        E4 = N1L(i1,:)
-        N1L(i1,:) = N1L(i2,:)
-        N1L(i2,:) = E4
+     If (Maxval(Abs(Aimag(mat4))).Eq.0._dp) Then ! matrix is reel
+      Call EigenSystem(Real(mat4,dp), mN_L, N4a, kont, test)
+ 
+      Do i1=1,4
+       If (mN_L(i1).Lt.0._dp) Then
+        mN_L(i1) = - mN_L(i1)
+        N1L(i1,:) = (0._dp,1._dp) * N4a(i1,:)
+       Else
+        N1L(i1,:) =N4a(i1,:)
        End If
       End Do
-     End Do
-     mN1L(i_L) = mN_L(i_L)
-     mN1L2(i_L) = mN1L(i_L)**2
+ 
+      Do i1=1,3
+       Do i2=i1+1,4
+        If (Abs(mN_L(i1)).Gt.Abs(mN_L(i2))) Then
+         work = mN_L(i1)
+         mN_L(i1) = mN_L(i2)
+         mN_L(i2) = work
+         E4 = N1L(i1,:)
+         N1L(i1,:) = N1L(i2,:)
+         N1L(i2,:) = E4
+        End If
+       End Do
+      End Do
+      mN1L(i_L) = mN_L(i_L)
+      mN1L2(i_L) = mN1L(i_L)**2
 
-    Else
+     Else
 
-     mat42 = Matmul( Transpose(Conjg( mat4 ) ), mat4 )
-     Call EigenSystem(mat42, mN_L, N1L, kont, test)
+      mat42 = Matmul( Transpose(Conjg( mat4 ) ), mat4 )
+      Call EigenSystem(mat42, mN_L, N1L, kont, test)
 
-     mat42 = Matmul(Conjg(N1L), Matmul( mat4, Transpose( Conjg( N1L ) ) ) )
-     Do i1=1,4
-      phaseM =   Sqrt( mat42(i1,i1)   / Abs( mat42(i1,i1) ) )
-      N1L(i1,:) = phaseM * N1L(i1,:)
-     End Do
-     mN1L2(i_L) = mN_L(i_L)
-     mN1L(i_L) = Sqrt( mN1L2(i_L) )
+      mat42 = Matmul(Conjg(N1L), Matmul( mat4, Transpose( Conjg( N1L ) ) ) )
+      Do i1=1,4
+       phaseM =   Sqrt( mat42(i1,i1)   / Abs( mat42(i1,i1) ) )
+       N1L(i1,:) = phaseM * N1L(i1,:)
+      End Do
+      mN1L2(i_L) = mN_L(i_L)
+      mN1L(i_L) = Sqrt( mN1L2(i_L) )
 
-    End If
+     End If
 
-    If ((kont.Ne.0).And.(ErrorLevel.Gt.-1)) Then
-     Write(ErrCan,*) 'Warning in subroutine NeutralinoMass_Loop, ierr =',kont
-     Write(ErrCan,*) 'M1,M2 ',M1,M2
-     Write(ErrCan,*) 'gp,g ',gU1, gSU2
-     Write(ErrCan,*) 'mu ',mu
-     Write(ErrCan,*) 'vevs ',vevSM
-     If (ErrorLevel.Eq.2) Call TerminateProgram
-    End If
+     If ((kont.Ne.0).And.(ErrorLevel.Gt.-1)) Then
+      Write(ErrCan,*) 'Warning in subroutine NeutralinoMass_Loop, ierr =',kont
+      Write(ErrCan,*) 'M1,M2 ',M1,M2
+      Write(ErrCan,*) 'gp,g ',gU1, gSU2
+      Write(ErrCan,*) 'mu ',mu
+      Write(ErrCan,*) 'vevs ',vevSM
+      If (ErrorLevel.Eq.2) Call TerminateProgram
+     End If
 
-    If (p2.Ne.0._dp) Then
-     test(1) = Abs(mN1L2(i_l) - p2) / p2
-    Else
-     test(1) = Abs(mN1L2(i_l))
-    End If
-    If (test(1).Lt.0.1_dp*delta) Exit p2_loop
-    If (i_count.Gt.30) Then
-     Write(*,*) "Problem in loop for mN",i_l,test(1),mN1L2(i_l)
-     Exit p2_loop
-    End If
+     If (p2.Ne.0._dp) Then
+      test(1) = Abs(mN1L2(i_l) - p2) / p2
+     Else
+      test(1) = Abs(mN1L2(i_l))
+     End If
+     If (test(1).Lt.0.1_dp*delta) Exit p2_loop
+     If (i_count.Gt.30) Then
+      Write(*,*) "Problem in loop for mN",i_l,test(1),mN1L2(i_l)
+      Exit p2_loop
+     End If
 
-   End Do p2_loop
+    End Do p2_loop
    
+   Else  ! mass_calc_iteration
+   End if ! mass_calc_iteration
   End Do !  i_l
 
   Iname = Iname - 1
@@ -14864,8 +14959,13 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
 
   !-------------------------------------
   ! redoing calculation using refined p2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !-------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    test_m2 = mass2
@@ -14982,6 +15082,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    End If
   End Do ! i_count
 
+  End If ! mass_calc_iteration
 
   Iname = Iname - 1
 
@@ -15417,8 +15518,13 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
 
   !-------------------------------------
   ! redoing calculation using refined p2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !-------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    test_m2 = mass2
@@ -15499,6 +15605,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    End If
   End Do ! i_count
 
+  End If ! mass_calc_iteration
 
   Iname = Iname - 1
 
@@ -16246,8 +16353,13 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
 
   !-------------------------------------
   ! redoing calculation using refined p2
+  ! be aware that this can lead to problems as different orders
+  ! in perturbation theory are mixed. 
   !-------------------------------------
   i_count = 0
+
+  If (mass_calc_iteration) Then 
+
   Do 
    i_count = i_count + 1
    test_m2 = mass2
@@ -16359,6 +16471,7 @@ If (WriteOut) Write(ErrCan,*) "N N S0",i1,i2,sumI(1,1),sumI(1,2)&
    End If
   End Do ! i_count
 
+  End If ! mass_calc_iteration
 
   Iname = Iname - 1
 

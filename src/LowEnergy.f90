@@ -3377,9 +3377,10 @@ Contains
     & , DMK_b_SLL2 = 0.51_dp, DMK_b_LR1 = 0.96_dp, DMK_b_LR2 = 1.3_dp
   !--------------------------------------------------------
   ! by S.Herrlich, U.Nierste, NPB476 (1996) 27
+  ! update from J.Brod, M.Gorbahn hep-ph/1108.2036
   !--------------------------------------------------------
-  Real(dp), Parameter :: DMK_eta_tt = 0.57_dp, DMK_eta_ct = 0.47_dp &
-    & , DMK_eta_cc = 1.44_dp
+  Real(dp), Parameter :: DMK_eta_tt = 0.577_dp, DMK_eta_ct = 0.496_dp &
+    & , DMK_eta_cc = 1.86_dp
   Complex(dp) :: KK_mat
 
   xt = mf_u(3)**2 / mW**2

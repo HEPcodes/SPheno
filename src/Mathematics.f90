@@ -4445,6 +4445,28 @@ Subroutine odeintB2(ystart, len, x1, x2, eps, h1, hmin, derivs,checks, xout, kon
 
    Call CheckHierarchyC(mF2, mat, UC, matC1, n_l, Isort0)
 
+   !-----------------------------------------------------------
+   ! check if there is a hierachy at all, it not, we are done
+   ! only a phase redefinition is needed now
+   !-----------------------------------------------------------
+   If (n_l.eq.0) then
+    mat2 = Matmul(Matmul(Conjg(UC),mat),Transpose(Conjg(UC)) )
+    Do i1=1,len
+     mFv(i1) = Abs(mat2(i1,i1))
+     If (mFv(i1).Ne.0._dp) Then
+      phaseM =   Sqrt( mat2(i1,i1)   / mFv(i1) )
+     Else
+      phaseM = 1._dp
+     End If
+     UC(i1,:) = phaseM * UC(i1,:)
+    End Do
+
+    Ufv = UC
+    Deallocate(mF2, mat2, matC1, UC, Isort0)
+    Iname = Iname - 1
+    return
+   End if
+
    Deallocate(mF2)
 
    i_c = 0

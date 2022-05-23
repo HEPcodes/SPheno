@@ -127,7 +127,7 @@ Implicit None
  !        to check if widths and cross sections shall be calculated
  !   (iii) Check if StandardModel.in exists to change the default SM values
  !   (iv) Read the information concerning the SUSY model from the file
- !        HighScale.in
+ !        HighScale.inSPh
  ! Note that either the file LesHouches.in or the file HighScale.in
  ! must exist.
  !--------------------------------------------------------------------------
@@ -187,7 +187,6 @@ Implicit None
    End If
 
    Q_in = Sqrt(GetRenormalizationScale())
-
    If (kont.Eq.0) Then
     Chi0%m2 = Chi0%m**2
     ChiPm%m2 = ChiPm%m**2
@@ -200,12 +199,13 @@ Implicit None
      & , a_e, a_mu, a_tau, d_e, d_mu, d_tau, BrMutoEGamma, BrTautoEGamma       &
      & , BrTautoMuGamma, BrMu3e, BrTau3e, BrTau3Mu, BR_Z_e_mu, BR_Z_e_tau      &
      & , BR_Z_mu_tau, d_N)
+
    End If
 
    !----------------------------------------------
    ! reorder state identification if necessary
    !----------------------------------------------
-   If ((.Not.GenerationMixing).And.(kont.Eq.0)) Then
+  If ((.Not.GenerationMixing).And.(kont.Eq.0)) Then
     Call Swap_Order_Sf(RSlepton(1,1), Slepton(1)%id, Slepton(2)%id, id_p, c_name)    
     Call Swap_Order_Sf(RSlepton(3,3), Slepton(3)%id, Slepton(4)%id, id_p, c_name)    
     Call Swap_Order_Sf(RSdown(1,1), Sdown(1)%id, Sdown(2)%id, id_p, c_name)    
@@ -213,6 +213,7 @@ Implicit None
     Call Swap_Order_Sf(RSup(1,1), Sup(1)%id, Sup(2)%id, id_p, c_name)    
     Call Swap_Order_Sf(RSup(3,3), Sup(3)%id, Sup(4)%id, id_p, c_name)    
    End If
+
  !-------------------------------------------------------------------
  ! Calculation of the branching ratios and widths provided L_BR is
  ! set .TRUE. (default) and that the routine Sugra has finished
@@ -263,6 +264,7 @@ Implicit None
 
  End If
 
+
  If (kont.Ne.0) Call WriteNumberOfErrors(ErrCan)
  Call LesHouches_Out(67, kont, id_p, c_name, HighScaleModel, M_GUT         &
       & , BRbtosgamma, Bs_ll, Bd_ll, DeltaMBd, DeltaMBs, BrBToSLL          &
@@ -283,7 +285,6 @@ Implicit None
  If ((kont.Ne.0).And.Non_Zero_Exit) Stop 99
 
 Contains
-
 
  Subroutine Swap_Order_Sf(Rij, id1, id2, id_p, names)
  Implicit None

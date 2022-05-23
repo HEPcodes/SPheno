@@ -1,3 +1,14 @@
+# linker flags depend on system
+OS=$(strip $(shell uname -s))
+linker = -U -ruc
+ifeq ($(OS),Linux)   
+linker = -U -ruc
+endif   
+ifeq ($(OS),Darwin)   
+linker = -ruc   
+endif
+
+
 # PreDef = -DGENERATIONMIXING  -DONLYDOUBLE -DSEESAWIII
 PreDef = -DGENERATIONMIXING  -DONLYDOUBLE
 # setting various paths
@@ -70,11 +81,11 @@ cleanall:
 #
 .f90.a:
 	${F90} ${comp} $<
-	ar -ruc -U $@ $*.o
+	ar ${linker} $@ $*.o
 	rm -f $*.o
 .F90.a:
 	${F90} ${comp}  ${PreDef} $<
-	ar -ruc -U $@ $*.o
+	ar ${linker} $@ $*.o
 	rm -f $*.o
 .f90.o: 
 	${F90} ${comp}  $< 

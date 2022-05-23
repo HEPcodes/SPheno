@@ -51,7 +51,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  !------------------------------------
  ! version number
  !------------------------------------
- Character(len=8), Save :: version="v4.0.4"
+ Character(len=8), Save :: version="v4.0.5"
  !------------------------------------
  ! variables for spectrum calculation
  !------------------------------------
@@ -87,18 +87,23 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  !-------------------------------------------------------------
  ! variables for super PMNS basis if only mixing is given
  !-------------------------------------------------------------
- Logical, save :: fake_m_nu = .True.
+ Logical, Save :: fake_m_nu = .True.
  !-------------------------------------------------------------------
  ! in case one still wants to check results using the old BoundaryEW
  ! use entry 9 in SPhenoInput to set value to 1 to use old version
  !-------------------------------------------------------------------
- Logical, save :: UseNewBoundaryEW = .True.
+ Logical, Save :: UseNewBoundaryEW = .True.
  !-------------------------------------------------------------------
  ! in case one still wants to check results using the on-shell stop
  ! masses to get the renormalisation scale, 
  ! use entry 10 in SPhenoInput to set value to 1 
  !-------------------------------------------------------------------
- Logical, save :: UseNewScale = .True.
+ Logical, Save :: UseNewScale = .True.
+ !-------------------------------------------------------------------
+ ! switch of iteration for calculation of chargino/neutralino masses
+ ! has to be extended for all mass calculations
+ !-------------------------------------------------------------------
+ Logical, Save :: mass_calc_iteration = .False.
  !------------------------------------------
  ! warning and error system
  !------------------------------------------

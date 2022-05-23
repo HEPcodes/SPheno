@@ -678,6 +678,12 @@ Contains
     Else If (read_line(7:10).Eq."MASS") Then
      Call Read_MASS(99)
 
+    Else If (read_line(7:10).Eq."HMIX") Then
+     If (external_spectrum) Call Read_Hmix(99)
+
+    Else If (read_line(7:12).Eq."IMHMIX") Then
+     If (external_spectrum) Call Read_ImHmix(99)
+
     Else If (read_line(7:11).Eq."MSOFT") Then
      If (external_spectrum) Call Read_MSOFT(99,0)
 
@@ -764,8 +770,8 @@ Contains
 
     Else If (read_line(7:11).Eq."ALPHA") Then
      Read(99,*) alpha_in,read_line
-     RS0(1,1) = -sin(alpha_in)
-     RS0(1,2) = cos(alpha_in)
+     RS0(1,1) = -Sin(alpha_in)
+     RS0(1,2) = Cos(alpha_in)
      RS0(2,1) = RS0(1,2)
      RS0(2,2) = -RS0(1,1)
 
@@ -866,7 +872,7 @@ Contains
     Else 
      ! in case of external spectrum all information should be given, exclude
      ! this from the check
-     if (.not.External_Spectrum) then
+     If (.Not.External_Spectrum) Then
       Write(ErrCan,*) "Higgs sector has not been specified consistently. Aborting"
       kont = -307
       Call AddError(307)
@@ -1190,6 +1196,8 @@ Contains
      wert = mSup(2)
      mSup(2) = mSup(1)
      mSup(1) = wert
+     Sup(1:2)%m = mSup(1:2)
+     Sup(1:2)%m2 = mSup(1:2)**2
      RSup(1,1) = 0._dp
      RSup(2,2) = 0._dp
      Rsup(1,2) = 1
@@ -1199,6 +1207,8 @@ Contains
      wert = mSup(4)
      mSup(4) = mSup(3)
      mSup(3) = wert
+     Sup(3:4)%m = mSup(3:4)
+     Sup(3:4)%m2 = mSup(3:4)**2
      RSup(3,3) = 0._dp
      RSup(4,4) = 0._dp
      Rsup(3,4) = 1
@@ -1208,6 +1218,8 @@ Contains
      wert = mSdown(2)
      mSdown(2) = mSdown(1)
      mSdown(1) = wert
+     Sdown(1:2)%m = mSdown(1:2)
+     Sdown(1:2)%m2 = mSdown(1:2)**2
      RSdown(1,1) = 0._dp
      RSdown(2,2) = 0._dp
      Rsdown(1,2) = 1
@@ -1217,6 +1229,8 @@ Contains
      wert = mSdown(4)
      mSdown(4) = mSdown(3)
      mSdown(3) = wert
+     Sdown(3:4)%m = mSdown(3:4)
+     Sdown(3:4)%m2 = mSdown(3:4)**2
      RSdown(3,3) = 0._dp
      RSdown(4,4) = 0._dp
      Rsdown(3,4) = 1
@@ -1226,6 +1240,8 @@ Contains
      wert = mSlepton(2)
      mSlepton(2) = mSlepton(1)
      mSlepton(1) = wert
+     Slepton(1:2)%m = mSlepton(1:2)
+     Slepton(1:2)%m2 = mSlepton(1:2)**2
      RSlepton(1,1) = 0._dp
      RSlepton(2,2) = 0._dp
      Rslepton(1,2) = 1
@@ -1235,6 +1251,8 @@ Contains
      wert = mSlepton(4)
      mSlepton(4) = mSlepton(3)
      mSlepton(3) = wert
+     Slepton(3:4)%m = mSlepton(3:4)
+     Slepton(3:4)%m2 = mSlepton(3:4)**2
      RSlepton(3,3) = 0._dp
      RSlepton(4,4) = 0._dp
      Rslepton(3,4) = 1
@@ -1287,6 +1305,64 @@ Contains
   Iname = Iname - 1
 
  Contains
+
+  Subroutine Read_Hmix(io)
+  Implicit None
+   Integer, Intent(in) :: io
+
+    Do 
+     Read(io,*,End=200) read_line
+     If (read_line(1:1).Eq."#") Cycle ! this loop
+     Backspace(io) ! resetting to the beginning of the line
+     If ((read_line(1:1).Eq."B").Or.(read_line(1:1).Eq."b") ) Exit ! this loop
+     Read(io,*) i1, wert, read_line
+     Select Case(i1)
+     Case(1)
+      mu = Cmplx( wert, Aimag(mu), dp )
+     Case (2)
+       tanb_Q = wert
+     Case (3)
+       vev_Q = wert
+     Case (4)
+       mA2_Q = wert
+
+     Case default
+      Write(ErrCan,*) "Reading block Hmix"
+      Write(ErrCan,*) "Particle with id=",i1," is unknown"
+      Write(ErrCan,*) "The assigned value is",wert
+     End Select
+
+    End Do
+
+  200 Return
+
+  End Subroutine Read_Hmix
+
+  Subroutine Read_ImHmix(io)
+  Implicit None
+   Integer, Intent(in) :: io
+
+    Do 
+     Read(io,*,End=200) read_line
+     If (read_line(1:1).Eq."#") Cycle ! this loop
+     Backspace(io) ! resetting to the beginning of the line
+     If ((read_line(1:1).Eq."B").Or.(read_line(1:1).Eq."b") ) Exit ! this loop
+     Read(io,*) i1, wert, read_line
+     Select Case(i1)
+     Case(1)
+      mu = Cmplx( Real(mu,dp), wert, dp )
+
+     Case default
+      Write(ErrCan,*) "Reading block Hmix"
+      Write(ErrCan,*) "Particle with id=",i1," is unknown"
+      Write(ErrCan,*) "The assigned value is",wert
+     End Select
+
+    End Do
+
+  200 Return
+
+  End Subroutine Read_ImHmix
 
   Subroutine Read_Neutrino_Bounds(io)
   Implicit None
@@ -1547,7 +1623,7 @@ Contains
   Subroutine Read_MSOFT(io,ic)
   Implicit None
    Integer, Intent(in) :: io,ic
-   real(dp) :: wert2
+   Real(dp) :: wert2
     Do 
      Read(io,*,End=200) read_line
      If (read_line(1:1).Eq."#") Cycle ! this loop
@@ -1557,24 +1633,24 @@ Contains
      Select Case(i1)
      Case(1)
       Mi(1) = wert
-      if (ic.eq.1) then
+      If (ic.Eq.1) Then
        wert2 = Real(Mi(1),dp)
        Mi(1) = Cmplx(wert2,wert,dp)
-      end if
+      End If
        
      Case(2)
       Mi(2) = wert
-      if (ic.eq.1) then
+      If (ic.Eq.1) Then
        wert2 = Real(Mi(2),dp)
        Mi(2) = Cmplx(wert2,wert,dp)
-      end if
+      End If
        
      Case(3)
       Mi(3) = wert
-      if (ic.eq.1) then
+      If (ic.Eq.1) Then
        wert2 = Real(Mi(3),dp)
        Mi(3) = Cmplx(wert2,wert,dp)
-      end if
+      End If
        
      Case(21)
       M2_H(1) = wert
@@ -2416,10 +2492,10 @@ Contains
       If ((wert.Eq.1._dp).Or.(wert.Eq.2._dp)) i1 =  SetYukawaScheme(Int(wert))
 
      Case(38) ! set looplevel of RGEs
-      If (wert.eq.2._dp) Then
+      If (wert.Eq.2._dp) Then
        TwoLoopRGE=.True.
        ThreeLoopRGE=.False.
-      Else If (wert.eq.3._dp) Then
+      Else If (wert.Eq.3._dp) Then
        TwoLoopRGE=.True.
        ThreeLoopRGE=.True.
       Else
@@ -2443,10 +2519,13 @@ Contains
       If (wert.Eq.1._dp) Switch_to_1_loop_mh = .True.
 
      Case(48) ! switch on NNNL fit formula for m_t and alpha_s values at Q=m_t 
-      if (wert.eq.1._dp) l_mt_3loop = .True.
+      If (wert.Eq.1._dp) l_mt_3loop = .True.
 
      Case(49) ! switch on SM decoupling
-      if (wert.eq.1._dp) l_SM_decoupling = .False.
+      If (wert.Eq.1._dp) l_SM_decoupling = .False.
+
+     Case(70) ! calculate chargino/neutralino masses only with p^2=m^2_tree
+      If (wert.Eq.1) mass_calc_iteration = .True.      
 
      Case(80) ! exit for sure with non-zero value if a problem occurs
       If (wert.Eq.1) Non_Zero_Exit = .True.      
@@ -2541,7 +2620,7 @@ Contains
       n_extpar(0) = "scale for input parameters"
       If (i_model.Eq.0) Call SetRGEScale(wert**2)  ! in case of MSSM
       If ((i_model.Eq.1).Or.(i_model.Ge.3)) Then ! SUGRA, AMSB or Mirage
-       If (wert.ge.1.e15_dp) Then ! this is a dirty hack to disthinguish
+       If (wert.Ge.1.e15_dp) Then ! this is a dirty hack to disthinguish
         Call SetGUTScale(wert)    ! between setting GUT scale and EWSB input
        Else
         Call SetInputScale(wert)
@@ -2608,7 +2687,7 @@ Contains
        If (i_c.Eq.0) mu = Cmplx(wert, Aimag(mu), dp)
        If (i_c.Eq.1) mu = Cmplx(Real(mu,dp), wert, dp)
        set_mod_par(9) = 1
-      Else If ((i_model.Eq.1).or.(i_model.Eq.4)) Then
+      Else If ((i_model.Eq.1).Or.(i_model.Eq.4)) Then
        If (i_c.Eq.0) mu = Cmplx(wert, Aimag(mu), dp)
        If (i_c.Eq.1) mu = Cmplx(Real(mu,dp), wert, dp)
        set_mod_par(9) = 1
@@ -2646,7 +2725,7 @@ Contains
        mP0(2) = wert
        mP02(2) = wert**2
        set_mod_par(10) = 1
-      Else If ((i_model.Eq.1).or.(i_model.Eq.4)) Then 
+      Else If ((i_model.Eq.1).Or.(i_model.Eq.4)) Then 
        P0(2)%m = wert
        P0(2)%m2 = wert**2
 ! to be checked
@@ -2881,28 +2960,28 @@ Contains
 !------------------------------------------
 ! General mirage mediation, 1610.062505
 !------------------------------------------
-     Else if (i_par.eq.210) then
+     Else If (i_par.Eq.210) Then
       m32 = wert
       l_m32_in = .True.
       n_extpar(210) = "m_3/2"
 
-     Else if (i_par.eq.211) then
+     Else If (i_par.Eq.211) Then
       alpha_mir = wert
       n_extpar(211) = "alpha"
      
-     Else if (i_par.eq.212) then
+     Else If (i_par.Eq.212) Then
       a3_mir = wert
       n_extpar(212) = "a_3"
 
-     Else if (i_par.eq.213) then
+     Else If (i_par.Eq.213) Then
       cm_mir = wert
       n_extpar(213) = "c_m"
 
-     Else if (i_par.eq.214) then
+     Else If (i_par.Eq.214) Then
       cHu_mir = wert
       n_extpar(214) = "c_Hu"
 
-     Else if (i_par.eq.215) then
+     Else If (i_par.Eq.215) Then
       cHd_mir = wert
       n_extpar(215) = "c_Hd"
 
