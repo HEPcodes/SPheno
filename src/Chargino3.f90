@@ -2,6 +2,7 @@ Module Chargino3Decays
 
 ! load modules
 Use Control
+Use StandardModel, Only: m_pi0, m_pip
 Use ThreeBodyPhaseSpace
 
 ! for check, if there is a numerical problem in the 3-body decays
@@ -64,6 +65,8 @@ Contains
  ! written by Werner Porod, 16.05.2001
  !  - taking the code from the Routine NeutralinoDecays.f as basis 
  !  13.09.03: including the possiblity to check for real intermediates states
+ !  24.07.19: checking in case of decays into hadrons, that the kinematics
+ !            allow at least for 2 pions in the final state
  !------------------------------------------------------------------
  Implicit None
 
@@ -103,7 +106,7 @@ Contains
      & , n_ZSf8, n_S0P04, n_S0Sf8, n_CSf4, n_Sf8, n_W4, n_WSpm, n_WSf8, n_Z8 &
      & , n_ZS08, n_S0P08, n_W8, n_ZW8, n_WSpm8, n_WSpm4, i_c
   Real(dp) :: factor(3), m_nu(3),  gCff(3,3), gNffp(3,3), gCCC, gCNN, diffM &
-     & , gW_in, gZ_in, gS0_in(n_s0), gP0_in(n_P0)  &
+     & , gW_in, gZ_in, gS0_in(n_s0), gP0_in(n_P0), dm2Pi  &
      & , gSpm_in(n_Spm), g_Su(n_su), g_Sd(n_sd), g_Sl(n_sle), g_Sn(n_snu)
   Real(dp), Allocatable :: IntegralsZ4(:,:), IntegralsS04(:,:)      &
      & , IntegralsSf4(:,:), IntegralsW4(:,:)
@@ -112,7 +115,7 @@ Contains
       & , IntegralsSf8(:,:), IntegralsWSpm4(:,:), IntegralsWSf8(:,:)     &
       & , IntegralsZ8(:,:), IntegralsZS08(:,:), IntegralsS0P08(:,:)      &
       & , IntegralsW8(:,:), IntegralsZW8(:,:), IntegralsWSpm8(:,:)
-  logical :: check
+  Logical :: check
 
   Iname = Iname + 1
   NameOfUnit(Iname) = 'CharginoThreeBodyDecays'
@@ -226,6 +229,8 @@ Contains
    !--------------------------------------
    i_c = 1
    Do i1 = 1, i_run - 1
+    ! required phase space to have at least 2 pions for hadronic final states
+    dm2pi = Abs(mC(i_run)) - Abs(mC(i1)) - m_pi0 -m_pip
     n_Z4 = 0
     n_W4 = 0
     n_S04 = 0
@@ -245,17 +250,22 @@ Contains
     n_S0Sf8 = 0
     n_CSf4 = 0
     n_Sf8 = 0
-    Call ChimToChimff(i_run, i1, ' u u ', mC, mZ, gZ_in, C_CCZ_L, C_CCZ_R &
-     & , n_u, mf_u, L_u, R_u, IntegralsZ4, n_Z4, mS0, gS0_in, c_CCS0_L    &
-     & , c_CCS0_R, c_UUS0_L, c_UUS0_R, IntegralsS04, n_S04, mP0, gP0_in   &
-     & , c_CCP0_L, c_CCP0_R, c_UUP0_L, c_UUP0_R, mDSquark, g_Sd           &
-     & , c_CUSd_L, c_CUSd_R, IntegralsSf4, n_Sf4, IntegralsZS04, n_ZS04   &
-     & , IntegralsZSf8, n_ZSf8, IntegralsS0P04, n_S0P04, IntegralsS0Sf8   &
-     & , n_S0Sf8, IntegralsCSf4, n_CSf4, deltaM, epsI, GenerationMixing   &
-     & , check, factor(2), gCff)
+    If (dm2pi.Gt.0._dp) Then
+     Call ChimToChimff(i_run, i1, ' u u ', mC, mZ, gZ_in, C_CCZ_L, C_CCZ_R &
+      & , n_u, mf_u, L_u, R_u, IntegralsZ4, n_Z4, mS0, gS0_in, c_CCS0_L    &
+      & , c_CCS0_R, c_UUS0_L, c_UUS0_R, IntegralsS04, n_S04, mP0, gP0_in   &
+      & , c_CCP0_L, c_CCP0_R, c_UUP0_L, c_UUP0_R, mDSquark, g_Sd           &
+      & , c_CUSd_L, c_CUSd_R, IntegralsSf4, n_Sf4, IntegralsZS04, n_ZS04   &
+      & , IntegralsZSf8, n_ZSf8, IntegralsS0P04, n_S0P04, IntegralsS0Sf8   &
+      & , n_S0Sf8, IntegralsCSf4, n_CSf4, deltaM, epsI, GenerationMixing   &
+      & , check, factor(2), gCff)
+    Else
+     gCff = 0._dp
+    End If
+
     Do i2=1,n_u
      Do i3=i2,n_u
-      If (i2.eq.i3) then
+      If (i2.Eq.i3) Then
        ChiPm(i_run)%gi3(i_c) = gCff(i2,i3)
        ChiPm(i_run)%id3(i_c,1) = ChiPm(i1)%id
        ChiPm(i_run)%id3(i_c,2) = id_u(i2)
@@ -275,17 +285,22 @@ Contains
      End Do
     End Do
 
-    Call ChimToChimff(i_run, i1, ' d d ', mC, mZ, gZ_in, C_CCZ_L, C_CCZ_R &
-     & , n_d, mf_d, L_d, R_d, IntegralsZ4, n_Z4, mS0, gS0_in, c_CCS0_L    &
-     & , c_CCS0_R, c_DDS0_L, c_DDS0_R, IntegralsS04, n_S04, mP0, gP0_in   &
-     & , c_CCP0_L, c_CCP0_R, c_DDP0_L, c_DDP0_R, mUSquark, g_Su           &
-     & , c_CDSu_L, c_CDSu_R, IntegralsSf4, n_Sf4, IntegralsZS04, n_ZS04   &
-     & , IntegralsZSf8, n_ZSf8, IntegralsS0P04, n_S0P04, IntegralsS0Sf8   &
-     & , n_S0Sf8, IntegralsCSf4, n_CSf4, deltaM, epsI, GenerationMixing   &
-     & , check, factor(2), gCff)
+    If (dm2pi.Gt.0._dp) Then
+     Call ChimToChimff(i_run, i1, ' d d ', mC, mZ, gZ_in, C_CCZ_L, C_CCZ_R &
+      & , n_d, mf_d, L_d, R_d, IntegralsZ4, n_Z4, mS0, gS0_in, c_CCS0_L    &
+      & , c_CCS0_R, c_DDS0_L, c_DDS0_R, IntegralsS04, n_S04, mP0, gP0_in   &
+      & , c_CCP0_L, c_CCP0_R, c_DDP0_L, c_DDP0_R, mUSquark, g_Su           &
+      & , c_CDSu_L, c_CDSu_R, IntegralsSf4, n_Sf4, IntegralsZS04, n_ZS04   &
+      & , IntegralsZSf8, n_ZSf8, IntegralsS0P04, n_S0P04, IntegralsS0Sf8   &
+      & , n_S0Sf8, IntegralsCSf4, n_CSf4, deltaM, epsI, GenerationMixing   &
+      & , check, factor(2), gCff)
+    Else
+     gCff = 0._dp
+    End If
+
     Do i2=1,n_d
      Do i3=i2,n_d
-      If (i2.eq.i3) then
+      If (i2.Eq.i3) Then
        ChiPm(i_run)%gi3(i_c) = gCff(i2,i3)
        ChiPm(i_run)%id3(i_c,1) = ChiPm(i1)%id
        ChiPm(i_run)%id3(i_c,2) = id_d(i2)
@@ -305,7 +320,7 @@ Contains
      End Do
     End Do
 
-    If (n_l.ge.1) Then
+    If (n_l.Ge.1) Then
      Call ChimToChimff(i_run, i1, ' l l ', mC, mZ, gZ_in, C_CCZ_L      &
       & , C_CCZ_R, n_l, mf_l, L_e, R_e, IntegralsZ4, n_Z4, mS0, gS0_in &
       & , c_CCS0_L, c_CCS0_R, c_LLS0_L, c_LLS0_R, IntegralsS04, n_S04  &
@@ -316,7 +331,7 @@ Contains
       & , deltaM, epsI, GenerationMixing, check, factor(1), gCff)
      Do i2=1,n_l
       Do i3=i2,n_l
-       If (i2.eq.i3) then
+       If (i2.Eq.i3) Then
         ChiPm(i_run)%gi3(i_c) = gCff(i2,i3)
         ChiPm(i_run)%id3(i_c,1) = ChiPm(i1)%id
         ChiPm(i_run)%id3(i_c,2) = id_l(i2)
@@ -337,7 +352,7 @@ Contains
      End Do
     End If
 
-    If (n_nu.ge.1) Then
+    If (n_nu.Ge.1) Then
      Call  ChimToChimNuNu(i_run, i1, mC, mZ, gZ_in, C_CCZ_L, C_CCZ_R, n_nu &
       & , L_nu, R_nu, IntegralsZ4, n_Z4, mSlepton, g_Sl, c_CNuSl_L         &
       & , c_CNuSl_R, IntegralsSf4, n_Sf4, IntegralsZSf8, n_ZSf8            &
@@ -356,6 +371,8 @@ Contains
    ! decay into neutralinos + 2 SM fermions
    !--------------------------------------
    Do i1=1,n_n
+    ! required phase space to have at least 2 pions for hadronic final states
+    dm2pi = Abs(mC(i_run)) - Abs(mN(i1)) - 0.3
     n_Z4 = 0
     n_W4 = 0
     n_S04 = 0
@@ -376,15 +393,20 @@ Contains
     n_CSf4 = 0
     n_Sf8 = 0
     If (Abs(mC(i_run)).Gt.Abs(mN(i1))) Then
-     Call ChimToChi0ffp(i_run, i1, mC, mN, 3, mf_d, mf_u, mW, gW_in         &
-      & , C_CNW_L, C_CNW_R, C_UDW, mSpm, gSpm_in, C_SmpCN_L                 &
-      & , C_SmpCN_R, C_SmpDU_L, C_SmpDU_R, mDSquark, g_Sd, c_DNSd_L         &
-      & , c_DNSD_R, c_CUSd_L, c_CUSd_R, mUSquark, g_Su, c_UNSu_L            &
-      & , c_UNSu_R, c_CDSu_L, c_CDSu_R, IntegralsW4, n_W4                   &
-      & , IntegralsS04, n_S04, IntegralsSf4, n_Sf4, IntegralsWSpm4, n_WSpm  &
-      & , IntegralsWSf8, n_WSf8, IntegralsS0P04, n_S0P04, IntegralsS0Sf8    &
-      & , n_S0Sf8, IntegralsCSf4, n_CSf4, IntegralsSf8, n_Sf8, deltaM, epsI &
-      & , GenerationMixing, check, factor(2), gNffp)
+     If (dm2pi.Gt.0._dp) Then
+      Call ChimToChi0ffp(i_run, i1, mC, mN, 3, mf_d, mf_u, mW, gW_in         &
+       & , C_CNW_L, C_CNW_R, C_UDW, mSpm, gSpm_in, C_SmpCN_L                 &
+       & , C_SmpCN_R, C_SmpDU_L, C_SmpDU_R, mDSquark, g_Sd, c_DNSd_L         &
+       & , c_DNSD_R, c_CUSd_L, c_CUSd_R, mUSquark, g_Su, c_UNSu_L            &
+       & , c_UNSu_R, c_CDSu_L, c_CDSu_R, IntegralsW4, n_W4                   &
+       & , IntegralsS04, n_S04, IntegralsSf4, n_Sf4, IntegralsWSpm4, n_WSpm  &
+       & , IntegralsWSf8, n_WSf8, IntegralsS0P04, n_S0P04, IntegralsS0Sf8    &
+       & , n_S0Sf8, IntegralsCSf4, n_CSf4, IntegralsSf8, n_Sf8, deltaM, epsI &
+       & , GenerationMixing, check, factor(2), gNffp)
+     Else
+      gNffp = 0._dp
+     End If
+
      Do i2=1,n_d
       Do i3=1,n_u
        ChiPm(i_run)%gi3(i_c) = gNffp(i2,i3)
@@ -395,7 +417,7 @@ Contains
       End Do
      End Do
 
-     If ((n_nu.Gt.0).and.(n_l.gt.0)) Then
+     If ((n_nu.Gt.0).And.(n_l.Gt.0)) Then
       Call ChimToChi0ffp(i_run, i1, mC, mN, n_l, mf_l, m_nu, mW, gW_in   &
        & , C_CNW_L, C_CNW_R, C_NuLW, mSpm, gSpm_in, C_SmpCN_L            &
        & , C_SmpCN_R, C_SmpLNu_L, C_SmpLNu_R, mSlepton, g_Sl             &
@@ -420,10 +442,11 @@ Contains
     End If
    End Do
 
-   !--------------------------------------
-   ! decay into a gluino + 2 quarks
-   !--------------------------------------
-   If (Abs(mC(i_run)).Gt.Abs(mglu)) Then
+   !-----------------------------------------------------------
+   ! decay into a gluino + 2 quarks, requiring at least phase
+   ! for two pions
+   !-----------------------------------------------------------
+   If (Abs(mC(i_run)).Gt.(Abs(mglu)+0.3_dp)) Then
     Call ChimToGffp(i_run, mC, mGlu, mf_d, mf_u, mDSquark, g_Sd       &
     & , c_DGSd_L, c_DGSD_R, c_CUSd_L, c_CUSd_R, mUSquark, g_Su &
     & , c_UGSu_L, c_UGSu_R, c_CDSu_L, c_CDSu_R                     &
@@ -531,7 +554,7 @@ Contains
    End If ! k_neut
 
    ChiPm(i_run)%g = Sum(ChiPm(i_run)%gi2) + Sum(ChiPm(i_run)%gi3)
-   If (ChiPm(i_run)%g.ne.0._dp) then
+   If (ChiPm(i_run)%g.Ne.0._dp) Then
     ChiPm(i_run)%bi2 = ChiPm(i_run)%gi2 / ChiPm(i_run)%g
     ChiPm(i_run)%bi3 = ChiPm(i_run)%gi3 / ChiPm(i_run)%g
    End If

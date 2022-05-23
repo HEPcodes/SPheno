@@ -98,7 +98,7 @@ Contains
   Integer :: i_mod=-1, set_mod_par(27)=-1 &
     & , i1, p_max, p_act, i_sp, i_model=-1, i_particles=-1, i_rp=0
   Real(dp) :: wert, Abs_Mu2, cosb2, cos2b, sinb2, RG0(3,3) &
-    & , mat_D(3,3), R2(2,2), s12, s13, s23, c12, c13, c23
+    & , mat_D(3,3), R2(2,2), s12, s13, s23, c12, c13, c23, alpha_in
   Logical :: check, calc_ferm, check_alpha(2), test_l
   Complex(dp) :: lam_vS, vec3C(3), wertC, MMnu(3,3), vec1C(1), mat1(1,1)
   Logical, Save :: l_open = .True.
@@ -678,6 +678,25 @@ Contains
     Else If (read_line(7:10).Eq."MASS") Then
      Call Read_MASS(99)
 
+    Else If (read_line(7:11).Eq."MSOFT") Then
+     If (external_spectrum) Call Read_MSOFT(99,0)
+
+    Else If (read_line(7:13).Eq."IMMSOFT") Then
+     If (external_spectrum) Call Read_MSOFT(99,1)
+
+    Else If (read_line(7:8).Eq."AE") Then
+     If (external_spectrum) &
+      & Call ReadMatrixC(99, 3, Al_pmns, 0, "Re(A_e)", kont)
+    
+    Else If (read_line(7:8).Eq."AD") Then
+     If (external_spectrum) &
+      & Call ReadMatrixC(99, 3, AD_sckm, 0, "Re(A_D)", kont)
+    
+    Else If (read_line(7:8).Eq."AU") Then
+     If (external_spectrum) &
+      & Call ReadMatrixC(99, 3, AU_sckm, 0, "Re(A_U)", kont)
+    
+
     Else If (read_line(7:11).Eq."FMASS") Then
      Call Read_FMASS(99)
 
@@ -742,6 +761,13 @@ Contains
      Call ReadMatrixR(99, 2, R2, "Im(R_~tau)", kont)
      If (Rslepton(1,1).Eq.0._dp) Rslepton = Id6C
      RSlepton(5:6,5:6) = Cmplx(Real(RSlepton(5:6,5:6),dp), R2, dp)
+
+    Else If (read_line(7:11).Eq."ALPHA") Then
+     Read(99,*) alpha_in,read_line
+     RS0(1,1) = -sin(alpha_in)
+     RS0(1,2) = cos(alpha_in)
+     RS0(2,1) = RS0(1,2)
+     RS0(2,2) = -RS0(1,1)
 
     Else If (read_line(7:24).Eq."NEUTRINOBOUNDSIN") Then
      Call Read_Neutrino_Bounds(99)
@@ -838,10 +864,14 @@ Contains
      B = mP02(2) * tanb / (1._dp + tanb**2)
 
     Else 
-     Write(ErrCan,*) "Higgs sector has not been specified consistently. Aborting"
-     kont = -307
-     Call AddError(307)
-     Return
+     ! in case of external spectrum all information should be given, exclude
+     ! this from the check
+     if (.not.External_Spectrum) then
+      Write(ErrCan,*) "Higgs sector has not been specified consistently. Aborting"
+      kont = -307
+      Call AddError(307)
+      Return
+     End If
     End If
 
    End If ! i_mod.eq.0
@@ -1331,6 +1361,13 @@ Contains
       mS032(1) = mS02(1)
       mS05(1) = wert
       mS052(1) = mS02(1)
+      S0(1)%m = wert
+      S0(1)%m2 = mS02(1)
+      S03(1)%m = wert
+      S03(1)%m2 = mS02(1)
+      S05(1)%m = wert
+      S05(1)%m2 = mS02(1)
+       
      Case(35)
       mS0(2) = wert
       mS02(2) = mS0(2)**2
@@ -1338,6 +1375,12 @@ Contains
       mS032(2) = mS02(2)
       mS05(2) = wert
       mS052(2) = mS02(2)
+      S0(2)%m = wert
+      S0(2)%m2 = mS02(2)
+      S03(2)%m = wert
+      S03(2)%m2 = mS02(2)
+      S05(2)%m = wert
+      S0(2)%m2 = mS02(2)
      Case(36)
       P0(2)%m = wert
       P0(2)%m2 = wert**2
@@ -1348,15 +1391,28 @@ Contains
       mP032(2) = mP02(2)
       mP05(2) = wert
       mP052(2) = mP02(2)
+      P0(2)%m = wert
+      P0(2)%m2 = mP02(2)
+      P03(2)%m = wert
+      P03(2)%m2 = mP02(2)
+      P05(2)%m = wert
+      P05(2)%m2 = mP02(2)
      Case(37)
       mSpm(2) = wert
       mSpm2(2) = mSpm(2)**2
+      Spm(2)%m = wert
+      Spm(2)%m2 = mSpm2(2)
+      
      Case(45)
       mS03(3) = wert
       mS032(3) = wert**2
+      S03(2)%m = wert
+      S03(2)%m2 = mS032(2)
      Case(46)
       mP03(3) = wert
       mP032(3) = wert**2
+      P03(2)%m = wert
+      P03(2)%m2 = mP032(2)
      Case(1000001)
       mSdown(1) = wert
       mSdown2(1) = wert**2
@@ -1458,9 +1514,129 @@ Contains
 
     End Do
 
+    !---------------------------
+    ! this is for the MSSM case
+    !---------------------------
+    P0(1)%m = mZ
+    P0(1)%m2 = mZ2
+    Spm(1)%m = mW
+    Spm(1)%m2 = mW2
+    Sdown%m = mSdown
+    Sdown%m2 = mSdown2
+    Sup%m = mSup
+    Sup%m2 = mSup2
+    Sneut%m = mSneut
+    Sneut%m2 = mSneut2
+    Slepton%m = mSlepton
+    Slepton%m2 = mSlepton2
+    Glu%m = mglu
+    Glu%m2 = mglu**2
+    ChiPM%m = mC
+    ChiPM%m2 = mC2
+    Chi0%m = mN
+    Chi0%m2 = mN2
+    !--------------------------
+    ! spectrum already given
+    !--------------------------
+    l_SM_decoupling = .False.
   200 Return
 
   End Subroutine Read_MASS
+
+
+  Subroutine Read_MSOFT(io,ic)
+  Implicit None
+   Integer, Intent(in) :: io,ic
+   real(dp) :: wert2
+    Do 
+     Read(io,*,End=200) read_line
+     If (read_line(1:1).Eq."#") Cycle ! this loop
+     Backspace(io) ! resetting to the beginning of the line
+     If ((read_line(1:1).Eq."B").Or.(read_line(1:1).Eq."b") ) Exit ! this loop
+     Read(io,*) i1, wert, read_line
+     Select Case(i1)
+     Case(1)
+      Mi(1) = wert
+      if (ic.eq.1) then
+       wert2 = Real(Mi(1),dp)
+       Mi(1) = Cmplx(wert2,wert,dp)
+      end if
+       
+     Case(2)
+      Mi(2) = wert
+      if (ic.eq.1) then
+       wert2 = Real(Mi(2),dp)
+       Mi(2) = Cmplx(wert2,wert,dp)
+      end if
+       
+     Case(3)
+      Mi(3) = wert
+      if (ic.eq.1) then
+       wert2 = Real(Mi(3),dp)
+       Mi(3) = Cmplx(wert2,wert,dp)
+      end if
+       
+     Case(21)
+      M2_H(1) = wert
+       
+     Case(22)
+      M2_H(2) = wert
+
+     Case(31)
+      M2L_pmns(1,1) = wert**2
+
+     Case(32)
+      M2L_pmns(2,2) = wert**2
+
+     Case(33)
+      M2L_pmns(3,3) = wert**2
+
+     Case(34)
+      M2E_pmns(1,1) = wert**2
+
+     Case(35)
+      M2E_pmns(2,2) = wert**2
+
+     Case(36)
+      M2E_pmns(3,3) = wert**2
+
+     Case(41)
+      M2Q_sckm(1,1) = wert**2
+
+     Case(42)
+      M2Q_sckm(2,2) = wert**2
+
+     Case(43)
+      M2Q_sckm(3,3) = wert**2
+
+     Case(44)
+      M2U_sckm(1,1) = wert**2
+
+     Case(45)
+      M2U_sckm(2,2) = wert**2
+
+     Case(46)
+      M2U_sckm(3,3) = wert**2
+
+     Case(47)
+      M2D_sckm(1,1) = wert**2
+
+     Case(48)
+      M2D_sckm(2,2) = wert**2
+
+     Case(49)
+      M2D_sckm(3,3) = wert**2
+
+     Case default
+      Write(ErrCan,*) "Read_MSOFT, Parameter with id=",i1," is unknown"
+      Write(ErrCan,*) "The assigned value is",wert
+     End Select
+
+    End Do
+
+  200 Return
+
+  End Subroutine Read_MSOFT
 
 
   Subroutine Read_FCONST(io)
@@ -3438,15 +3614,18 @@ Contains
    !-----------------------------------------------
    Call GetError(i_errors)
    !---------------------------------------------------------------
-   ! large Higgs mass is a sign of large logs in DRbar calculation
+   ! large Higgs mass is a sign of large logs in DRbar calculation;
+   ! only in case that there are no additional numerical problems
    !---------------------------------------------------------------
-   If (S0(1)%m.Gt.170._dp) Then
+   If (kont.eq.0) Then 
+    If (S0(1)%m.Gt.170._dp) Then
      Write(io_L,100) &
       & "     3               # problem with Higgs mass, large logs in DRbar scheme"
-   End If 
-   If (Switch_to_1_loop_mh.And.Only_1loop_Higgsmass) Then
+    End If 
+    If (Switch_to_1_loop_mh.And.Only_1loop_Higgsmass) Then
      Write(io_L,100) &
       & "     3               # large logs in 2-loop calculation of m_h, taking only 1-loop contributions"
+    End If 
    End If 
    !--------------------------------------
    ! a numerical problem might have happen
@@ -5565,6 +5744,8 @@ Contains
   
   Call Write_Wilson_Coeff(io_L,1,kont)  ! Wilson coefficients at m_Z
   Call Write_Wilson_Coeff(io_L,2,kont)  ! Wilson coefficients at Q=160 ~ m_t(m_t)
+!  Call Write_wcxf(55,.True.,2,kont)  ! Wilson coefficients in wcxf format
+!                                        ! at  Q=160 ~ m_t(m_t)
 
   If (Present(omega)) Then
    Write(io_L,100) "Block Omega # omega h^2"

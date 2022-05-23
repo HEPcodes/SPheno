@@ -10221,7 +10221,21 @@ Goto 200
 
   Real(dp), Intent(in) :: mj2,mi2,mb2,mf2
 
-  Igamma = C0(mj2,mi2,0._dp,mf2,mb2,mf2)
+  Real(dp) :: x, y, z
+
+  x = mj2/mb2
+  y = mf2/mb2
+  z = mj2/mf2
+  If ((x.Le.1.e-3_dp).And.(z.Le.1.e-3_dp)) Then 
+   y = 1._dp / y ! using the formula of Haber/Wyler for this case
+   Igamma = (1._dp + y * Log(y) /(1-y))/(mf2 * (y-1._dp))
+  Else If ((x.Le.1.e-3_dp).And.(y.Le.1.e-3_dp)) Then
+   Igamma = (36 + 9*x*(1 + 6*y + 8*y**2) + 2*x**2*(11 + 42*y + 93*y**2) &
+        & + 6*(6*(1 + 2*y + 2*y**2) + 3*x*(1 + 4*y + 8*y**2)            &
+        & + 2*x**2*(1 + 6*y + 18*y**2))*Log(y))/(36.*Mb2)
+  Else
+   Igamma = C0(mj2,mi2,0._dp,mf2,mb2,mf2)
+  End If
 
  End Function Igamma
 
@@ -10236,7 +10250,22 @@ Goto 200
 
   Real(dp), Intent(in) :: mj2,mi2,mb2,mf2
 
-  I2gamma = - Cget("C1  ",mj2,mi2,0._dp,mf2,mb2,mf2)
+  Real(dp) :: x, y, z
+
+  x = mj2/mb2
+  y = mf2/mb2
+  z = mj2/mf2
+
+  If ((x.Le.1.e-3_dp).And.(z.Le.1.e-3_dp)) Then 
+   ! using the formula of Haber/Wyler for this case
+   I2gamma = - (0.5_dp*(mf2+mb2) - mf2*mb2*Log(mb2/mf2) /(mb2-mf2)) /(mb2-mf2)**2
+  Else If ((x.Le.1.e-3_dp).And.(y.Le.1.e-3_dp)) Then
+   I2gamma =  - (0.5_dp*(mf2+mb2) - mf2*mb2*Log(mb2/mf2) /(mb2-mf2)) /(mb2-mf2)**2 &
+    & - mj2 * ( (mf2**2 + 10 * mf2 * mb2 + mb2**2) / (6*(mb2-mf2)**4)               &
+    &         +  mf2*mb2*(mf2+mb2)*Log(mb2/mf2) /(mf2-mb2)**5 )
+  Else
+   I2gamma = - Cget("C1  ",mj2,mi2,0._dp,mf2,mb2,mf2)
+  End If
 !  I2gamma = - Cget("C1  ",mj2,mi2,0._dp,mf2,mf2,mb2)
 !  I2gamma = - Cget("C2  ",mj2,mi2,0._dp,mb2,mf2,mf2)
 !  I2gamma = - Cget("C2  ",mj2,mi2,0._dp,mf2,mb2,mf2)
@@ -10255,7 +10284,22 @@ Goto 200
 
   Real(dp), Intent(in) :: mj2,mi2,mb2,mf2
 
-  Jgamma = C0(mj2,mi2,0._dp,mb2,mf2,mb2)
+  Real(dp) :: x, y, z
+
+  x = mj2/mb2
+  y = mf2/mb2
+  z = mj2/mf2
+
+  If ((x.Le.1.e-3_dp).And.(z.Le.1.e-3_dp)) Then 
+   y = 1._dp / y ! using the formula of Haber/Wyler for this case
+   Jgamma = ((1._dp + y * Log(y) /(1-y))/ (1._dp-y) -1._dp )/mb2
+  Else If ((x.Le.1.e-3_dp).And.(y.Le.1.e-3_dp)) Then
+!Write(*,*) "I am here"
+   Jgamma = (-36 + x**2*(14 + 24*y - 78*y**2) - 9*x*(-3 - 2*y + 4*y**2) &
+     & - 18*y*(2 + 4*y + 2*x**2*(1 + 5*y) + x*(2 + 7*y))*Log(y))/(36.*MB2)
+  Else
+   Jgamma = C0(mj2,mi2,0._dp,mb2,mf2,mb2)
+  End If
 
  End Function Jgamma
 

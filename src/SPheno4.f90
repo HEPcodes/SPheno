@@ -73,8 +73,9 @@ Implicit None
  ! Input and output files
  !------------------------------------------------------
   Character(len=120) :: inputFileName, outputFileName
+
  Iname = 1
- NameOfUnit(1) = "SPheno3"
+ NameOfUnit(1) = "SPheno4"
  !--------------------------------------------------------------------------
  ! set all parameters and low energy observables to zero
  !--------------------------------------------------------------------------
@@ -131,6 +132,7 @@ Implicit None
  ! must exist.
  !--------------------------------------------------------------------------
  Call ReadingData(kont)
+
  !---------------------------------------------
  ! parameters for branching ratio calculations
  !---------------------------------------------
@@ -190,7 +192,6 @@ Implicit None
     Chi0%m2 = Chi0%m**2
     ChiPm%m2 = ChiPm%m**2
     Glu%m2 = Glu%m**2
-
     Call Low_Energy_Constraints_MSSM(Q_in, gauge, Y_l, Y_d, Y_u, A_l, A_d, A_u &
      & , Mi, mu, M2_E, M2_L, M2_D, M2_Q, M2_U, M2_H, B, tanb_Q, P0%m2, S0%m2   &
      & , Spm%m2, CKM, kont, GenerationMixing, rho_parameter, DeltaMBd          &
@@ -278,11 +279,11 @@ Implicit None
  !------------------------------------------------------------
  If ((Write_SLHA1).And.(kont.Eq.0)) Call WriteSPhenoOutputLHA1(35, M_GUT)
 
-! call CompareSUSYHD(35)
  Call closing() ! closes the files
  If ((kont.Ne.0).And.Non_Zero_Exit) Stop 99
 
 Contains
+
 
  Subroutine Swap_Order_Sf(Rij, id1, id2, id_p, names)
  Implicit None
@@ -429,6 +430,16 @@ Contains
   End If
 
   If (External_Spectrum) Then
+   RP0(2,2) = 1._dp /Sqrt(1._dp+tanb**2)
+   RP0(1,2) = tanb * RP0(2,2)
+   RP0(2,1) = RP0(1,2)
+   RP0(1,1) = - RP0(2,2)
+   RSpm = RP0
+   Do i1=1,3
+    A_u(i1,i1) = Y_u(i1,i1) *  A_u(i1,i1)
+    A_d(i1,i1) = Y_d(i1,i1) *  A_d(i1,i1)
+    A_l(i1,i1) = Y_l(i1,i1) *  A_l(i1,i1)
+   end do
    Iname = Iname - 1
    Return ! using the externaly given spectrum
   End If
@@ -1492,6 +1503,7 @@ Contains
   End If
 
  End Subroutine ReadingData
-!include "CompareSUSYHD.f90"
+
+
 End Program SPheno
 

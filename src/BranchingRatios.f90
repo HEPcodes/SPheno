@@ -322,7 +322,7 @@ Contains
           & , mf_u, mf_d, Chi0, c_UNSu_L, c_UNSu_R, ChiPm, c_CDSu_L  &
           & , c_CDSu_R, Sdown, m_W, c_SuSdW, m_Z, c_SuSuZ, Spm       &
           & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m32, F_eff      &
-          & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R)
+          & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R, m_pip)
   Do i1=1,6
    Sup(i1)%g = Sup2(i1)%g
    Sup(i1)%gi2 = Sup2(i1)%gi2
@@ -338,7 +338,7 @@ Contains
           & , mf_d, mf_u, Chi0, c_DNSd_L, c_DNSd_R, ChiM, c_CUSd_L      &
           & , c_CUSd_R, Sup2, m_W, c_SdSuW, m_Z, c_SdSdZ, Smp           &
           & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m32, F_eff         &
-          & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R)
+          & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R, m_pip)
 
   !------------------------------------------------
   ! gluino decays
@@ -1178,7 +1178,7 @@ Contains
           & , mf_u, mf_d, Chi0, c_UNSu_L, c_UNSu_R, ChiPm, c_CDSu_L  &
           & , c_CDSu_R, Sdown, m_W, c_SuSdW, m_Z, c_SuSuZ, Spm       &
           & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m32, F_eff   &
-          & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R)
+          & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R, m_pip)
   Do i1=1,6
    Sup(i1)%g = Sup2(i1)%g
    Sup(i1)%gi2 = Sup2(i1)%gi2
@@ -1194,7 +1194,7 @@ Contains
           & , mf_d, mf_u, Chi0, c_DNSd_L, c_DNSd_R, ChiM, c_CUSd_L      &
           & , c_CUSd_R, Sup2, m_W, c_SdSuW, m_Z, c_SdSdZ, Smp           &
           & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m32, F_eff      &
-          & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R)
+          & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R, m_pip)
 
   !------------------------------------------------
   ! gluino decays
@@ -1695,7 +1695,7 @@ c_GraUSu_R = 0
           & , mf_u, mf_d, Chi0, c_UNSu_L, c_UNSu_R, ChiPm, c_CDSu_L  &
           & , c_CDSu_R, Sdown, m_W, c_SuSdW, m_Z, c_SuSuZ, Spm       &
           & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m32, F_eff   &
-          & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R)
+          & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R, m_pip)
   Do i1=1,6
    Sup(i1)%g = Sup2(i1)%g
    Sup(i1)%gi2 = Sup2(i1)%gi2
@@ -1709,7 +1709,7 @@ c_GraUSu_R = 0
           & , mf_d, mf_u, Chi0, c_DNSd_L, c_DNSd_R, ChiM, c_CUSd_L      &
           & , c_CUSd_R, Sup2, m_W, c_SdSuW, m_Z, c_SdSdZ, Smp           &
           & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m32, F_eff      &
-          & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R)
+          & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R, m_pip)
   Do i1=1,6
    Call check_charge(Sdown(i1)%id,Sdown(i1)%id2)
   End Do
@@ -2303,7 +2303,7 @@ c_GraUSu_R = 0
           & , mf_u, mf_d, Chi0, c_UNSu_L, c_UNSu_R, ChiPm, c_CDSu_L  &
           & , c_CDSu_R, Sdown, m_W, c_SuSdW, m_Z, c_SuSuZ, Spm       &
           & , c_SmpSuSd, P0, c_P0SuSu, S0, c_S0SuSu, m32, F_eff   &
-          & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R)
+          & , c_GraUSu_L, c_GraUSu_R, 0, Glu, c_GUSu_L, c_GUSu_R, m_pip)
   Do i1=1,6
    Sup(i1)%g = Sup2(i1)%g
    Sup(i1)%gi2 = Sup2(i1)%gi2
@@ -2317,7 +2317,7 @@ c_GraUSu_R = 0
           & , mf_d, mf_u, Chi0, c_DNSd_L, c_DNSd_R, ChiM, c_CUSd_L      &
           & , c_CUSd_R, Sup2, m_W, c_SdSuW, m_Z, c_SdSdZ, Smp           &
           & , c_SmpSdSu, P0, c_P0SdSd, S0, c_S0SdSd, m32, F_eff      &
-          & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R)
+          & , c_GraDSd_L, c_GraDSd_R, 0, Glu, c_GDSd_L, c_GDSd_R, m_pip)
   Do i1=1,6
    Call check_charge(Sdown(i1)%id,Sdown(i1)%id2)
   End Do

@@ -3,7 +3,8 @@ Module Gluino3Decays
 ! load modules
 Use Control
 Use DecayFunctions, Only : FermionToFermionScalar
-Use StandardModel, Only: mW, mW2, mf_d , mf_d2, mf_u, mf_u2, mZ2, CKM
+Use StandardModel, Only: mW, mW2, mf_d , mf_d2, mf_u, mf_u2, mZ2, CKM &
+                       & , m_pi0, m_pip
 Use ThreeBodyPhaseSpace
 Use ThreeBodyPhaseSpaceS
 Use LoopFunctions, Only: Igamma, I2gamma, Jgamma, Kgamma &
@@ -39,6 +40,9 @@ Contains
  !           - adding possiblity to calculate 3-body states only via
  !             virtual states -> new logical variable Check_Real_States
  ! 18.09.2010: adapting to new variable type for particles
+ ! 06.08.2019: require that at least a pion can be produced in the decays
+ !             e.g., do not consider 2 m_u or 2 m_d but m_pi in the
+ !             kinematics
  !------------------------------------------------------------------
  Implicit None
 
@@ -114,7 +118,7 @@ Contains
    !--------------------------------------
    i_c = 1
    Do i1 = 1, n_n
-    If (Abs(mGlu).Gt.Abs(mN(i1))) Then
+    If (Abs(mGlu).Gt.Abs(mN(i1))+m_pi0) Then
       Call GluToChi0qq(mGlu, i1,' u u ', mN, mf_u, mUSquark, g_Su             &
          & , cpl_UGSu_L, cpl_UGSu_R, cpl_UNSu_L, cpl_UNSu_R                   &
          & , IntegralsSf4, n_Sf4, IntegralsCSf4, n_CSf4, IntegralsSf8, n_Sf8  &
@@ -175,7 +179,7 @@ Contains
    ! decay into charginos + 2 quarks
    !--------------------------------------
    Do i1=1,n_c
-    If (Abs(mGlu).Gt.Abs(mC(i1))) Then
+    If (Abs(mGlu).Gt.Abs(mC(i1))+m_pip) Then
      Call GluToChimqqp(mGlu, i1, mC, mf_d, mf_u, mDSquark, g_Sd            &
           & , cpl_DGSd_L, cpl_DGSd_R, cpl_CUSd_L, cpl_CUSd_R, mUSquark      &
           & , g_Su, cpl_UGSu_L, cpl_UGSu_R, cpl_CDSu_L, cpl_CDSu_R          &
@@ -202,7 +206,7 @@ Contains
    factor(1) = - gSU3 * oo16pi2
    factor(2) = 0.125_dp / ( Pi * Abs(mGlu)**3 ) 
    Do i1=1,n_n
-    If (Abs(mGlu).Gt.Abs(mN(i1)) ) Then
+    If (Abs(mGlu).Gt.Abs(mN(i1))+m_pi0 ) Then
      Call GluToChi0Gluon(mGlu, i1, mN, mf_u, mUsquark2, cpl_UNSu_L           &
         & , cpl_UNSu_R, cpl_UGSu_L, cpl_UGSu_R, mf_d, mDsquark2, cpl_DNSd_L  &
         & , cpl_DNSd_R, cpl_DGSd_L, cpl_DGSd_R, factor, gG)

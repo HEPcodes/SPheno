@@ -70,11 +70,11 @@ cleanall:
 #
 .f90.a:
 	${F90} ${comp} $<
-	ar -ruc $@ $*.o
+	ar -ruc -U $@ $*.o
 	rm -f $*.o
 .F90.a:
 	${F90} ${comp}  ${PreDef} $<
-	ar -ruc $@ $*.o
+	ar -ruc -U $@ $*.o
 	rm -f $*.o
 .f90.o: 
 	${F90} ${comp}  $< 

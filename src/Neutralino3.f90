@@ -3,6 +3,7 @@ Module Neut3Decays
 ! load modules
 Use Control
 Use LoopFunctions
+Use StandardModel, Only: m_pi0
 Use ThreeBodyPhaseSpace
 
 ! for check, if there is a numerical problem in the 3-body decays
@@ -78,6 +79,8 @@ Contains
  !            - adding n_int_diag, n_int_off_diag, which give the size of
  !              arrays for the intermediate contrictuions
  !  19.09.2010: adjusting for new variable types
+ !  24.07.19: checking in case of decays into hadrons, that the kinematics
+ !            allow at least for 2 pions in the final state
  !------------------------------------------------------------------
  Implicit None
 
@@ -114,12 +117,13 @@ Contains
   Integer :: i_start, i_end, i_run, i_c, i1, i2, i3, n_Z4, n_S04, n_Sf4   &
      & , n_ZS04, n_ZSf8, n_S0P04, n_S0Sf8, n_CSf4, n_Sf8, n_W4, n_WSpm    &
      & , n_ZS08, n_S0P08, n_W8, n_ZW8, n_WSpm8, n_WSf8, n_Z8
-  Real(dp) :: factor(3), mW2a, m_nu(3), mUsquark2(n_Su), gP0_in(n_P0)       &
-     & , mDsquark2(n_Sd), mSlepton2(n_sle), gNff(3,3), gCffp(3,3), mGlu     &
-     & , mSneutrino(n_snu), mN(n_n), mC(n_c), mP0(n_P0), mUsquark(n_Su)     &
-     & , mDsquark(n_Sd), mSlepton(n_sle), mS0(n_S0), mSpm(n_Spm), diffM     &
-     & , gNNN, gNCC, gGqq(3,3), gW_in, gZ_in, mSpm2(n_Spm), gS0_in(n_S0)    &
-     & , gSpm_in(n_Spm), g_Su(n_Su), g_Sd(n_Sd), g_Sl(n_Sle), g_Sn(n_Snu)
+  Real(dp) :: factor(3), mW2a, m_nu(3), mUsquark2(n_Su), gP0_in(n_P0)     &
+     & , mDsquark2(n_Sd), mSlepton2(n_sle), gNff(3,3), gCffp(3,3), mGlu   &
+     & , mSneutrino(n_snu), mN(n_n), mC(n_c), mP0(n_P0), mUsquark(n_Su)   &
+     & , mDsquark(n_Sd), mSlepton(n_sle), mS0(n_S0), mSpm(n_Spm), diffM   &
+     & , gNNN, gNCC, gGqq(3,3), gW_in, gZ_in, mSpm2(n_Spm), gS0_in(n_S0)  &
+     & , gSpm_in(n_Spm), g_Su(n_Su), g_Sd(n_Sd), g_Sl(n_Sle), g_Sn(n_Snu) &
+     & , dm2pi
   Real(dp), Allocatable :: IntegralsZ4(:,:), IntegralsS04(:,:)   &
      & , IntegralsSf4(:,:), IntegralsW4(:,:)
   Complex(dp), Allocatable :: IntegralsZS04(:,:), IntegralsZSf8(:,:)     &
@@ -258,6 +262,7 @@ Contains
    ! decays into a neutralino + 2 fermions
    !--------------------------------------
    Do i1 = 1, i_run - 1
+    dm2pi = Abs(mN(i_run)) - Abs(mN(i1)) - 2._dp*m_pi0 
     n_Z4 = 0
     n_W4 = 0
     n_S04 = 0
@@ -277,7 +282,8 @@ Contains
     n_CSf4 = 0
     n_Sf8 = 0
     If (Abs(mN(i_run)).Gt.(Abs(mN(i1))+M_D)) Then
-     Call  Chi0ToChi0ff(i_run, i1, ' u u ', mN, mZ, gZ_in, Cpl_NNZ_L,Cpl_NNZ_R &
+     If (dm2pi.gt.0._dp) then
+      Call Chi0ToChi0ff(i_run, i1, ' u u ', mN, mZ, gZ_in, Cpl_NNZ_L,Cpl_NNZ_R &
      & , n_u, mf_u, L_u, R_u, IntegralsZ4, n_Z4, mS0, gS0_in, cpl_NNS0_L       &
      & , cpl_NNS0_R, cpl_UUS0_L, cpl_UUS0_R, IntegralsS04, n_S04, mP0, gP0_in  &
      & , cpl_NNP0_L, cpl_NNP0_R, cpl_UUP0_L, cpl_UUP0_R, mUSquark, g_Su        &
@@ -285,6 +291,9 @@ Contains
      & , IntegralsZSf8, n_ZSf8, IntegralsS0P04, n_S0P04, IntegralsS0Sf8        &
      & , n_S0Sf8, IntegralsCSf4, n_CSf4, IntegralsSf8, n_Sf8, deltaM, epsI     &
      & , GenerationMixing, check, factor(2), gNff,0,ErrCan)
+     Else
+      gNff = 0._dp
+     end if
 
      Do i2=1,n_u
       Do i3=i2,n_u
@@ -308,7 +317,8 @@ Contains
       End Do
      End Do
 
-     Call  Chi0ToChi0ff(i_run, i1, ' d d ', mN, mZ, gZ_in, Cpl_NNZ_L,Cpl_NNZ_R &
+     If (dm2pi.gt.0._dp) then
+      Call Chi0ToChi0ff(i_run, i1, ' d d ', mN, mZ, gZ_in, Cpl_NNZ_L,Cpl_NNZ_R &
      & , n_d, mf_d, L_d, R_d, IntegralsZ4, n_Z4, mS0, gS0_in, cpl_NNS0_L       &
      & , cpl_NNS0_R, cpl_DDS0_L, cpl_DDS0_R, IntegralsS04, n_S04, mP0, gP0_in  &
      & , cpl_NNP0_L, cpl_NNP0_R, cpl_DDP0_L, cpl_DDP0_R, mDSquark, g_Sd        &
@@ -316,6 +326,9 @@ Contains
      & , IntegralsZSf8, n_ZSf8, IntegralsS0P04, n_S0P04, IntegralsS0Sf8        &
      & , n_S0Sf8, IntegralsCSf4, n_CSf4, IntegralsSf8, n_Sf8, deltaM, epsI     &
      & , GenerationMixing, check, factor(2), gNff,0,ErrCan)
+     Else
+      gNff = 0._dp
+     end if
 
      Do i2=1,n_d
       Do i3=i2,n_d
@@ -393,6 +406,7 @@ Contains
    ! decay into charginos + 2 SM fermions
    !--------------------------------------
    Do i1=1,n_c
+    dm2pi = Abs(mN(i_run)) - Abs(mC(i1)) - 0.3
     n_Z4 = 0
     n_W4 = 0
     n_S04 = 0
@@ -412,7 +426,8 @@ Contains
     n_CSf4 = 0
     n_Sf8 = 0
     If (Abs(mN(i_run)).Gt.(Abs(mC(i1))+M_D)) Then
-     Call Chi0ToChimffp(i_run, i1, mN, mC, 3, mf_d, mf_u, mW, gW_in, Cpl_CNW_L &
+     If (dm2pi.gt.0._dp) then
+      Call Chi0ToChimffp(i_run,i1, mN, mC, 3, mf_d, mf_u, mW, gW_in, Cpl_CNW_L &
           & , Cpl_CNW_R, Cpl_UDW, mSpm, gSpm_in, Cpl_SmpCN_L, Cpl_SmpCN_R      &
           & , Cpl_SmpDU_L, Cpl_SmpDU_R, mDSquark, g_Sd, cpl_DNSd_L, cpl_DNSD_R &
           & , cpl_CUSd_L, cpl_CUSd_R, mUSquark, g_Su, cpl_UNSu_L, cpl_UNSu_R   &
@@ -421,6 +436,9 @@ Contains
           & , n_WSf8, IntegralsS0P04, n_S0P04, IntegralsS0Sf8, n_S0Sf8         &
           & , IntegralsCSf4, n_CSf4, IntegralsSf8, n_Sf8, deltaM, epsI         &
           & , GenerationMixing, check, factor(2), gCffp, 0, ErrCan)
+     Else
+      gCffp = 0._dp
+     end if
 
      Do i2=1,n_d
       Do i3=1,n_u

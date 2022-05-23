@@ -185,6 +185,12 @@ Contains
    mf_d2 = mf_d2**2
    mf_u2 = mf_u2**2
   End If
+  !-------------------------------------------------------------------------------
+  ! arXiv:hep-ph/9606211 and arXiv:hep-ph/9212285 require the use of the onshell
+  ! top mass in the calculation of m_W
+  !-------------------------------------------------------------------------------
+  mf_u2(3) = mf_u(3)**2 
+
   !-----------
   ! alpha(mZ)
   !-----------
@@ -297,7 +303,8 @@ Contains
    !-----------------------------------------------------------------
    If ((Abs(sinW2_DR-sinW2_old).Lt. 0.1_dp*delta0).And.(i1.Gt.1)) Exit
    sinW2_old = sinW2_DR
-   delta_rw = delta_rho*(1._dp-delta_r) + delta_r
+!   delta_rw = delta_rho*(1._dp-delta_r) + delta_r
+   delta_rw = (delta_rho+fac(2)/sinW2_DR+xt2)*(1._dp-delta_r) + delta_r
    If ((0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))).Lt.0._dp) Then
     If (Errorlevel.Ge.0) Then
      Write(Errcan,*) "Problem in subroutine "//NameofUnit(Iname)
@@ -322,15 +329,10 @@ Contains
    cosW2 = mW2 / mZ2
    sinW2 = 1._dp - cosW2
   End Do
+
   mSpm2(1) = mW2
-  !--------------------------------------------------------------------------
-  ! recalcuating m_W and sin^2_W, the formula for m_W is base on Eq.25 of
-  ! G.Degrassi et al., NPB351, 49 (1991)  
-  !--------------------------------------------------------------------------
-  delta_rw = delta_rho*(1._dp-delta_r) + delta_r
-  mW2 = mZ2 * rho * ( 0.5_dp &
-      &         +Sqrt(0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))))
   mW = Sqrt(mW2)
+
   cosW2 = mW2 / mZ2
   sinW2 = 1._dp - cosW2
   !---------------------------
@@ -1076,6 +1078,11 @@ Contains
   !-----------------
   ! sin(theta_W)^2
   !-----------------
+  !-------------------------------------------------------------------------------
+  ! arXiv:hep-ph/9606211 and arXiv:hep-ph/9212285 require the use of the onshell
+  ! top mass in the calculation of m_W
+  !-------------------------------------------------------------------------------
+  mf_u2(3) = mf_u(3)**2 
   !--------------------
   ! for 2-loop parts
   !--------------------
@@ -1191,7 +1198,8 @@ Contains
    If ((Abs(sinW2_DR-sinW2_old).Lt. 0.1_dp*delta0).And.(i1.Gt.1)) Exit
 
    sinW2_old = sinW2_DR
-   delta_rw = delta_rho*(1._dp-delta_r) + delta_r
+!   delta_rw = delta_rho*(1._dp-delta_r) + delta_r
+   delta_rw = (delta_rho+fac(2)/sinW2_DR+xt2)*(1._dp-delta_r) + delta_r
    If ((0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))).Lt.0._dp) Then
     If (Errorlevel.Ge.0) Then
      Write(Errcan,*) "Problem in subroutine "//NameofUnit(Iname)
@@ -1215,14 +1223,8 @@ Contains
    cosW2 = mW2 / mZ2
    sinW2 = 1._dp - cosW2
   End Do
+
   mSpm2(1) = mW2
-  !--------------------------------------------------------------------------
-  ! recalcuating m_W and sin^2_W, the formula for m_W is base on Eq.25 of
-  ! G.Degrassi et al., NPB351, 49 (1991)  
-  !--------------------------------------------------------------------------
-  delta_rw = delta_rho*(1._dp-delta_r) + delta_r
-  mW2 = mZ2 * rho * ( 0.5_dp &
-      &         +Sqrt(0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))))
   mW = Sqrt(mW2)
   cosW2 = mW2 / mZ2
   sinW2 = 1._dp - cosW2
@@ -10307,6 +10309,11 @@ Contains
    mf_d2 = mf_d_DR**2
    mf_u2 = mf_u_DR**2
   End If
+  !-------------------------------------------------------------------------------
+  ! arXiv:hep-ph/9606211 and arXiv:hep-ph/9212285 require the use of the onshell
+  ! top mass in the calculation of m_W
+  !-------------------------------------------------------------------------------
+  mf_u2(3) = mf_u(3)**2 
 
   !-------------------------------------------------------------------
   ! alpha(mZ), include also m_t part, to get a SU(2) invariant model
@@ -10388,7 +10395,8 @@ Contains
 
    If (Abs(sinW2_DR-sinW2_old).Lt. 0.1_dp*delta0) Exit
     sinW2_old = sinW2_DR
-    delta_rw = delta_rho*(1._dp-delta_r) + delta_r
+!    delta_rw = delta_rho*(1._dp-delta_r) + delta_r
+    delta_rw = (delta_rho+fac(2)/sinW2_DR+xt2)*(1._dp-delta_r) + delta_r
     If ((0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))).Lt.0._dp) Then
     kont = -406
     If (Errorlevel.Ge.0) Then
@@ -10412,13 +10420,7 @@ Contains
    cosW2 = mW2 / mZ2
    sinW2 = 1._dp - cosW2
   End Do
-  !--------------------------------------------------------------------------
-  ! recalcuating m_W and sin^2_W, the formula for m_W is base on Eq.25 of
-  ! G.Degrassi et al., NPB351, 49 (1991)
-  !--------------------------------------------------------------------------
-  delta_rw = delta_rho*(1._dp-delta_r) + delta_r
-  mW2 = mZ2 * rho * ( 0.5_dp &
-      &         +Sqrt(0.25_dp-alphamz*pi/(sqrt2*G_F*mz2*rho*(1._dp-delta_rw))))
+
   mW = Sqrt(mW2)
   cosW2 = mW2 / mZ2
   sinW2 = 1._dp - cosW2
@@ -11924,6 +11926,8 @@ Write(*,*) Real(Y_l_SM(3,3)),  Real(Y_d_SM(3,3)),  Real(Y_u_SM(3,3))
     End If
     Call SetRGEScale(mudim)
     UseFixedScale = .False.
+   Else
+    Call SetRGEScale(mudim**2)    
    End If
 
    If ((deltag0.Lt.delta).And.(j.Gt.1)) Then ! require at least two iterations

@@ -51,7 +51,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  !------------------------------------
  ! version number
  !------------------------------------
- Character(len=8), Save :: version="v4.0.3"
+ Character(len=8), Save :: version="v4.0.4"
  !------------------------------------
  ! variables for spectrum calculation
  !------------------------------------
@@ -112,7 +112,7 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
  !-------------------------
  ! for the error system 
  !-------------------------
- Character(len=60) :: Math_Error(31) =                                &
+ Character(len=60) :: Math_Error(33) =                                &
   & (/ "Routine OdeInt, stepsize smaller than minimum:              " &
   &  , "Routine OdeInt, maximal value > 10^36:                      " &
   &  , "Routine OdeInt, too many steps:                             " &
@@ -144,6 +144,8 @@ Integer, Parameter :: qp = Selected_real_kind(25,450)
   &  , "Routine rzextr: probable misuse, too much extrapolation     " &
   &  , "Routine RealEigenSystem, matrix contains NaN                " &
   &  , "Routine ComplexEigenSystem, matrix contains NaN             " &
+  &  , "Routine InvMat_c: precision not achieved                    " &
+  &  , "Routine InvMat_r: precision not achieved                    " &
   & /)
  Character(len=60) :: MathQP_Error(10) =                              &
   & (/ "Routine ComplexEigenSystemDP, array dimensions do not match:" &
@@ -631,7 +633,12 @@ Contains
   Do i1=ErrCan,ErrCan+NumberOfOpenFiles-1
    Close(i1)
   End Do
-  Stop "Subroutine TerminateProgram"
+  If (Non_Zero_Exit) Then
+   Stop 99
+  Else
+   Stop "Subroutine TerminateProgram"
+  End If
+
 
  End Subroutine TerminateProgram
 

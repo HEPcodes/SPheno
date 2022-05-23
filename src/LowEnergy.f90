@@ -48,6 +48,13 @@ Real(dp), Parameter, Private :: e_u = 2._dp/3._dp, e_d=-1._dp/3._dp
    & , WC_4d_SLL2(n_i,3,3) = ZeroC, WC_4d_SRR2(n_i,3,3) = ZeroC      &
    & , WC_2d2l_CS(n_i,3,3,3) = ZeroC, WC_2d2l_CSp(n_i,3,3,3) = ZeroC &
    & , WC_2d2l_CP(n_i,3,3,3) = ZeroC, WC_2d2l_CPp(n_i,3,3,3) = ZeroC
+! Variables for comparison with Flavor Kit & wcxf interface
+ Complex(dp), Private, Save :: WC_Q1R(n_i,3,3) = ZeroC               &
+   & ,  WC_Q2R(n_i,3,3) = ZeroC, WC_EVLL(n_i,3,3,3) = ZeroC  & 
+   & ,  WC_EVLR(n_i,3,3,3) = ZeroC, WC_EVRL(n_i,3,3,3) = ZeroC  & 
+   & ,  WC_EVRR(n_i,3,3,3) = ZeroC, WC_FVLL(n_i,3,3,3) = ZeroC  & 
+   & ,  WC_FVRL(n_i,3,3,3) = ZeroC , WC_ESLR(n_i,3,3,3) = ZeroC  & 
+   & , WC_ESRR(n_i,3,3,3) = ZeroC   
  Logical, Private, Save :: l_wc(n_i) = .False.
 ! for internal use
  Logical, Private, Save :: WriteDetails = .False.
@@ -1229,6 +1236,10 @@ Contains
    WC_c8(is,3,i1,:) = c8(1:2) / norm
    WC_c8p(is,3,i1,1) = c8p(1) / norm
    WC_c8p(is,3,i1,2) = 0._dp
+   WC_Q1R(is,i1,3) =  c7(1)
+   WC_Q1R(is,3,i1) =  c7p(1)
+   WC_Q2R(is,i1,3) =  c8(1)
+   WC_Q2R(is,3,i1) =  c8p(1)
   End Do
 
   mC2 = mC**2
@@ -1267,6 +1278,12 @@ Contains
     WC_C10(is,3,i2,i1,2) = c10_c(i1,2)
     WC_C10p(is,3,i2,i1,1) = c10p(i1)
     WC_C10p(is,3,i2,i1,2) = c10p_c(i1,2)
+
+    WC_EVLL(is,3,i2,i1) = 0.5_dp * ( c9(i1) - c10(i1)) / kappa_q
+    WC_EVLR(is,3,i2,i1) = 0.5_dp * ( c9(i1) + c10(i1)) / kappa_q
+    WC_EVRL(is,3,i2,i1) = 0.5_dp * ( c9p(i1) - c10p(i1)) / kappa_q
+    WC_EVRR(is,3,i2,i1) = 0.5_dp * ( c9p(i1) + c10p(i1)) / kappa_q
+
    End Do
   End Do
 
@@ -1285,6 +1302,10 @@ Contains
     WC_C11(is,i2,i2-1,i1,2) = c11_c(i1,2)
     WC_C11p(is,i2,i2-1,i1,1) = c11p(i1)
     WC_C11p(is,i2,i2-1,i1,2) = c11p_c(i1,2)
+
+    WC_FVLL(is,i2,i2-1,i1) = c11(i1) / kappa_q
+    WC_FVRL(is,i2,i2-1,i1) = c11p(i1) / kappa_q
+
    End Do
   End Do
  
@@ -1309,6 +1330,10 @@ Contains
      WC_2d2l_CPp(is,3,i1,i2) = WC_2d2l_CPp(is,3,i1,i2) &
       & + fac * c_DDP0_1L_R(3,i1,i3) * c_LLP0_R(i2,i2,i3) / (mP02(i3)*mf_d(i1))
     End Do
+
+    WC_ESRR(is,3,i2,i1) =  WC_2d2l_CS(is,3,i1,i2) / fac
+    WC_ESLR(is,3,i2,i1) =  WC_2d2l_CS(is,3,i1,i2) / fac
+
    End Do
   End Do
   !--------------------------------------------------------------------
@@ -5772,6 +5797,108 @@ end if
 
  End Subroutine K_To_PiNuNu
 
+
+ Subroutine Write_wcxf(n, l_head, i, kont)
+ !---------------------------------------------------
+ ! write the Wilson coefficients at the energy Q(i)
+ ! to the channel n
+ !---------------------------------------------------
+ Implicit None
+
+  Integer, Intent(in) :: n, i
+  Integer, Intent(inout) :: kont
+  Logical, Intent(in) :: l_head
+
+  Integer :: i1, i2, i3
+  Character(len=12) :: name
+
+  Iname = Iname + 1
+  NameOfUnit(Iname) = "Write_wcxf"
+  !------------------------------------------------
+  ! test, if set of coefficients exists
+  !------------------------------------------------
+  If ((i.Lt.1).Or.(i.Gt.n_i)) Then
+   Write(ErrCan,*) "Error in routine Write_wcxf"
+   Write(ErrCan,*) "set with index",i,"does not exist"
+   kont = -1000
+   Iname = Iname - 1
+   Return
+  End If
+
+  If (l_head) then
+   Write(n,100) "eft: WET"
+   Write(n,100) "basis: FlavorKit"
+   Write(n,100) "metadata:"
+   Write(n,100) "  generator: SPheno "//version
+  End If
+
+  Write(n,101) "scale: ",Q_out(i)
+  Write(n,100) "values:"
+
+!  DVLL_2323:
+!   Re: 1.3e-5
+!   Im: 1.234e-7
+!  DVLR_2323:
+!   Re: 1.3e-5
+!   Im: 1.234e-7
+
+  ! write only in case that at least one coefficient is non-zero
+  If (l_wc(i)) Then
+   Call WriteLineC(n, "Q1R_23",WC_Q1R(i,2,3) )
+   Call WriteLineC(n, "Q1R_32",WC_Q1R(i,3,2) )
+   Call WriteLineC(n, "Q2R_23",WC_Q2R(i,2,3) )
+   Call WriteLineC(n, "Q2R_32",WC_Q2R(i,3,2) )
+
+   ! d -> d' l l
+   Do i1=1,2
+    Do i2=1,3
+     name = "EVLL_3"//Bu(i1)//Bu(i2)//Bu(i2)
+     Call WriteLineC(n, Trim(name),WC_EVLL(i,3,i1,i2) )
+     name = "EVLR_3"//Bu(i1)//Bu(i2)//Bu(i2)
+     Call WriteLineC(n, Trim(name),WC_EVLR(i,3,i1,i2) )
+     name = "EVRL_3"//Bu(i1)//Bu(i2)//Bu(i2)
+     Call WriteLineC(n, Trim(name),WC_EVRL(i,3,i1,i2) )
+     name = "EVRR_3"//Bu(i1)//Bu(i2)//Bu(i2)
+     Call WriteLineC(n, Trim(name),WC_EVRR(i,3,i1,i2) )
+    End Do
+   End Do
+
+   ! d -> d' nu nu
+   Do i1=2,3
+    Do i2=1,3
+     name = "FVLL_"//Bu(i1)//Bu(i1-1)//Bu(i2)//Bu(i2)
+     Call WriteLineC(n, Trim(name),WC_FVLL(i,i1,i1-1,i2) )
+     name = "FVRL_"//Bu(i1)//Bu(i1-1)//Bu(i2)//Bu(i2)
+     Call WriteLineC(n, Trim(name),WC_FVRL(i,i1,i1-1,i2) )
+    End Do
+   End Do
+
+
+  End If
+
+  Iname = Iname - 1
+
+  100 Format(a)
+  101 Format(a,1P,e14.7)
+
+ Contains 
+
+  Subroutine WriteLineC(n, var, val)
+   Implicit None
+   Integer, Intent(in) :: n
+   Character(len=*), Intent(in) :: var
+   Complex(dp), Intent(in) :: val
+
+   Write(n,100) Trim(var)//":"
+   Write(n,101) "Re:",Real(val,dp)
+   Write(n,101) "Im:",aimag(val)
+
+   100 Format(1x,a)
+   101 Format(2x,a3,1x,1P,e14.7)
+
+  End Subroutine WriteLineC
+
+ End Subroutine Write_wcxf
 
  Subroutine Write_Wilson_Coeff(n, i, kont)
  !---------------------------------------------------

@@ -2172,7 +2172,7 @@ Contains
           & , Sf, mf, mfp, Chi0, c_FNSf_L, c_FNSf_R, ChiPm, c_CFpSf_L        &
           & , c_CFpSf_R, Sfp, mW, c_SfSfpW, mZ, c_SfSfZ, Spm, c_SmpSfSfp     &
           & , P0, c_P0SfSf, S0, c_S0SfSf, m_grav, F_eff, c_GraFSf_L          &
-          & , c_GraFSf_R, k_neut, Glu, c_GQSq_L, c_GQSq_R)
+          & , c_GraFSf_R, k_neut, Glu, c_GQSq_L, c_GQSq_R, dm)
  !-----------------------------------------------------------------------
  ! Calculates the 2-body decays of sfermions:
  ! input:
@@ -2220,6 +2220,9 @@ Contains
         & , n_Spm, n_Z, n_P0, n_S0, n_Sf, id_f(:), id_fp(:), id_W(:), id_Z(:) &
         & , id_grav 
   Real(dp), Intent(in) :: mf(:), mfp(:), mW(:), mZ(:), m_grav, F_eff
+  Real(dp), Intent(in), Optional :: dm ! gives the possiblity to forbid
+                                       ! decays into quarks if quark
+                                       ! masses are below m_pi
   Type(particle23), Intent(in), Optional :: Glu
   Complex(dp), Intent(in) :: c_FNSf_L(:,:,:), c_FNSf_R(:,:,:)    &
                               & , c_CFpSf_L(:,:,:), c_CFpSf_R(:,:,:)
@@ -2233,7 +2236,7 @@ Contains
 
   Integer :: i1, i2, i3, i_gen, i_start, i_end, i_count
   Real(dp) :: mSf(n_Sf), gam, m_in, mN(n_n), mC(n_c), mG, mSfp(n_sfp)  &
-      & , mSpm(n_Spm), mP0(n_P0), mS0(n_S0)
+      & , mSpm(n_Spm), mP0(n_P0), mS0(n_S0), d_m
   !-----------------
   ! Initialization
   !-----------------
@@ -2274,6 +2277,9 @@ Contains
   mS0 = S0%m
   mP0 = P0%m
 
+  d_m = 0._dp
+  if (Present(dm)) d_m = dm
+
   Do i1 = i_start, i_end
    m_in = msf(i1)
    i_count = 1
@@ -2287,7 +2293,7 @@ Contains
    Do i2 = 1, n_n
     Do i3 = 1,n_f
      If ((Abs(c_FNSf_L(i3,i2,i1))+Abs(c_FNSf_R(i3,i2,i1))).ne.0._dp) then
-      Call ScalarToTwoFermions(m_in, mf(i3), mN(i2) &
+      Call ScalarToTwoFermions(m_in, mf(i3)+d_m, mN(i2) &
             & , c_FNSf_L(i3,i2,i1), c_FNSf_R(i3,i2,i1), gam)
       If ((k_neut.Eq.1).Or.(k_neut.Eq.3)) Then
        Sf(i1)%gi2(i_count) = Sf(i1)%gi2(i_count) + gam
@@ -2309,7 +2315,7 @@ Contains
    Do i2 = 1, n_c
     Do i3 = 1,n_fp
      If ((Abs(c_CFpSf_L(i2,i3,i1))+Abs(c_CFpSf_R(i2,i3,i1))).ne.0._dp) then
-      Call ScalarToTwoFermions(m_in, mfp(i3), mC(i2) &
+      Call ScalarToTwoFermions(m_in, mfp(i3)+d_m, mC(i2) &
            & , c_CFpSf_L(i2, i3, i1), c_CFpSf_R(i2, i3, i1), gam)
       If ((k_neut.Eq.2).Or.(k_neut.Eq.3)) Then
        Sf(i1)%gi2(i_count) = Sf(i1)%gi2(i_count) + gam
@@ -2331,7 +2337,7 @@ Contains
    If (Present(Glu).And.Present(c_GQSq_L).And.Present(c_GQSq_R) ) Then
     Do i_gen = 1,n_f
      If ((Abs(c_GQSq_L(i_gen, i1))+Abs(c_GQSq_R(i_gen, i1))).ne.0._dp) then
-      Call ScalarToTwoFermions(m_in, mf(i_gen), mG, c_GQSq_L(i_gen, i1) &
+      Call ScalarToTwoFermions(m_in, mf(i_gen)+d_m, mG, c_GQSq_L(i_gen, i1) &
              & , c_GQSq_R(i_gen, i1), gam)
       If (k_neut.Eq.3) Then
        Sf(i1)%gi2(i_count) = Sf(i1)%gi2(i_count) + 16._dp * gam / 3._dp ! Colour factor
